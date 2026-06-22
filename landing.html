@@ -390,7 +390,7 @@
     <div class="hero-stats">
       <div class="stat"><div class="stat-num">3</div><div class="stat-label">捕获入口</div></div>
       <div class="stat"><div class="stat-num">1s</div><div class="stat-label">捕获速度</div></div>
-      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">本地优先</div></div>
+      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">隐私保护</div></div>
       <div class="stat"><div class="stat-num">∞</div><div class="stat-label">灵感容量</div></div>
     </div>
   </section>
@@ -480,16 +480,16 @@
   <div class="container">
     <div class="section-eyebrow">Engine</div>
     <h2 class="section-title">分级 LLM 路由</h2>
-    <p class="section-sub">一条灵感进来走哪条模型？<br>私有数据用本地，公共分析上云端 —— 按任务选最优模型，不浪费一分钱。</p>
+    <p class="section-sub">一条灵感进来走哪条模型？<br>隐私数据走 Agent 内置 LLM，公共分析上云端 —— 按任务选最优模型，不浪费一分钱。</p>
 
     <!-- Architecture Diagram -->
     <div class="arch-diagram">
       <div class="arch-row">
         <div class="arch-node arch-local">
-          <div class="arch-node-icon">🏠</div>
-          <div class="arch-node-title">本地 Ollama</div>
-          <div class="arch-node-model">qwen2.5:14b</div>
-          <div class="arch-node-desc">隐私数据不出机</div>
+          <div class="arch-node-icon">🧬</div>
+          <div class="arch-node-title">Agent 内置 LLM</div>
+          <div class="arch-node-model">Same as Agent</div>
+          <div class="arch-node-desc">隐私数据不出对话</div>
         </div>
         <div class="arch-pipe">
           <div class="arch-pipe-label">DNA 分析</div>
@@ -574,8 +574,8 @@
       </div>
       <div class="route-card route-card-local">
         <div class="route-task">🔒 DNA 分析</div>
-        <div class="route-model">本地 Ollama</div>
-        <div class="route-why">个人灵感库 → 创作画像<br>数据不出机，零成本</div>
+        <div class="route-model">Agent 内置 LLM</div>
+        <div class="route-why">个人灵感库 → 创作画像<br>Agent 自身模型分析，隐私不出对话</div>
       </div>
     </div>
   </div>

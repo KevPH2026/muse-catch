@@ -1,6 +1,6 @@
 ---
 name: muse
-description: Muse · Catch — AI 灵感捕手。浏览器插件+Telegram Bot一键捕获灵感，AI自动提炼，Web Dashboard浏览。分级LLM路由：本地Ollama隐私分析 + TokenRouter云端分布式调用。当用户说「灵感」「捕获」「Muse」「Catch」「记下来」「收藏」「稍后读」时自动触发。
+description: Muse · Catch — AI 灵感捕手。浏览器插件+Telegram Bot一键捕获灵感，AI自动提炼，Web Dashboard浏览。分级LLM路由：Agent内置LLM隐私分析 + TokenRouter云端分布式调用。当用户说「灵感」「捕获」「Muse」「Catch」「记下来」「收藏」「稍后读」时自动触发。
 category: product
 ---
 
@@ -19,7 +19,7 @@ Muse 不绑单一模型。按任务智能选模型：
 
 | 任务 | 模型 | 原因 |
 |------|------|------|
-| 🔒 DNA 分析 | **本地 Ollama** qwen2.5:14b | 隐私数据不出机，零成本 |
+| 🔒 DNA 分析 | **Agent 内置 LLM** | 隐私数据不出对话，零额外成本 |
 | 📥 灵感汲取 | **DeepSeek V4 Pro** (TokenRouter) | 高频低延迟，批量便宜 |
 | 🔀 发散扩展 | **DeepSeek V4 Pro** (TokenRouter) | 3 角度 x 200 字，快速 |
 | 📊 分类聚类 | **DeepSeek V4 Pro** (TokenRouter) | 结构提取，不需创造力 |
@@ -28,7 +28,7 @@ Muse 不绑单一模型。按任务智能选模型：
 | 💎 金句生成 | **Claude Sonnet 4** (TokenRouter) | 中文语感 + 锐度 |
 | 🖼️ 金句配图 | **GPT Image 2** (TokenRouter) | 社交媒体卡片生成 |
 
-**隐私承诺：** Onboarding DNA 分析使用本地 Ollama `qwen2.5:14b`，你的灵感数据永不出本机。
+**隐私承诺：** Onboarding DNA 分析使用 Agent 自身模型（与 Agent 同款 LLM），灵感数据不出对话上下文。
 
 **Landing Page：** https://muse-pitch-swiss-v2.vercel.app
 
@@ -157,9 +157,9 @@ cd ~/.hermes/workspace/muse && python3 bot.py &
 TR_BASE_URL=https://api.tokenrouter.com/v1
 TR_API_KEY=sk-your-t…key
 
-# 本地 Ollama（隐私数据、DNA 分析）
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:14b
+# Agent 内置 LLM（DNA 分析，隐私数据）
+# Agent 内置 LLM — 无需额外部署
+# 由 Agent 运行时的模型自动提供
 ```
 
 详见 `.env.example`。
@@ -188,7 +188,7 @@ curl "http://localhost:5200/api/topics?mode=random&count=10"
 # 深度拆解
 curl "http://localhost:5200/api/topic-deep-dive?topic=选题&angle=角度&ids=1,2,3"
 
-# DNA 分析（本地 Ollama）
+# DNA 分析（Agent 内置 LLM）
 curl -X POST http://localhost:5200/api/profile/dna \
   -H 'Content-Type: application/json' \
   -d '{}'  # 或 {"samples":["内容1"]}
@@ -215,7 +215,7 @@ curl http://localhost:5200/api/profile
 ```
 ~/.openclaw/workspace/skills/muse-catch/KevPH2026-muse-catch-d2ae878/
   server.py          ← Flask API (:5200) — 所有 LLM 调用经 llm_router.py
-  llm_router.py      ← 分级路由层：Ollama vs TokenRouter 自动选模型
+  llm_router.py      ← 分级路由层：Agent 内置 LLM vs TokenRouter 自动选模型
   index.html         ← Web Dashboard（含 Onboarding 对话）
   onboard.js         ← Onboarding UI 模块
   landing.html       ← Landing Page → https://muse-pitch-swiss-v2.vercel.app
@@ -236,10 +236,10 @@ curl http://localhost:5200/api/profile
 |---|---|
 | API 连不上 | `curl localhost:5200/api/stats` |
 | 端口被占 | `lsof -i :5200` → `kill <PID>` |
-| LLM 不工作 | `.env` 设 `TR_API_KEY`（云端）；`OLLAMA_BASE_URL`（本地）。不设也能用规则提取 fallback |
+| LLM 不工作 | `.env` 设 `TR_API_KEY`（云端）；DNA 分析自动走 Agent 内置模型（fallback 规则提取） |
 | 插件捕获失败 | 确认 CORS 已启用（server.py 已内置） |
 | Bot 没反应 | `echo $MUSE_BOT_KEY` 确认已设 |
-| DNA 分析超时 | 确认 Ollama 在跑：`curl http://localhost:11434/api/tags` |
+| DNA 分析超时 | 确认 Agent 模型可用。DNA 分析走 Agent 内置 LLM，不依赖外部服务 |
 | TokenRouter 401 | 检查 `TR_API_KEY` 是否正确 |
 | 分类 500 | 可能是模型超时，重试即可 |
 
