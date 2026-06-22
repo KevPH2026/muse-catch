@@ -100,7 +100,7 @@ async function capture() {
   const userNote = document.getElementById('user-note').value.trim();
 
   const payload = {
-    source: 'browser_extension',
+    source: 'extension',
     url: currentTab.url,
     title: currentTab.title,
     content: selectedText || userNote || '',

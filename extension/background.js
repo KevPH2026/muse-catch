@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(() => {
 // ============ CONTEXT MENU ============
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   let payload = {
-    source: 'browser_extension',
+    source: 'extension',
     url: tab.url,
     title: tab.title
   };

@@ -212,6 +212,17 @@ textarea:focus {
 
 .settings-btn:hover { color: var(--text); }
 
+.dash-link {
+  color: var(--purple-light);
+  font-size: 11px;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.dash-link:hover { color: var(--text); }
+
 /* Settings Panel */
 .settings-panel {
   margin-top: 8px;

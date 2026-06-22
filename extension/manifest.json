@@ -27,7 +27,7 @@
       "run_at": "document_end"
     }
   ],
-  "permissions": ["activeTab", "contextMenus", "storage", "scripting"],
+  "permissions": ["activeTab", "contextMenus", "storage", "scripting", "notifications"],
   "host_permissions": ["<all_urls>"],
   "commands": {
     "capture-page": {
