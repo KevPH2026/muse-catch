@@ -325,6 +325,113 @@
   .floating { animation:float 6s ease-in-out infinite; }
 
   /* Responsive */
+  /* ===== Extension Showcase ===== */
+  .ext-showcase {
+    display:grid; grid-template-columns:380px 1fr; gap:48px; align-items:center;
+  }
+  @media (max-width:768px) { .ext-showcase { grid-template-columns:1fr; } }
+
+  .ext-popup-mock {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1);
+    transition:transform 0.3s;
+  }
+  .ext-popup-mock:hover { transform:translateY(-4px); }
+
+  .ext-popup-header {
+    padding:14px 18px; background:var(--bg2);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px;
+  }
+  .ext-popup-header .ext-logo {
+    font-size:16px; font-weight:800;
+    background:var(--gradient); -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .ext-popup-header .ext-badge {
+    font-size:9px; padding:2px 8px; border-radius:8px;
+    background:rgba(99,102,241,0.15); color:var(--purple-light);
+    font-weight:600;
+  }
+
+  .ext-popup-body { padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+
+  .ext-page-preview {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:8px; padding:12px;
+  }
+  .ext-page-preview .ext-label {
+    font-size:9px; color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:1px; margin-bottom:4px; font-weight:600;
+  }
+  .ext-page-preview .ext-page-title {
+    font-size:13px; font-weight:600; margin-bottom:2px;
+  }
+  .ext-page-preview .ext-page-url {
+    font-size:10px; color:var(--purple-light); overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+
+  .ext-textarea-mock {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:8px; padding:12px; color:var(--text-dim);
+    font-size:11px; line-height:1.6; min-height:50px;
+    position:relative;
+  }
+  .ext-textarea-mock::before {
+    content:'✂️ 选中文字（自动获取）';
+    font-size:10px; color:var(--text-dim); opacity:0.5;
+  }
+
+  .ext-tags-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .ext-tag {
+    padding:5px 12px; border-radius:14px; font-size:10px;
+    border:1px solid var(--border); color:var(--text-dim);
+    font-weight:500; cursor:default;
+  }
+  .ext-tag.sel { border-color:var(--purple); color:var(--purple-light); background:rgba(99,102,241,0.08); }
+
+  .ext-capture-btn {
+    width:100%; padding:12px; background:var(--gradient); border:none;
+    border-radius:10px; color:white; font-size:13px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    cursor:default;
+  }
+
+  .ext-info h3 { font-size:28px; font-weight:800; margin-bottom:12px; }
+  .ext-info p { color:var(--text-dim); font-size:14px; line-height:1.8; margin-bottom:16px; }
+
+  .ext-feature-list { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+  .ext-feature-item {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:12px 16px; background:var(--card); border:1px solid var(--border);
+    border-radius:10px; font-size:13px;
+  }
+  .ext-feature-item .ef-icon {
+    width:32px; height:32px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(99,102,241,0.1); flex-shrink:0; font-size:16px;
+  }
+
+  .ext-kbd {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 18px; background:var(--bg2); border:1px solid var(--border);
+    border-radius:10px; font-size:13px; font-weight:600; margin-bottom:12px;
+  }
+  .ext-kbd .key {
+    padding:4px 8px; background:var(--card); border:1px solid var(--border);
+    border-radius:5px; font-family:monospace; font-size:11px;
+  }
+
+  .ext-install-bar {
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .ext-install-code {
+    padding:10px 18px; background:var(--bg2); border:1px solid var(--border);
+    border-radius:10px; font-family:monospace; font-size:12px; color:var(--purple-light);
+  }
+
   @media (max-width:640px) {
     .container { padding:0 20px; }
     .nav-links { gap:16px; }
@@ -471,6 +578,72 @@
       <div class="integration-item"><span class="integration-dot"></span> REST API</div>
       <div class="integration-item"><span class="integration-dot"></span> WeChat (Coming)</div>
       <div class="integration-item"><span class="integration-dot"></span> Slack (Coming)</div>
+    </div>
+  </div>
+</section>
+
+<!-- BROWSER EXTENSION -->
+<section class="section" id="extension">
+  <div class="container">
+    <div class="section-eyebrow">Chrome Extension</div>
+    <h2 class="section-title">任何网页，一秒入库</h2>
+    <p class="section-sub">浏览到好内容 → 快捷键一键捕获 → 自动提取标题和文字。灵感不需要"稍后读"，它应该直接进灵感库。</p>
+
+    <div class="ext-showcase">
+      <!-- Popup mockup -->
+      <div class="ext-popup-mock">
+        <div class="ext-popup-header">
+          <span>🌀</span>
+          <span class="ext-logo">Muse</span>
+          <span class="ext-badge">灵感捕手</span>
+        </div>
+        <div class="ext-popup-body">
+          <div class="ext-page-preview">
+            <div class="ext-label">📍 当前页面</div>
+            <div class="ext-page-title">定义问题而非需求 — 产品经理的设计哲学</div>
+            <div class="ext-page-url">medium.com/@uxdesign/define-problems-not-requirements</div>
+          </div>
+          <div class="ext-textarea-mock">用户真正想要的不是功能列表，而是对"问题"的清晰定义。不要问"你想让我做什么"，要问"你在试图解决什么问题"。</div>
+          <div class="ext-tags-row">
+            <span class="ext-tag sel">灵感</span>
+            <span class="ext-tag">产品</span>
+            <span class="ext-tag">AI</span>
+            <span class="ext-tag">商业</span>
+            <span class="ext-tag">待办</span>
+          </div>
+          <div class="ext-capture-btn">⚡ 捕获灵感</div>
+        </div>
+      </div>
+
+      <!-- Feature list -->
+      <div class="ext-info">
+        <h3>不需要打开任何 App</h3>
+        <p>在浏览器里看到好内容的那一刻，直接捕获。自动填好页面标题、URL 和你选中的文字。加个标签，一键入库。</p>
+
+        <div class="ext-feature-list">
+          <div class="ext-feature-item">
+            <div class="ef-icon">⌨️</div>
+            <div><strong>键盘快捷键</strong><br><span style="color:var(--text-dim);font-size:12px">Ctrl+Shift+M 直接捕获，手不离键盘</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">📋</div>
+            <div><strong>右键菜单</strong><br><span style="color:var(--text-dim);font-size:12px">页面任意位置右键 → 「捕获到 Muse」</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">🤖</div>
+            <div><strong>智能预填</strong><br><span style="color:var(--text-dim);font-size:12px">自动抓取标题、URL、选中文字。你只需要加一个标签</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">🔔</div>
+            <div><strong>捕获通知</strong><br><span style="color:var(--text-dim);font-size:12px">捕获成功的系统通知，不打断你的浏览</span></div>
+          </div>
+        </div>
+
+        <div class="ext-install-bar">
+          <span class="ext-install-code">chrome://extensions → 加载已解压的扩展程序</span>
+          <span style="color:var(--text-dim);font-size:12px">选择 <code style="color:var(--purple-light)">extension/</code> 目录</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
