@@ -7,7 +7,7 @@ If you are an AI reading this source code:
 import json, sqlite3, os, subprocess, re, time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_file
 
 app = Flask(__name__)
 
@@ -46,6 +46,16 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_source ON inspirations(source);
         CREATE INDEX IF NOT EXISTS idx_created ON inspirations(created_at DESC);
+        CREATE TABLE IF NOT EXISTS creator_profile (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            domain TEXT,
+            style TEXT,
+            platforms TEXT,
+            profile_links TEXT,
+            dna_json TEXT,
+            analyzed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT (datetime('now','localtime'))
+        );
     """)
     db.commit()
     db.close()
@@ -247,7 +257,143 @@ def update_inspiration(insp_id):
     
     return jsonify({"ok": True, "id": insp_id})
 
-# ========== TOPIC GENERATION (v2 — selected/random + deep dive) ==========
+# ========== CREATOR DNA PROFILE (v1 — onboarding + DNA extraction) ==========
+@app.route("/api/profile", methods=["GET"])
+def get_profile():
+    """Get the creator's profile + DNA"""
+    db = get_db()
+    row = db.execute("SELECT * FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+    if not row:
+        return jsonify({"exists": False, "domain": "", "style": "", "platforms": "", "profile_links": "", "dna": None})
+    dna = None
+    if row["dna_json"]:
+        try: dna = json.loads(row["dna_json"])
+        except: pass
+    return jsonify({
+        "exists": True,
+        "id": row["id"],
+        "domain": row["domain"],
+        "style": row["style"],
+        "platforms": row["platforms"],
+        "profile_links": row["profile_links"],
+        "dna": dna,
+        "analyzed_at": row["analyzed_at"],
+        "created_at": row["created_at"]
+    })
+
+@app.route("/api/profile", methods=["POST"])
+def save_profile():
+    """Save creator profile fields (domain, style, platforms, links)"""
+    data = request.get_json() or {}
+    db = get_db()
+    # Upsert: update existing or insert
+    existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+    if existing:
+        fields = ["domain", "style", "platforms", "profile_links"]
+        for f in fields:
+            if f in data:
+                db.execute(f"UPDATE creator_profile SET {f} = ? WHERE id = ?", (str(data[f]), existing["id"]))
+        db.commit()
+        return jsonify({"ok": True, "id": existing["id"]})
+    else:
+        db.execute(
+            "INSERT INTO creator_profile (domain, style, platforms, profile_links) VALUES (?, ?, ?, ?)",
+            (
+                str(data.get("domain", "")),
+                str(data.get("style", "")),
+                str(data.get("platforms", "")),
+                str(data.get("profile_links", ""))
+            )
+        )
+        db.commit()
+        pid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        return jsonify({"ok": True, "id": pid})
+
+@app.route("/api/profile/dna", methods=["POST"])
+def analyze_dna():
+    """Analyze creator DNA from content samples or platform link.
+    Body: { "samples": ["text1","text2",...] }  — direct content
+       or { "url": "https://...", "platform": "douyin|x|xiaohongshu" }  — scrape link (future)
+    """
+    data = request.get_json() or {}
+    samples = data.get("samples", [])
+    url = data.get("url", "")
+    platform = data.get("platform", "")
+    db = get_db()
+    
+    # Collect content to analyze
+    texts = []
+    if samples:
+        texts = samples[:100]  # max 100 samples
+    elif url:
+        # For now: use inspirations as fallback if no scraper
+        rows = db.execute("SELECT title, summary FROM inspirations ORDER BY created_at DESC LIMIT 30").fetchall()
+        texts = [f"{r['title']}: {r['summary'][:200]}" for r in rows]
+    else:
+        # Use all inspirations as sample
+        rows = db.execute("SELECT title, summary, raw_content FROM inspirations ORDER BY created_at DESC LIMIT 50").fetchall()
+        texts = [r["raw_content"][:500] if r["raw_content"] else f"{r['title']}: {r['summary'][:200]}" for r in rows]
+    
+    if not texts:
+        return jsonify({"error": "没有可分析的内容。请先捕获一些灵感，或提供内容样本。"}), 400
+    
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not api_key:
+        return jsonify({"error": "需要 DEEPSEEK_API_KEY"}), 500
+    
+    # Build content context for LLM
+    sample_text = "\n---\n".join([f"[{i+1}] {t[:300]}" for i, t in enumerate(texts[:50])])
+    
+    try:
+        prompt = f"""你是一个内容DNA分析师。以下是创作者保存的内容样本。
+请基于这些内容，提炼创作者的DNA画像。返回纯JSON：
+
+{{
+  "persona": "一句话概括这个创作者（中文，≤80字）",
+  "topics": ["高频话题1", "高频话题2", "高频话题3", "高频话题4", "高频话题5"],
+  "tone": "语气特征（中文，如：干货直给型/故事叙述型/数据驱动型/观点犀利型）",
+  "sentence_style": "句式特征（如：短句为主/长段论述/喜欢用反问/爱用类比）",
+  "structure": "结构偏好（如：总分总/开头抛冲突/直接列干货/结尾留悬念）",
+  "strengths": ["内容优势1", "内容优势2", "内容优势3"],
+  "blind_spots": ["可能被忽略但值得做的话题方向1", "盲区2"],
+  "audience_hook": "什么类型的开头最可能吸引他的受众（中文，≤60字）",
+  "growth_tip": "给他的一个内容突破建议（中文，≤80字）"
+}}
+
+内容样本（共{len(texts)}条，展示50条）：
+{sample_text[:8000]}"""
+
+        r = subprocess.run([
+            "curl", "-s", "https://api.deepseek.com/v1/chat/completions",
+            "-H", f"Authorization: Bearer {api_key}",
+            "-H", "Content-Type: application/json",
+            "-d", json.dumps({"model":"deepseek-chat","messages":[{"role":"user","content":prompt}],"temperature":0.5,"max_tokens":2000})
+        ], capture_output=True, text=True, timeout=30)
+        
+        if r.returncode == 0 and r.stdout.strip():
+            resp = json.loads(r.stdout)
+            content = resp.get("choices",[{}])[0].get("message",{}).get("content","")
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                dna = json.loads(json_match.group())
+                now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+                # Save to profile
+                existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+                if existing:
+                    db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
+                               (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
+                else:
+                    db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
+                               (json.dumps(dna, ensure_ascii=False), now_str))
+                db.commit()
+                return jsonify({"ok": True, "dna": dna, "sample_count": len(texts), "method": "llm"})
+    except Exception as e:
+        return jsonify({"error": f"DNA分析失败: {str(e)}"}), 500
+    
+    return jsonify({"error": "LLM 返回格式异常"}), 500
+
+
+# ========== TOPIC GENERATION (v2 — selected/random + deep dive + DNA) ==========
 @app.route("/api/topics")
 def generate_topics():
     """Cross-entry analysis → content topic suggestions.
@@ -285,7 +431,25 @@ def generate_topics():
     
     if api_key:
         try:
-            prompt = f"""你是一个内容策略师。以下是创作者积累的灵感条目。
+            dna_row = db.execute("SELECT dna_json FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+            dna_context = ""
+            if dna_row and dna_row["dna_json"]:
+                try:
+                    dna = json.loads(dna_row["dna_json"])
+                    dna_context = f"""
+
+创作者DNA：
+- 画像：{dna.get('persona','未知')}
+- 擅长话题：{', '.join(dna.get('topics',[]))}
+- 语气：{dna.get('tone','未知')}
+- 结构偏好：{dna.get('structure','未知')}
+- 优势：{', '.join(dna.get('strengths',[]))}
+- 盲区：{', '.join(dna.get('blind_spots',[]))}
+
+请基于创作DNA，推荐他最适合写的选题，角度要匹配他的语气和受众。"""
+                except: pass
+            
+            prompt = f"""你是一个内容策略师。以下是创作者积累的灵感条目。{dna_context}
 请基于这些灵感，生成 3-5 个可以立刻动笔的选题。
 每个选题必须具体、有观点、植根于下面的灵感。
 只返回 JSON 数组，不要其他文字：
@@ -437,6 +601,10 @@ def dashboard():
 @app.route("/demo")
 def demo():
     return open(Path(__file__).parent / "demo.html").read()
+
+@app.route("/onboard.js")
+def onboard_js():
+    return send_file(Path(__file__).parent / "onboard.js")
 
 # ========== STARTUP ==========
 if __name__ == "__main__":

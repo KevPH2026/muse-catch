@@ -105,6 +105,35 @@ main{max-width:1100px;margin:0 auto;padding:32px 24px}
 .btn-topics:disabled{opacity:.4;cursor:not-allowed}
 .toast{position:fixed;top:20px;right:20px;padding:12px 20px;background:var(--purple);color:#fff;border-radius:10px;font-size:13px;font-weight:600;z-index:100;opacity:0;transform:translateY(-10px);transition:all .3s}
 .toast.show{opacity:1;transform:translateY(0)}
+
+.onboard-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,5,15,.92);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.onboard-overlay.hide{display:none}
+.onboard-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;animation:slideDown .5s}
+.onboard-box h2{font-size:24px;font-weight:800;margin-bottom:6px}
+.onboard-box .ob-sub{font-size:13px;color:var(--dim);margin-bottom:20px}
+.ob-step{display:none}
+.ob-step.active{display:block;animation:slideDown .4s}
+.ob-tags{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.ob-tag{padding:10px 18px;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;transition:all .2s;background:var(--bg2);color:var(--dim);font-weight:500}
+.ob-tag:hover{border-color:var(--purple);color:var(--text)}
+.ob-tag.sel{border-color:var(--purple);background:rgba(99,102,241,.15);color:var(--purple-light);font-weight:700}
+.ob-input{width:100%;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;margin:12px 0}
+.ob-input:focus{border-color:var(--purple)}
+.ob-btn{padding:12px 28px;background:var(--gradient);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.ob-btn:hover{opacity:.9;transform:translateY(-1px)}
+.ob-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.ob-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--dim);margin-left:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.ob-btn-ghost:hover{color:var(--text);border-color:var(--purple)}
+.dna-badge{display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;margin-bottom:20px;cursor:pointer;transition:all .2s;animation:slideDown .4s}
+.dna-badge:hover{border-color:var(--purple);background:rgba(99,102,241,.12)}
+.dna-badge .dna-icon{font-size:24px}
+.dna-badge .dna-text{flex:1;font-size:12px;line-height:1.6}
+.dna-badge .dna-text strong{color:var(--purple-light);display:block;font-size:13px;margin-bottom:2px}
+#dna-panel{display:none;animation:slideDown .4s}
+#dna-panel.show{display:block}
+.ob-loading{text-align:center;padding:40px 20px}
+.ob-loading .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -116,7 +145,26 @@ main{max-width:1100px;margin:0 auto;padding:32px 24px}
     <span id="stat-sources">0</span> 来源
   </div>
 </nav>
+<!-- Onboarding overlay -->
+<div class="onboard-overlay hide" id="onboard-overlay">
+  <div class="onboard-box" id="onboard-box"></div>
+</div>
+
 <main>
+  <!-- DNA badge (shown after onboarding) -->
+  <div class="dna-badge" id="dna-badge" style="display:none" onclick="toggleDnaPanel()">
+    <div class="dna-icon">🧬</div>
+    <div class="dna-text"><strong id="dna-persona">...</strong><span id="dna-stats"></span></div>
+    <div style="font-size:12px;color:var(--purple-light)">→</div>
+  </div>
+  <div id="dna-panel" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">🧬 Creator DNA</h3>
+      <button class="btn-sm btn-ghost" onclick="resetOnboarding()">🔄 重新认识我</button>
+    </div>
+    <div id="dna-detail"></div>
+  </div>
+
   <div class="header">
     <h1>你的灵感库</h1>
     <div class="header-actions">
@@ -287,8 +335,9 @@ async function deepDive(topic,angle,ids){
   }catch(e){showToast('❌ Deep Dive 失败')}
 }
 
-document.addEventListener('DOMContentLoaded',load);
+document.addEventListener('DOMContentLoaded',async()=>{await load();await checkOnboarding()});
 document.getElementById('ingest-input').addEventListener('keydown',e=>{if(e.key==='Enter')capture()});
 </script>
+<script src="onboard.js"></script>
 </body>
 </html>
