@@ -559,9 +559,10 @@
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
       <li><a href="#how">How</a></li>
+      <li><a href="#live-demo">Live Demo</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://github.com/KevPH2026/muse-catch" target="_blank">GitHub</a></li>
-      <li><a href="#install" class="nav-cta">Dashboard →</a></li>
+      <li><a href="http://localhost:5200" class="nav-cta" target="_blank">Launch Demo →</a></li>
     </ul>
   </nav>
 
@@ -578,8 +579,9 @@
         AI auto-extracts titles, summaries, keywords, and emotion. Your ideas, never lost.
       </p>
       <div class="hero-cta-group">
-        <a href="#install" class="btn btn-primary">🌀 Install Extension</a>
-        <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-outline" target="_blank">⭐ Star on GitHub</a>
+        <a href="http://localhost:5200" class="btn btn-primary" target="_blank">🔬 Live Demo</a>
+        <a href="#install" class="btn btn-outline">🌀 Install Extension</a>
+        <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-ghost" target="_blank">⭐ GitHub</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -914,6 +916,64 @@
     <div style="margin-top:28px;text-align:center;">
       <a href="/extension.zip" class="btn btn-primary" download>📦 Download Extension (.zip)</a>
       <p style="font-size:11px;color:var(--text-dim);margin-top:6px;">Download, unzip, follow the steps above. 18KB lightweight.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE DEMO -->
+<section class="section" id="live-demo">
+  <div class="container">
+    <div class="section-eyebrow">Live Demo</div>
+    <h2 class="section-title">Run it on <span class="grad">your machine</span></h2>
+    <p class="section-sub">Dashboard with DNA onboarding, card wall, stats, topics & deep dive — all live at localhost.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:32px auto">
+      <!-- Demo features -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px">
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:16px">🔬 What you'll see</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="ext-feature-item">
+            <div class="ef-icon">🧬</div>
+            <div><strong>Creator DNA Onboarding</strong><br><span style="color:var(--text-dim);font-size:11px">5-step conversational flow. Pick topics, platforms, style → AI analyzes your content DNA</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">📊</div>
+            <div><strong>Inspiration Card Wall</strong><br><span style="color:var(--text-dim);font-size:11px">Emotion strips, source chips, keyword pills. Stats: donut chart, heatmap, bar chart</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">💡</div>
+            <div><strong>Topics + Deep Dive</strong><br><span style="color:var(--text-dim);font-size:11px">Cross-inspiration topic generation → viral angles → headlines → structure → golden quotes</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">🔒</div>
+            <div><strong>Agent 内置 LLM</strong><br><span style="color:var(--text-dim);font-size:11px">DNA analysis uses Agent's own model. Your content never leaves the conversation context.</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Launch -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:20px">
+        <div style="font-size:48px">🚀</div>
+        <h3 style="font-size:22px;font-weight:800">Ready to try?</h3>
+        <p style="color:var(--text-dim);font-size:13px">Dashboard runs at <code style="background:rgba(99,102,241,.1);padding:2px 8px;border-radius:4px;color:var(--purple-light);font-size:13px">localhost:5200</code></p>
+        <a href="http://localhost:5200" class="btn btn-primary" target="_blank" style="justify-content:center;font-size:15px">🔬 Launch Live Demo →</a>
+        <p style="font-size:10px;color:var(--text-dim)">Requires Flask server running on your machine</p>
+      </div>
+    </div>
+
+    <!-- Quick start commands -->
+    <div style="max-width:600px;margin:24px auto 0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 24px">
+      <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600">Quick Start</div>
+      <div style="font-family:'SF Mono',monospace;font-size:11px;color:var(--purple-light);line-height:2">
+        git clone https://github.com/KevPH2026/muse-catch<br>
+        cd muse-catch &amp;&amp; pip install flask<br>
+        cp .env.example .env &amp;&amp; <span style="color:var(--cyan)"># add your TR_API_KEY</span><br>
+        python server.py &amp;&amp; open http://localhost:5200
+      </div>
+    </div>
+
+    <!-- Demo video -->
+    <div style="text-align:center;margin-top:24px">
+      <a href="https://litter.catbox.moe/7g8z2t.mp4" class="btn btn-outline" target="_blank">🎬 Watch Demo Video (45s)</a>
     </div>
   </div>
 </section>

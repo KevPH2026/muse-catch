@@ -301,10 +301,6 @@ def analyze_dna():
     if not texts:
         return jsonify({"error": "没有可分析的内容。请先捕获一些灵感，或提供内容样本。"}), 400
     
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-    if not api_key:
-        return jsonify({"error": "需要 DEEPSEEK_API_KEY"}), 500
-    
     # Build content context for LLM
     sample_text = "\n---\n".join([f"[{i+1}] {t[:300]}" for i, t in enumerate(texts[:50])])
     
@@ -314,23 +310,34 @@ def analyze_dna():
 内容({len(texts)}条):
 {sample_text[:6000]}"""
         content = call_llm(prompt, task="dna")
-        if content:
-            dna = extract_json(content)
-            if dna:
-                now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
-                existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
-                if existing:
-                    db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
-                               (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
-                else:
-                    db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
-                               (json.dumps(dna, ensure_ascii=False), now_str))
-                db.commit()
-                return jsonify({"ok": True, "dna": dna, "sample_count": len(texts), "method": "ollama"})
+        if not content:
+            return jsonify({"error": "Agent 内置 LLM 返回空。请确认 Agent 连接正常。"}), 500
+        dna = extract_json(content)
+        if not dna:
+            # Try to extract from raw content with array match
+            arr_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if arr_match:
+                try:
+                    dna = json.loads(arr_match.group())
+                except:
+                    pass
+        if not dna:
+            return jsonify({
+                "error": "Agent LLM 返回了内容但无法解析为JSON。",
+                "raw_preview": content[:300]
+            }), 500
+        now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+        existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+        if existing:
+            db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
+                       (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
+        else:
+            db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
+                       (json.dumps(dna, ensure_ascii=False), now_str))
+        db.commit()
+        return jsonify({"ok": True, "dna": dna, "sample_count": len(texts), "method": "agent_llm"})
     except Exception as e:
         return jsonify({"error": f"DNA分析失败: {str(e)}"}), 500
-    
-    return jsonify({"error": "本地模型返回异常"}), 500
 
 
 # ========== TOPIC GENERATION (v2 — selected/random + deep dive + DNA) ==========

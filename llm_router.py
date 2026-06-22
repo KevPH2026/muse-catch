@@ -1,7 +1,10 @@
 """
 Muse Catch — 分级 LLM 路由层
-- 本地 Ollama：隐私分析（Onboarding DNA、个人数据）
+- Agent 内置 LLM：隐私数据不出对话上下文（Onboarding DNA、个人画像分析）
 - TokenRouter 云端：公开功能（灵感分析、选题、金句配图）
+
+所有模型通过 TokenRouter 统一网关调用。DNA 分析使用与 Agent 相同的模型，
+代表"Agent 自己的分析能力"——不是本地 Ollama。
 """
 import os
 import json
@@ -26,9 +29,9 @@ ROUTE = {
     "topics":      {"provider": "tr", "model": "anthropic/claude-sonnet-4", "temp": 0.8, "max_tokens": 1500},
     "deep_dive":   {"provider": "tr", "model": "anthropic/claude-sonnet-4", "temp": 0.7, "max_tokens": 2000},
     "quotes":      {"provider": "tr", "model": "anthropic/claude-sonnet-4", "temp": 0.9, "max_tokens": 800},
-    "dna":         {"provider": "ollama", "model": OLLAMA_MODEL, "temp": 0.5, "max_tokens": 1200},
+    "dna":         {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 1200, "label": "Agent 内置 LLM"},
     "ingest":      {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 400},
-    "onboarding":  {"provider": "ollama", "model": OLLAMA_MODEL, "temp": 0.5, "max_tokens": 800},
+    "onboarding":  {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 800, "label": "Agent 内置 LLM"},
 }
 
 
@@ -148,10 +151,38 @@ def extract_json(content):
     """从 LLM 输出中提取第一个 JSON 对象"""
     if not content:
         return None
-    match = re.search(r'\{.*\}', content.replace('\n', ' '), re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group())
-        except:
-            pass
+    # Try direct parse first
+    try:
+        return json.loads(content.strip())
+    except:
+        pass
+    # Try regex extraction — find first { that pairs correctly
+    start = content.find('{')
+    if start == -1:
+        return None
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(content)):
+        c = content[i]
+        if escape:
+            escape = False
+            continue
+        if c == '\\':
+            escape = True
+            continue
+        if c == '"':
+            in_str = not in_str
+            continue
+        if not in_str:
+            if c == '{':
+                depth += 1
+            elif c == '}':
+                depth -= 1
+                if depth == 0:
+                    substr = content[start:i+1]
+                    try:
+                        return json.loads(substr)
+                    except:
+                        return None
     return None
