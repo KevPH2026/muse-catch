@@ -152,7 +152,13 @@ def ingest():
         # Merge incoming tags with extracted tags
         incoming_tags = data.get("tags", [])
         if isinstance(incoming_tags, list) and incoming_tags:
-            extracted_tags = extracted.get("tags", "").split(",") if extracted.get("tags") else []
+            raw_tags = extracted.get("tags", [])
+            if isinstance(raw_tags, list):
+                extracted_tags = raw_tags
+            elif isinstance(raw_tags, str) and raw_tags.strip():
+                extracted_tags = [t.strip() for t in raw_tags.split(",") if t.strip()]
+            else:
+                extracted_tags = []
             all_tags = list(dict.fromkeys(incoming_tags + extracted_tags))  # dedup, keep order
             extracted["tags"] = ",".join(all_tags)
 
