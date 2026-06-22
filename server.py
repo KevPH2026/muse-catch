@@ -8,6 +8,7 @@ import json, sqlite3, os, subprocess, re, time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from flask import Flask, request, jsonify, g, send_file
+from llm_router import call_llm, call_tr_image, extract_json
 
 app = Flask(__name__)
 
@@ -67,69 +68,32 @@ def close_db(exception):
 
 # ========== LLM PROCESSING ==========
 def llm_extract(raw_text, source="web"):
-    """Extract title, summary, keywords — with LLM if available, fallback otherwise"""
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    """Extract title, summary, keywords — TokenRouter cloud"""
+    prompt = f"""Analyze this content snippet. Return ONLY valid JSON:
+{{"title":"max 80 chars", "summary":"max 200 chars", "keywords":"3-5 comma-separated", "emotion":"excited|curious|concerned|inspired|neutral", "tags":"2-3 category keywords"}}
+
+Content: {raw_text[:1500]}"""
+    content = call_llm(prompt, task="ingest")
+    if content:
+        result = extract_json(content)
+        if result:
+            result["source"] = source
+            return result
     
-    if api_key:
-        try:
-            prompt = f"""Analyze this content. Return ONLY valid JSON with: title (max 80 chars), summary (max 200 chars), keywords (3-5 comma-separated), emotion (excited/curious/concerned/inspired/neutral), tags (2-3 categories). Content: {raw_text[:1500]}"""
-            r = subprocess.run([
-                "curl", "-s", "https://api.deepseek.com/v1/chat/completions",
-                "-H", f"Authorization: Bearer {api_key}",
-                "-H", "Content-Type: application/json",
-                "-d", json.dumps({"model":"deepseek-chat","messages":[{"role":"user","content":prompt}],"temperature":0.3,"max_tokens":400})
-            ], capture_output=True, text=True, timeout=15)
-            if r.returncode == 0 and r.stdout.strip():
-                resp = json.loads(r.stdout)
-                content = resp.get("choices",[{}])[0].get("message",{}).get("content","")
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                if json_match:
-                    result = json.loads(json_match.group())
-                    result["source"] = source
-                    return result
-        except Exception as e:
-            print(f"LLM fallback: {e}")
-    
-    # Rule-based fallback extraction
+    # Fallback
     lines = [l.strip() for l in raw_text.split("\n") if l.strip()]
-    first_line = lines[0] if lines else raw_text[:80]
-    
-    # Extract title from first meaningful line
-    title = first_line[:80] if len(first_line) > 10 else (lines[1][:80] if len(lines) > 1 and len(lines[1]) > 10 else raw_text[:80])
-    
-    # Summary = first 200 chars
+    title = (lines[0] if len(lines[0]) > 10 else (lines[1] if len(lines)>1 else raw_text[:80]))[:80]
     summary = raw_text[:200].replace("\n"," ")
-    
-    # Keywords: extract meaningful words
     words = re.findall(r'[\u4e00-\u9fff]{2,4}|[A-Za-z]{3,}', raw_text[:500])
-    word_freq = {}
-    for w in words:
-        wl = w.lower()
-        if wl not in ('the','and','for','that','this','with','from','have','are','not','but','all','can','has','had','was','its','his','her','our','you','your','they','them','their','will','would','about','which','when','what','who','how','been','more','some','than','then','also','just','like','over','into','after','very','much','such','only','other','new','now','get','see','make','use','one','two','well','way','say','go','good','great','many','know','think','need','want','look','come','take','give','find','tell','ask','try','call','help','work','play','read','write','set','put','let','keep','show','mean','move','run','turn','start','stop','hold','bring','feel','seem','become','leave','happen'):
-            word_freq[wl] = word_freq.get(wl,0)+1
-    
-    keywords = ",".join(sorted(word_freq, key=word_freq.get, reverse=True)[:5]) or source
-    
-    # Emotion detection
-    excitement_words = ['great','amazing','incredible','love','wow','breakthrough','revolutionary','exciting','灵感','突破','厉害','惊艳','best','game','changer']
-    concern_words = ['risk','danger','warning','careful','problem','issue','worry','concern','风险','问题','危机','危险','worst']
-    curious_words = ['interesting','curious','wonder','explore','fascinating','why','what','有趣','探索','好奇','值得']
-    
+    word_set = set(w.lower() for w in words)
+    keywords = ",".join(list(word_set)[:5]) or source
     lower = raw_text.lower()
-    if any(w in lower for w in excitement_words): emotion = 'excited'
-    elif any(w in lower for w in concern_words): emotion = 'concerned'
-    elif any(w in lower for w in curious_words): emotion = 'curious'
-    else: emotion = 'neutral'
-    
-    # Tags based on keyword matching
-    tags_list = []
-    if any(w in lower for w in ['ai','agent','model','llm','gpt','智能','模型','算法']): tags_list.append('AI')
-    if any(w in lower for w in ['business','revenue','profit','market','startup','商业','赚钱','盈利','市场']): tags_list.append('Business')
-    if any(w in lower for w in ['product','feature','design','ux','build','产品','设计','功能']): tags_list.append('Product')
-    if any(w in lower for w in ['code','api','tech','software','开发','技术','代码','架构']): tags_list.append('Tech')
-    tags = ",".join(tags_list[:3]) if tags_list else source
-    
-    return {"title": title, "summary": summary, "keywords": keywords, "emotion": emotion, "tags": tags}
+    if any(w in lower for w in ['突破','惊艳','great','love','amazing','exciting']): emotion='excited'
+    elif any(w in lower for w in ['风险','危机','danger','worry','risk']): emotion='concerned'
+    elif any(w in lower for w in ['好奇','探索','wonder','interesting','curious']): emotion='curious'
+    else: emotion='neutral'
+    tags = ','.join(['AI'] if any(w in lower for w in ['ai','agent','model','智能','模型','算法']) else []+['Business'] if any(w in lower for w in ['business','startup','商业','赚钱']) else []+['Tech'] if any(w in lower for w in ['code','api','tech','开发','技术']) else [source])
+    return {"title":title,"summary":summary,"keywords":keywords,"emotion":emotion,"tags":tags}
 
 
 # ========== API ROUTES ==========
@@ -345,39 +309,15 @@ def analyze_dna():
     sample_text = "\n---\n".join([f"[{i+1}] {t[:300]}" for i, t in enumerate(texts[:50])])
     
     try:
-        prompt = f"""你是一个内容DNA分析师。以下是创作者保存的内容样本。
-请基于这些内容，提炼创作者的DNA画像。返回纯JSON：
-
-{{
-  "persona": "一句话概括这个创作者（中文，≤80字）",
-  "topics": ["高频话题1", "高频话题2", "高频话题3", "高频话题4", "高频话题5"],
-  "tone": "语气特征（中文，如：干货直给型/故事叙述型/数据驱动型/观点犀利型）",
-  "sentence_style": "句式特征（如：短句为主/长段论述/喜欢用反问/爱用类比）",
-  "structure": "结构偏好（如：总分总/开头抛冲突/直接列干货/结尾留悬念）",
-  "strengths": ["内容优势1", "内容优势2", "内容优势3"],
-  "blind_spots": ["可能被忽略但值得做的话题方向1", "盲区2"],
-  "audience_hook": "什么类型的开头最可能吸引他的受众（中文，≤60字）",
-  "growth_tip": "给他的一个内容突破建议（中文，≤80字）"
-}}
-
-内容样本（共{len(texts)}条，展示50条）：
-{sample_text[:8000]}"""
-
-        r = subprocess.run([
-            "curl", "-s", "https://api.deepseek.com/v1/chat/completions",
-            "-H", f"Authorization: Bearer {api_key}",
-            "-H", "Content-Type: application/json",
-            "-d", json.dumps({"model":"deepseek-chat","messages":[{"role":"user","content":prompt}],"temperature":0.5,"max_tokens":2000})
-        ], capture_output=True, text=True, timeout=30)
-        
-        if r.returncode == 0 and r.stdout.strip():
-            resp = json.loads(r.stdout)
-            content = resp.get("choices",[{}])[0].get("message",{}).get("content","")
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                dna = json.loads(json_match.group())
+        prompt = f"""你是一个内容DNA分析师。基于这些内容提炼创作者DNA。返回纯JSON：
+{{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"结构偏好","strengths":["优势1","优势2","优势3"],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
+内容({len(texts)}条):
+{sample_text[:6000]}"""
+        content = call_llm(prompt, task="dna")
+        if content:
+            dna = extract_json(content)
+            if dna:
                 now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
-                # Save to profile
                 existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
                 if existing:
                     db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
@@ -386,11 +326,11 @@ def analyze_dna():
                     db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
                                (json.dumps(dna, ensure_ascii=False), now_str))
                 db.commit()
-                return jsonify({"ok": True, "dna": dna, "sample_count": len(texts), "method": "llm"})
+                return jsonify({"ok": True, "dna": dna, "sample_count": len(texts), "method": "ollama"})
     except Exception as e:
         return jsonify({"error": f"DNA分析失败: {str(e)}"}), 500
     
-    return jsonify({"error": "LLM 返回格式异常"}), 500
+    return jsonify({"error": "本地模型返回异常"}), 500
 
 
 # ========== TOPIC GENERATION (v2 — selected/random + deep dive + DNA) ==========
@@ -427,7 +367,7 @@ def generate_topics():
         items.append(f"- [{r['id']}] [{r['source']}] {r['title']}: {r['summary'][:120]} (tags: {r['tags'] or ''})")
     context = "\n".join(items)
     
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    api_key = os.environ.get("TR_API_KEY", "")
     
     if api_key:
         try:
@@ -442,36 +382,27 @@ def generate_topics():
 - 画像：{dna.get('persona','未知')}
 - 擅长话题：{', '.join(dna.get('topics',[]))}
 - 语气：{dna.get('tone','未知')}
-- 结构偏好：{dna.get('structure','未知')}
-- 优势：{', '.join(dna.get('strengths',[]))}
 - 盲区：{', '.join(dna.get('blind_spots',[]))}
-
-请基于创作DNA，推荐他最适合写的选题，角度要匹配他的语气和受众。"""
+请基于DNA，推荐他最适合写的选题。"""
                 except: pass
             
-            prompt = f"""你是一个内容策略师。以下是创作者积累的灵感条目。{dna_context}
-请基于这些灵感，生成 3-5 个可以立刻动笔的选题。
-每个选题必须具体、有观点、植根于下面的灵感。
-只返回 JSON 数组，不要其他文字：
-[{{"topic": "选题标题（中文，≤60字）", "angle": "独特切入角度（中文，≤120字）", "why": "选题理由，为什么现在写，基于哪些灵感（中文，≤100字）", "source_ids": "引用的灵感ID，逗号分隔"}}]
-
-灵感列表：
+            prompt = f"""你是内容策略师。{dna_context}
+基于这些灵感，生成3-5个可以立刻动笔的选题。只返回JSON数组：
+[{{"topic":"选题(≤60字)","angle":"切入角度(≤120字)","why":"理由(≤100字)","source_ids":"灵感ID逗号分隔"}}]
+灵感:
 {context[:4000]}"""
-            
-            r = subprocess.run([
-                "curl", "-s", "https://api.deepseek.com/v1/chat/completions",
-                "-H", f"Authorization: Bearer {api_key}",
-                "-H", "Content-Type: application/json",
-                "-d", json.dumps({"model":"deepseek-chat","messages":[{"role":"user","content":prompt}],"temperature":0.7,"max_tokens":1500})
-            ], capture_output=True, text=True, timeout=30)
-            
-            if r.returncode == 0 and r.stdout.strip():
-                resp = json.loads(r.stdout)
-                content = resp.get("choices",[{}])[0].get("message",{}).get("content","")
-                json_match = re.search(r'\[.*\]', content, re.DOTALL)
-                if json_match:
-                    topics = json.loads(json_match.group())
-                    return jsonify({"topics": topics, "source_count": len(rows), "method": "llm", "mode": mode})
+            content = call_llm(prompt, task="topics")
+            if content:
+                topics = extract_json(content)
+                if isinstance(topics, list):
+                    return jsonify({"topics": topics, "source_count": len(rows), "method": "tr_claude", "mode": mode})
+                # Try array extraction
+                arr_match = re.search(r'\[.*\]', content, re.DOTALL)
+                if arr_match:
+                    try:
+                        topics = json.loads(arr_match.group())
+                        return jsonify({"topics": topics, "source_count": len(rows), "method": "tr_claude", "mode": mode})
+                    except: pass
         except Exception as e:
             print(f"Topic LLM fallback: {e}")
     
@@ -520,40 +451,24 @@ def topic_deep_dive():
                 source_context = "\n".join([f"- {r['title']}: {r['summary'][:100]}" for r in rows])
         except: pass
     
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    api_key = os.environ.get("TR_API_KEY", "")
     
     if api_key:
         try:
-            prompt = f"""你是一个顶级内容创作者和爆款文案专家。
-用户选定了一个选题，请帮他做深度内容策划。
+            prompt = f"""你是爆款文案专家。帮做深度策划。
 
 选题：{topic}
 切入角度：{angle}
 {"参考灵感：" + source_context if source_context else ""}
 
-请返回以下 JSON（不要其他文字）：
-{{
-  "viral_angles": ["3个爆款切入角度，每个≤60字，有冲突感或反转"],
-  "headlines": ["5个爆款标题，每个≤40字，有数字/对比/悬念/情绪"],
-  "structure": ["文章主要结构，5-7个段落大纲，每段一句话概括"],
-  "quotes": ["5条金句，每条≤80字，有观点有态度，可直接引用"]
-}}"""
-            
-            r = subprocess.run([
-                "curl", "-s", "https://api.deepseek.com/v1/chat/completions",
-                "-H", f"Authorization: Bearer {api_key}",
-                "-H", "Content-Type: application/json",
-                "-d", json.dumps({"model":"deepseek-chat","messages":[{"role":"user","content":prompt}],"temperature":0.8,"max_tokens":2000})
-            ], capture_output=True, text=True, timeout=30)
-            
-            if r.returncode == 0 and r.stdout.strip():
-                resp = json.loads(r.stdout)
-                content = resp.get("choices",[{}])[0].get("message",{}).get("content","")
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                if json_match:
-                    result = json.loads(json_match.group())
+返回JSON：
+{{"viral_angles":["3个爆款角度，有冲突感",...],"headlines":["5个标题≤40字",...],"structure":["5-7段大纲",...],"quotes":["5条金句≤80字，有观点",...]}}"""
+            content = call_llm(prompt, task="deep_dive")
+            if content:
+                result = extract_json(content)
+                if result:
                     result["topic"] = topic
-                    result["method"] = "llm"
+                    result["method"] = "tr_claude"
                     return jsonify(result)
         except Exception as e:
             print(f"Deep dive LLM fallback: {e}")
@@ -597,6 +512,80 @@ def topic_deep_dive():
 @app.route("/")
 def dashboard():
     return open(Path(__file__).parent / "index.html").read()
+
+# ========== NEW — 发散 / 分类 / 金句配图 ==========
+@app.route("/api/expand", methods=["POST"])
+def expand_inspiration():
+    """对一条灵感做3个不同角度的发散"""
+    data = request.get_json() or {}
+    insp_id = data.get("id", 0)
+    content = data.get("content", "")
+    if not content and insp_id:
+        db = get_db()
+        row = db.execute("SELECT title, summary, raw_content FROM inspirations WHERE id = ?", (insp_id,)).fetchone()
+        if row: content = f"{row['title']}: {row['summary']} | {row['raw_content'][:500]}"
+    if not content: return jsonify({"error": "需要 content 或有效的 id"}), 400
+    prompt = f"""基于这条灵感做3个不同角度的发散思考。返回JSON数组：[{{"angle":"角度名","expanded":"发散内容100-200字","hook":"钩子≤40字"}}]
+灵感：{content[:1200]}"""
+    result = call_llm(prompt, task="expand")
+    if result:
+        arr_match = re.search(r'\[.*\]', result, re.DOTALL)
+        if arr_match:
+            try: return jsonify({"expansions": json.loads(arr_match.group()), "method": "tr_deepseek"})
+            except: pass
+    return jsonify({"error": "发散失败"}), 500
+
+@app.route("/api/classify", methods=["POST"])
+def classify_inspirations():
+    """批量分类 + 聚类"""
+    data = request.get_json() or {}
+    ids = data.get("ids", [])
+    db = get_db()
+    if ids:
+        placeholders = ",".join(["?" for _ in ids])
+        rows = db.execute(f"SELECT id, title, summary FROM inspirations WHERE id IN ({placeholders})", ids).fetchall()
+    else:
+        rows = db.execute("SELECT id, title, summary FROM inspirations ORDER BY created_at DESC LIMIT 30").fetchall()
+    if not rows: return jsonify({"error": "没有可分类的灵感"}), 400
+    items = "\n".join([f"[{r['id']}] {r['title']}: {r['summary'][:100]}" for r in rows])
+    prompt = f"""把这些灵感分为4-6个聚类。JSON：{{"clusters":[{{"name":"簇名","count":3,"ids":[1,2,3],"desc":"描述"}}],"suggested_tags":["标签1"]}}
+条目({len(rows)}条)：{items[:4000]}"""
+    result = call_llm(prompt, task="classify")
+    if result:
+        obj = extract_json(result)
+        if obj and "clusters" in obj:
+            return jsonify({**obj, "method": "tr_deepseek", "total": len(rows)})
+    return jsonify({"error": "分类失败"}), 500
+
+@app.route("/api/generate-quote-card", methods=["POST"])
+def generate_quote_card():
+    """灵感→金句+配图一键生成"""
+    data = request.get_json() or {}
+    insp_id = data.get("id", 0)
+    topic = data.get("topic", "")
+    db = get_db()
+    source = ""
+    if insp_id:
+        row = db.execute("SELECT title, summary, raw_content FROM inspirations WHERE id = ?", (insp_id,)).fetchone()
+        if row: source = f"{row['title']}: {row['summary']} | {row['raw_content'][:500]}"
+    if not source and not topic: return jsonify({"error": "需要 id 或 topic"}), 400
+    input_text = source or topic
+    # Step 1: 金句
+    q_prompt = f"""提炼3条金句(≤60字)，用于社交媒体配图。JSON：{{"quotes":["金句1","金句2","金句3"]}}
+内容：{input_text[:1500]}"""
+    q_result = call_llm(q_prompt, task="quotes")
+    quotes = []
+    if q_result:
+        q = extract_json(q_result)
+        if q and "quotes" in q: quotes = q["quotes"]
+    if not quotes: quotes = [input_text[:60]]
+    # Step 2: 配图
+    images = []
+    for quote in quotes[:3]:
+        img_prompt = f"Minimalist quote card, Chinese text. Dark gradient bg (#0f0f24→#1a1a3e). Text: \"{quote}\". Modern typo, clean. Instagram story 1080x1920."
+        img_url = call_tr_image(img_prompt, "1024x1792")
+        if img_url: images.append({"quote": quote, "image_url": img_url})
+    return jsonify({"quotes": quotes, "cards": images, "source": input_text[:100], "method": "tr_claude+image2"})
 
 @app.route("/demo")
 def demo():
