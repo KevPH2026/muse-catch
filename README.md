@@ -140,7 +140,33 @@ Muse comes with a **self-onboarding AI Agent skill**. Any AI agent that loads `s
 
 ---
 
-## 🔌 API
+## 🎯 AI Topic Pipeline (New!)
+
+**Inspiration → Topic → Viral Content — 3-stage pipeline**
+
+```
+灵感碎片 → AI选题生成 → 点击选题 → Deep Dive 深挖
+                          ├── 💥 3 爆款角度
+                          ├── 🔥 5 爆款标题
+                          ├── 📋 7 段文章结构
+                          └── ✨ 5 条金句
+```
+
+**Live Demo:**
+```bash
+bash demo_pipeline.sh
+# Seeds 10 inspirations → generates topics → deep-dives first topic
+```
+
+| Mode | API | Description |
+|------|-----|-------------|
+| 🎲 Random | `GET /api/topics?mode=random` | AI picks inspirations, generates topics |
+| 🎯 Selected | `GET /api/topics?mode=selected&ids=1,3,5` | Generate from hand-picked inspirations |
+| 💥 Deep Dive | `GET /api/topic-deep-dive?topic=垂直AI创业` | Headlines + angles + structure + quotes |
+
+---
+
+## 🔌 Full API
 
 ```bash
 # Ingest
@@ -154,6 +180,13 @@ PATCH /api/ingest/<id>  { "title": "New Title" }
 
 # Stats
 GET /api/stats
+
+# Topic Generation (LLM)
+GET /api/topics?mode=random
+GET /api/topics?mode=selected&ids=1,2,3
+
+# Deep Dive
+GET /api/topic-deep-dive?topic=垂直AI创业
 ```
 
 [Full API Docs →](docs/API.md)
