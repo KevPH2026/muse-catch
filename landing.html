@@ -475,6 +475,199 @@
   </div>
 </section>
 
+<!-- LLM ARCHITECTURE -->
+<section class="section" id="architecture">
+  <div class="container">
+    <div class="section-eyebrow">Engine</div>
+    <h2 class="section-title">分级 LLM 路由</h2>
+    <p class="section-sub">一条灵感进来走哪条模型？<br>私有数据用本地，公共分析上云端 —— 按任务选最优模型，不浪费一分钱。</p>
+
+    <!-- Architecture Diagram -->
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-node arch-local">
+          <div class="arch-node-icon">🏠</div>
+          <div class="arch-node-title">本地 Ollama</div>
+          <div class="arch-node-model">qwen2.5:14b</div>
+          <div class="arch-node-desc">隐私数据不出机</div>
+        </div>
+        <div class="arch-pipe">
+          <div class="arch-pipe-label">DNA 分析</div>
+          <div class="arch-pipe-line"></div>
+        </div>
+        <div class="arch-core">
+          <div class="arch-core-icon">🌀</div>
+          <div class="arch-core-text">Router</div>
+        </div>
+        <div class="arch-pipe">
+          <div class="arch-pipe-label">发散 · 分类</div>
+          <div class="arch-pipe-line"></div>
+        </div>
+        <div class="arch-node arch-cloud-ds">
+          <div class="arch-node-icon">⚡</div>
+          <div class="arch-node-title">DeepSeek V4 Pro</div>
+          <div class="arch-node-model">TokenRouter 云端</div>
+          <div class="arch-node-desc">便宜 · 批量处理</div>
+        </div>
+        
+      </div>
+      <div class="arch-row arch-row-2">
+        <div class="arch-pipe-v">
+          <div class="arch-pipe-label">选题 · 深挖 · 金句</div>
+          <div class="arch-pipe-line-v"></div>
+        </div>
+        <div class="arch-node arch-cloud-claude">
+          <div class="arch-node-icon">🧠</div>
+          <div class="arch-node-title">Claude Sonnet 4</div>
+          <div class="arch-node-model">TokenRouter 云端</div>
+          <div class="arch-node-desc">创造力 · 中文最优</div>
+        </div>
+        <div class="arch-pipe">
+          <div class="arch-pipe-label">配图</div>
+          <div class="arch-pipe-line"></div>
+        </div>
+        <div class="arch-node arch-cloud-img">
+          <div class="arch-node-icon">🖼️</div>
+          <div class="arch-node-title">GPT Image 2</div>
+          <div class="arch-node-model">TokenRouter 云端</div>
+          <div class="arch-node-desc">金句卡片生成</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Route Table -->
+    <div class="route-grid">
+      <div class="route-card">
+        <div class="route-task">📥 灵感汲取</div>
+        <div class="route-model">DeepSeek V4 Pro</div>
+        <div class="route-why">摘要 / 关键词 / 情绪识别<br>¥0.28/M tokens — 高频低延迟</div>
+      </div>
+      <div class="route-card">
+        <div class="route-task">🔀 发散扩展</div>
+        <div class="route-model">DeepSeek V4 Pro</div>
+        <div class="route-why">3 角度 x 200 字<br>批量便宜，快</div>
+      </div>
+      <div class="route-card">
+        <div class="route-task">📊 分类聚类</div>
+        <div class="route-model">DeepSeek V4 Pro</div>
+        <div class="route-why">50 条灵感 → 4-6 簇<br>结构提取，不需创造力</div>
+      </div>
+      <div class="route-card">
+        <div class="route-task">🎯 选题生成</div>
+        <div class="route-model">Claude Sonnet 4</div>
+        <div class="route-why">跨灵感组合 → 独特选题<br>需要洞察力和中文审美</div>
+      </div>
+      <div class="route-card">
+        <div class="route-task">🔬 深度拆解</div>
+        <div class="route-model">Claude Sonnet 4</div>
+        <div class="route-why">选题 → 爆款角度 + 标题 + 结构<br>结构化输出最优</div>
+      </div>
+      <div class="route-card">
+        <div class="route-task">💎 金句生成</div>
+        <div class="route-model">Claude Sonnet 4</div>
+        <div class="route-why">有态度、有观点的简短金句<br>需要中文语感和锐度</div>
+      </div>
+      <div class="route-card">
+        <div class="route-task">🖼️ 金句配图</div>
+        <div class="route-model">GPT Image 2</div>
+        <div class="route-why">金句 → 社交媒体卡片<br>深色渐变 · 中文排版</div>
+      </div>
+      <div class="route-card route-card-local">
+        <div class="route-task">🔒 DNA 分析</div>
+        <div class="route-model">本地 Ollama</div>
+        <div class="route-why">个人灵感库 → 创作画像<br>数据不出机，零成本</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Architecture Diagram */
+  .arch-diagram {
+    max-width: 900px; margin: 48px auto 56px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 40px 32px;
+    position: relative; overflow: hidden;
+  }
+  .arch-diagram::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: var(--gradient-h); opacity: 0.5;
+  }
+  .arch-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-bottom: 28px;
+  }
+  .arch-row-2 { margin-top: 8px; margin-bottom: 0; }
+  .arch-node {
+    padding: 16px 20px; border-radius: 12px;
+    background: var(--bg2); border: 1px solid var(--border);
+    text-align: center; min-width: 140px;
+    transition: all .3s;
+    position: relative;
+  }
+  .arch-node:hover { transform: translateY(-2px); }
+  .arch-local { border-color: rgba(34,211,238,0.3); }
+  .arch-local:hover { box-shadow: 0 0 24px rgba(34,211,238,0.1); }
+  .arch-cloud-ds { border-color: rgba(99,102,241,0.3); }
+  .arch-cloud-ds:hover { box-shadow: 0 0 24px rgba(99,102,241,0.1); }
+  .arch-cloud-claude { border-color: rgba(168,85,247,0.3); }
+  .arch-cloud-claude:hover { box-shadow: 0 0 24px rgba(168,85,247,0.1); }
+  .arch-cloud-img { border-color: rgba(236,72,153,0.3); }
+  .arch-cloud-img:hover { box-shadow: 0 0 24px rgba(236,72,153,0.1); }
+  .arch-node-icon { font-size: 24px; margin-bottom: 4px; }
+  .arch-node-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .arch-node-model { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .arch-node-desc { font-size: 10px; color: var(--purple-light); font-weight: 500; }
+  .arch-core {
+    padding: 24px; border-radius: 50%;
+    background: var(--gradient);
+    text-align: center; color: white;
+    box-shadow: 0 0 40px rgba(99,102,241,0.3);
+    flex-shrink: 0;
+  }
+  .arch-core-icon { font-size: 28px; }
+  .arch-core-text { font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+  .arch-pipe { text-align: center; min-width: 60px; }
+  .arch-pipe-label { font-size: 10px; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+  .arch-pipe-line { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  .arch-pipe-v { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .arch-pipe-line-v { width: 1px; height: 40px; background: linear-gradient(180deg, var(--border), transparent); }
+
+  /* Route Grid */
+  .route-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    max-width: 1000px; margin: 0 auto;
+  }
+  .route-card {
+    padding: 16px 14px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    transition: all .2s;
+  }
+  .route-card:hover { border-color: var(--purple); transform: translateY(-1px); }
+  .route-card-local {
+    border-color: rgba(34,211,238,0.3);
+    background: rgba(34,211,238,0.02);
+  }
+  .route-task { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .route-model {
+    font-size: 12px; font-weight: 600; color: var(--purple-light);
+    margin-bottom: 6px; padding: 2px 8px; border-radius: 6px;
+    background: rgba(99,102,241,0.08); display: inline-block;
+  }
+  .route-card-local .route-model { color: var(--cyan); background: rgba(34,211,238,0.08); }
+  .route-why { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    .route-grid { grid-template-columns: repeat(2, 1fr); }
+    .arch-row { flex-wrap: wrap; }
+  }
+  @media (max-width: 640px) {
+    .route-grid { grid-template-columns: 1fr; }
+    .arch-diagram { padding: 24px 16px; }
+    .arch-node { min-width: 100px; padding: 12px 14px; }
+  }
+</style>
+
 <!-- USER PERSONAS -->
 <section class="section">
   <div class="container">

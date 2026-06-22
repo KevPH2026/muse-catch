@@ -1,6 +1,6 @@
 ---
 name: muse
-description: Muse · Catch — AI 灵感捕手。浏览器插件+Telegram Bot一键捕获灵感，AI自动提炼，Web Dashboard浏览。当用户说「灵感」「捕获」「Muse」「Catch」「记下来」「收藏」「稍后读」时自动触发。
+description: Muse · Catch — AI 灵感捕手。浏览器插件+Telegram Bot一键捕获灵感，AI自动提炼，Web Dashboard浏览。分级LLM路由：本地Ollama隐私分析 + TokenRouter云端分布式调用。当用户说「灵感」「捕获」「Muse」「Catch」「记下来」「收藏」「稍后读」时自动触发。
 category: product
 ---
 
@@ -8,10 +8,29 @@ category: product
 
 > **「灵感本易逝，行动应当时。」— Naval Ravikant**
 >
-> 浏览器插件 + Telegram Bot → 1秒捕获 → AI 提炼 → 灵感卡片墙。
+> 浏览器插件 + Telegram Bot → 1秒捕获 → 分级 LLM 提炼 → 灵感卡片墙。
 > 不是笔记软件。是你灵感库的操作系统。
 
 ---
+
+## 🧠 分级 LLM 路由
+
+Muse 不绑单一模型。按任务智能选模型：
+
+| 任务 | 模型 | 原因 |
+|------|------|------|
+| 🔒 DNA 分析 | **本地 Ollama** qwen2.5:14b | 隐私数据不出机，零成本 |
+| 📥 灵感汲取 | **DeepSeek V4 Pro** (TokenRouter) | 高频低延迟，批量便宜 |
+| 🔀 发散扩展 | **DeepSeek V4 Pro** (TokenRouter) | 3 角度 x 200 字，快速 |
+| 📊 分类聚类 | **DeepSeek V4 Pro** (TokenRouter) | 结构提取，不需创造力 |
+| 🎯 选题生成 | **Claude Sonnet 4** (TokenRouter) | 洞察力 + 中文审美 |
+| 🔬 深度拆解 | **Claude Sonnet 4** (TokenRouter) | 结构化输出最优 |
+| 💎 金句生成 | **Claude Sonnet 4** (TokenRouter) | 中文语感 + 锐度 |
+| 🖼️ 金句配图 | **GPT Image 2** (TokenRouter) | 社交媒体卡片生成 |
+
+**隐私承诺：** Onboarding DNA 分析使用本地 Ollama `qwen2.5:14b`，你的灵感数据永不出本机。
+
+**Landing Page：** https://muse-pitch-swiss-v2.vercel.app
 
 ## 🎯 触发条件（自动激活）
 
@@ -130,6 +149,21 @@ cd ~/.hermes/workspace/muse && python3 bot.py &
 
 ---
 
+## 🔧 环境配置
+
+`.env` 文件（gitignored，安装者自配）：
+```bash
+# TokenRouter 云端 API（灵感分析、选题生成等公共功能）
+TR_BASE_URL=https://api.tokenrouter.com/v1
+TR_API_KEY=sk-your-t…key
+
+# 本地 Ollama（隐私数据、DNA 分析）
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:14b
+```
+
+详见 `.env.example`。
+
 ## 🔌 API 参考
 
 ```bash
@@ -138,11 +172,40 @@ curl -X POST http://localhost:5200/api/ingest \
   -H 'Content-Type: application/json' \
   -d '{"source":"web","content":"内容","url":"https://...","tags":["AI"]}'
 
+# 灵感发散（3角度）
+curl -X POST http://localhost:5200/api/expand \
+  -H 'Content-Type: application/json' \
+  -d '{"content":"一条灵感"}'
+
+# 批量分类
+curl -X POST http://localhost:5200/api/classify \
+  -H 'Content-Type: application/json' \
+  -d '{}'  # 或 {"ids":[1,2,3]}
+
+# 选题生成
+curl "http://localhost:5200/api/topics?mode=random&count=10"
+
+# 深度拆解
+curl "http://localhost:5200/api/topic-deep-dive?topic=选题&angle=角度&ids=1,2,3"
+
+# DNA 分析（本地 Ollama）
+curl -X POST http://localhost:5200/api/profile/dna \
+  -H 'Content-Type: application/json' \
+  -d '{}'  # 或 {"samples":["内容1"]}
+
+# 金句配图
+curl -X POST http://localhost:5200/api/generate-quote-card \
+  -H 'Content-Type: application/json' \
+  -d '{"id":31}'  # 灵感ID
+
 # 查看所有灵感
 curl http://localhost:5200/api/inspirations
 
 # 统计
 curl http://localhost:5200/api/stats
+
+# Creator Profile
+curl http://localhost:5200/api/profile
 ```
 
 ---
@@ -150,13 +213,19 @@ curl http://localhost:5200/api/stats
 ## 📁 文件结构
 
 ```
-~/.hermes/workspace/muse/
-  server.py          ← Flask API (:5200)
-  index.html         ← Web Dashboard
-  landing.html       ← Landing Page
+~/.openclaw/workspace/skills/muse-catch/KevPH2026-muse-catch-d2ae878/
+  server.py          ← Flask API (:5200) — 所有 LLM 调用经 llm_router.py
+  llm_router.py      ← 分级路由层：Ollama vs TokenRouter 自动选模型
+  index.html         ← Web Dashboard（含 Onboarding 对话）
+  onboard.js         ← Onboarding UI 模块
+  landing.html       ← Landing Page → https://muse-pitch-swiss-v2.vercel.app
   bot.py             ← Telegram Bot
+  .env               ← API Keys（gitignored）
+  .env.example       ← 安装者参考
   BP-BRD.md          ← 商业计划+产品需求
   extension/         ← Chrome 插件
+  muse.db            ← SQLite 数据库
+  SKILL.md           ← 本文件
 ```
 
 ---
@@ -167,9 +236,12 @@ curl http://localhost:5200/api/stats
 |---|---|
 | API 连不上 | `curl localhost:5200/api/stats` |
 | 端口被占 | `lsof -i :5200` → `kill <PID>` |
-| LLM 不工作 | 设 `DEEPSEEK_API_KEY` 环境变量。不设也能用规则提取 |
+| LLM 不工作 | `.env` 设 `TR_API_KEY`（云端）；`OLLAMA_BASE_URL`（本地）。不设也能用规则提取 fallback |
 | 插件捕获失败 | 确认 CORS 已启用（server.py 已内置） |
 | Bot 没反应 | `echo $MUSE_BOT_KEY` 确认已设 |
+| DNA 分析超时 | 确认 Ollama 在跑：`curl http://localhost:11434/api/tags` |
+| TokenRouter 401 | 检查 `TR_API_KEY` 是否正确 |
+| 分类 500 | 可能是模型超时，重试即可 |
 
 ---
 
