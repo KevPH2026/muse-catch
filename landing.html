@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muse · Catch — AI 灵感捕手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05050f;
+    --bg2: #0a0a1a;
+    --card: #0f0f24;
+    --card-hover: #151530;
+    --border: #1e1e3a;
+    --border-glow: rgba(99,102,241,0.3);
+    --purple: #6366f1;
+    --purple-light: #818cf8;
+    --purple-dark: #4f46e5;
+    --pink: #a855f7;
+    --cyan: #22d3ee;
+    --text: #e8e8f0;
+    --text-dim: #8888b0;
+    --gradient: linear-gradient(135deg, #6366f1, #a855f7);
+    --gradient-h: linear-gradient(90deg, #6366f1, #a855f7, #6366f1);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Starfield */
+  #starfield { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.4; }
+
+  .container { max-width: 1200px; margin:0 auto; padding:0 32px; position:relative; z-index:1; }
+
+  /* ===== NAV ===== */
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px 0; position:relative; z-index:10;
+  }
+  .nav-brand {
+    font-size:24px; font-weight:800;
+    background: var(--gradient);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+    display:flex; align-items:center; gap:8px;
+  }
+  .nav-brand .icon { font-size:28px; -webkit-text-fill-color:initial; }
+  .nav-links { display:flex; gap:32px; list-style:none; align-items:center; }
+  .nav-links a { color:var(--text-dim); text-decoration:none; font-size:14px; font-weight:500; transition:color .2s; }
+  .nav-links a:hover { color:var(--text); }
+  .nav-cta {
+    padding:8px 20px; border-radius:20px;
+    background: var(--gradient); color:white;
+    text-decoration:none; font-size:13px; font-weight:600;
+    transition: all .2s;
+  }
+  .nav-cta:hover { box-shadow:0 0 20px rgba(99,102,241,0.4); transform:translateY(-1px); }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding:80px 0 60px;
+    text-align:center;
+    position:relative;
+  }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 16px; border-radius:20px;
+    background:rgba(99,102,241,0.08);
+    border:1px solid rgba(99,102,241,0.2);
+    color:var(--purple-light); font-size:13px; font-weight:500;
+    margin-bottom:32px;
+  }
+  .hero-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--purple); box-shadow:0 0 6px var(--purple); animation:pulse 2s infinite; }
+
+  .hero h1 {
+    font-size:clamp(40px, 7vw, 80px);
+    font-weight:900; line-height:1.05; letter-spacing:-2px;
+    margin-bottom:24px;
+    position:relative;
+  }
+  .hero h1 .gradient {
+    background:linear-gradient(135deg, #818cf8 0%, #a855f7 40%, #6366f1 70%, #818cf8 100%);
+    background-size:200% auto;
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation:shimmer 3s linear infinite;
+  }
+  .hero-sub {
+    font-size:18px; color:var(--text-dim);
+    max-width:560px; margin:0 auto 40px;
+    line-height:1.7;
+  }
+  .hero-sub strong { color:var(--text); }
+
+  .hero-cta-group { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:60px; }
+
+  .btn {
+    padding:14px 32px; border-radius:12px;
+    font-size:15px; font-weight:600;
+    text-decoration:none; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:all .25s;
+    font-family:inherit;
+  }
+  .btn-primary {
+    background:var(--gradient);
+    color:white;
+    box-shadow:0 4px 30px rgba(99,102,241,0.3);
+  }
+  .btn-primary:hover {
+    transform:translateY(-2px);
+    box-shadow:0 8px 40px rgba(99,102,241,0.45);
+  }
+  .btn-outline {
+    background:transparent; border:1px solid var(--border);
+    color:var(--text);
+  }
+  .btn-outline:hover { border-color:var(--purple-light); }
+
+  /* Hero demo card */
+  .hero-demo {
+    max-width:640px; margin:0 auto;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius); padding:20px 24px;
+    text-align:left;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero-demo::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:var(--gradient-h); opacity:0.6;
+  }
+  .hero-demo .demo-row {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .hero-demo .demo-row:last-child { border-bottom:none; }
+  .demo-chip {
+    font-size:10px; padding:2px 8px; border-radius:10px;
+    font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .demo-chip.web { background:rgba(99,102,241,0.15); color:var(--purple-light); }
+  .demo-chip.tg { background:rgba(34,211,238,0.15); color:var(--cyan); }
+  .demo-chip.idea { background:rgba(168,85,247,0.15); color:var(--pink); }
+  .demo-title { font-size:13px; font-weight:600; flex:1; }
+  .demo-meta { font-size:11px; color:var(--text-dim); white-space:nowrap; }
+  .demo-live { font-size:10px; color:var(--purple-light); display:flex; align-items:center; gap:4px; margin-top:8px; }
+  .demo-live .pulse { width:5px; height:5px; border-radius:50%; background:var(--purple); animation:pulse 2s infinite; }
+
+  /* Stats */
+  .hero-stats {
+    display:flex; gap:48px; justify-content:center; flex-wrap:wrap;
+    margin-top:56px;
+  }
+  .stat { text-align:center; }
+  .stat-num {
+    font-size:44px; font-weight:900;
+    background:var(--gradient);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .stat-label { color:var(--text-dim); font-size:13px; margin-top:2px; letter-spacing:0.5px; }
+
+  /* ===== SECTIONS ===== */
+  .section { padding:80px 0; }
+
+  .section-eyebrow {
+    text-align:center; font-size:11px; text-transform:uppercase;
+    letter-spacing:3px; color:var(--purple-light); font-weight:600;
+    margin-bottom:12px;
+  }
+  .section-title {
+    text-align:center; font-size:36px; font-weight:800;
+    letter-spacing:-1px; margin-bottom:16px;
+  }
+  .section-sub {
+    text-align:center; color:var(--text-dim); font-size:16px;
+    max-width:500px; margin:0 auto 48px;
+  }
+
+  /* Features grid */
+  .features-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
+    gap:20px;
+  }
+
+  .feature-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius); padding:32px;
+    transition:all .3s; position:relative; overflow:hidden;
+  }
+  .feature-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:var(--gradient-h); opacity:0; transition:opacity .3s;
+  }
+  .feature-card:hover { border-color:var(--border-glow); transform:translateY(-4px); background:var(--card-hover); }
+  .feature-card:hover::before { opacity:1; }
+
+  .feature-icon {
+    width:48px; height:48px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin-bottom:16px;
+    background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.15);
+  }
+  .feature-card h3 { font-size:17px; font-weight:700; margin-bottom:6px; }
+  .feature-card p { color:var(--text-dim); font-size:13px; line-height:1.7; }
+
+  /* How it works */
+  .steps-row { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; }
+  .step {
+    flex:1; min-width:240px; max-width:320px;
+    text-align:center; padding:40px 24px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius); position:relative;
+  }
+  .step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--gradient); color:white;
+    font-size:22px; font-weight:800;
+    margin-bottom:20px;
+    box-shadow:0 0 24px rgba(99,102,241,0.3);
+  }
+  .step h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .step p { color:var(--text-dim); font-size:13px; line-height:1.7; }
+  .step-connector {
+    position:absolute; top:68px; right:-24px;
+    color:var(--purple-light); font-size:24px; opacity:0.5;
+  }
+  @media (max-width:768px) { .step-connector { display:none; } }
+
+  /* User personas */
+  .personas { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+  .persona {
+    padding:12px 24px; background:var(--card); border:1px solid var(--border);
+    border-radius:24px; font-size:14px; font-weight:500;
+    display:flex; align-items:center; gap:8px;
+    transition:all .2s;
+  }
+  .persona:hover { border-color:var(--purple-light); background:var(--card-hover); }
+
+  /* Integration bar */
+  .integration-bar { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:40px; }
+  .integration-item {
+    padding:14px 24px; background:var(--card); border:1px solid var(--border);
+    border-radius:12px; font-size:14px; font-weight:500;
+    display:flex; align-items:center; gap:10px;
+    transition:all .2s;
+  }
+  .integration-item:hover { border-color:var(--border-glow); }
+  .integration-dot { width:8px; height:8px; border-radius:50%; background:var(--purple); box-shadow:0 0 8px var(--purple); }
+
+  /* Story section */
+  .story-block {
+    background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  }
+  .story-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;
+    padding:80px 0;
+  }
+  @media (max-width:768px) { .story-grid { grid-template-columns:1fr; gap:32px; } }
+
+  .story-quote {
+    font-size:22px; font-weight:700; line-height:1.5;
+    position:relative; padding-left:20px;
+    border-left:3px solid var(--purple);
+  }
+  .story-quote .author { display:block; margin-top:10px; font-size:13px; color:var(--text-dim); font-weight:500; }
+  .story-text h3 { font-size:28px; font-weight:800; margin-bottom:16px; letter-spacing:-0.5px; }
+  .story-text p { color:var(--text-dim); font-size:14px; line-height:1.8; margin-bottom:12px; }
+
+  /* Pricing */
+  .pricing-grid { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+  .pricing-card {
+    flex:1; min-width:280px; max-width:360px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius); padding:36px; text-align:center;
+    transition:all .3s; position:relative;
+  }
+  .pricing-card.featured { border-color:var(--purple); box-shadow:0 0 40px rgba(99,102,241,0.1); }
+  .pricing-card.featured::before {
+    content:'最受欢迎'; position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+    background:var(--gradient); color:white; padding:4px 16px; border-radius:20px;
+    font-size:11px; font-weight:600;
+  }
+  .pricing-card h4 { font-size:20px; font-weight:700; margin-bottom:8px; }
+  .pricing-card .price { font-size:36px; font-weight:900; margin:12px 0 4px; }
+  .pricing-card .price span { font-size:14px; font-weight:400; color:var(--text-dim); }
+  .pricing-card .desc { color:var(--text-dim); font-size:13px; margin-bottom:20px; }
+  .pricing-features { list-style:none; text-align:left; margin-bottom:24px; }
+  .pricing-features li { padding:6px 0; font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:8px; }
+  .pricing-features li::before { content:'✓'; color:var(--purple-light); font-weight:700; }
+  .pricing-card .btn { width:100%; justify-content:center; }
+
+  /* CTA */
+  .cta-block { text-align:center; padding:80px 0; }
+  .cta-block h2 { font-size:40px; font-weight:800; letter-spacing:-1px; margin-bottom:12px; }
+  .cta-block p { color:var(--text-dim); font-size:16px; max-width:480px; margin:0 auto 32px; }
+
+  /* Footer */
+  footer {
+    padding:32px 0; border-top:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:16px; font-size:12px;
+  }
+  footer, footer a { color:var(--text-dim); text-decoration:none; }
+  footer a:hover { color:var(--text); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes shimmer { 0%{background-position:0% center} 100%{background-position:200% center} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .floating { animation:float 6s ease-in-out infinite; }
+
+  /* Responsive */
+  @media (max-width:640px) {
+    .container { padding:0 20px; }
+    .nav-links { gap:16px; }
+    .hero h1 { font-size:36px; }
+    .section-title { font-size:26px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="container">
+  <!-- NAV -->
+  <nav>
+    <div class="nav-brand"><span class="icon">🌀</span>Muse</div>
+    <ul class="nav-links">
+      <li><a href="#features">功能</a></li>
+      <li><a href="#how">原理</a></li>
+      <li><a href="#pricing">定价</a></li>
+      <li><a href="https://github.com/KevPH2026/muse-catch" target="_blank">GitHub</a></li>
+      <li><a href="http://localhost:5200" class="nav-cta" target="_blank">Dashboard →</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><span class="dot"></span> AI 灵感捕手 · 开源</div>
+    <h1>
+      灵感易逝<br>
+      <span class="gradient">行动应当时</span>
+    </h1>
+    <p class="hero-sub">
+      浏览器插件、Telegram Bot、API —— <strong>三种入口，一个灵感库</strong>。<br>
+      AI 自动提炼标题、摘要、关键词。你的灵感，永不丢失。
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="#install" class="btn btn-primary">🌀 安装浏览器插件</a>
+      <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-outline" target="_blank">⭐ GitHub</a>
+    </div>
+
+    <!-- Live demo card -->
+    <div class="hero-demo">
+      <div class="demo-row">
+        <span class="demo-chip web">Web</span>
+        <span class="demo-title">Paul Graham: Solve Your Own Problems</span>
+        <span class="demo-meta">✨ 2 分钟前</span>
+      </div>
+      <div class="demo-row">
+        <span class="demo-chip tg">Telegram</span>
+        <span class="demo-title">AI Agent 赛道最大机会：垂直专业化</span>
+        <span class="demo-meta">🧐 10 分钟前</span>
+      </div>
+      <div class="demo-row">
+        <span class="demo-chip idea">Idea</span>
+        <span class="demo-title">灵感易逝，行动当时</span>
+        <span class="demo-meta">💡 30 分钟前</span>
+      </div>
+      <div class="demo-live"><span class="pulse"></span> 灵感库实时更新中…</div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">捕获入口</div></div>
+      <div class="stat"><div class="stat-num">1s</div><div class="stat-label">捕获速度</div></div>
+      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">本地优先</div></div>
+      <div class="stat"><div class="stat-num">∞</div><div class="stat-label">灵感容量</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-eyebrow">Features</div>
+    <h2 class="section-title">不只是笔记，是第二大脑</h2>
+    <p class="section-sub">浏览器、Telegram、API —— 灵感从四面八方来，Muse 帮你接住、提炼、归档。</p>
+
+    <div class="features-grid">
+      <div class="feature-card floating" style="animation-delay:0s">
+        <div class="feature-icon">🔌</div>
+        <h3>全渠道捕获</h3>
+        <p>Chrome 插件一键捕获网页，Telegram Bot 转发消息自动入库，REST API 接入任何工具。Platform-agnostic by design.</p>
+      </div>
+      <div class="feature-card floating" style="animation-delay:1s">
+        <div class="feature-icon">🧠</div>
+        <h3>AI 智能提取</h3>
+        <p>粘贴链接或文字，AI 自动生成标题、摘要、关键词、情绪标签。支持 DeepSeek LLM，也内置规则引擎作为后备。</p>
+      </div>
+      <div class="feature-card floating" style="animation-delay:2s">
+        <div class="feature-icon">⌨️</div>
+        <h3>快捷键 + 右键菜单</h3>
+        <p>Ctrl+Shift+M 直接捕获当前页面。右键任意位置 →「捕获到 Muse」。灵感闪现时，不需要翻找，不需要等待。</p>
+      </div>
+      <div class="feature-card floating" style="animation-delay:0.5s">
+        <div class="feature-icon">✏️</div>
+        <h3>双击即编辑</h3>
+        <p>Dashboard 卡片墙支持 contenteditable —— 双击标题或摘要直接修改，失焦自动保存。像编辑 Notion 一样丝滑。</p>
+      </div>
+      <div class="feature-card floating" style="animation-delay:1.5s">
+        <div class="feature-icon">📊</div>
+        <h3>灵感看板</h3>
+        <p>卡片式布局，按时间倒序。情绪图标、来源标签、关键词一目了然。灵感不再是散落的碎片，而是可检索的资产。</p>
+      </div>
+      <div class="feature-card floating" style="animation-delay:2.5s">
+        <div class="feature-icon">🔓</div>
+        <h3>开放 API + 数据主权</h3>
+        <p>REST API 是唯一接口。SQLite 本地存储，100% 数据归你。不需要注册、不依赖云服务、不担心关停。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="container">
+    <div class="section-eyebrow">How It Works</div>
+    <h2 class="section-title">灵感 → AI → 行动</h2>
+    <p class="section-sub">三步把碎片变成资产。从捕获到提炼到回顾，一个闭环。</p>
+
+    <div class="steps-row">
+      <div class="step" style="position:relative">
+        <div class="step-num">1</div>
+        <h3>捕获 Capture</h3>
+        <p>浏览器插件、Telegram 转发、API 调用。你看到好内容的那一刻，1 秒入库。</p>
+        <span class="step-connector">→</span>
+      </div>
+      <div class="step" style="position:relative">
+        <div class="step-num">2</div>
+        <h3>AI 加工 Process</h3>
+        <p>LLM 自动提取标题、摘要、关键词、情绪。碎片变结构化。不需要你手动整理。</p>
+        <span class="step-connector">→</span>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>看板回顾 Act</h3>
+        <p>卡片墙浏览，情绪筛选，关键词搜索。灵感不再是"稍后读"，而是随时可用的创意资产。</p>
+      </div>
+    </div>
+
+    <div class="integration-bar">
+      <div class="integration-item"><span class="integration-dot"></span> Chrome Extension</div>
+      <div class="integration-item"><span class="integration-dot"></span> Telegram Bot</div>
+      <div class="integration-item"><span class="integration-dot"></span> REST API</div>
+      <div class="integration-item"><span class="integration-dot"></span> WeChat (Coming)</div>
+      <div class="integration-item"><span class="integration-dot"></span> Slack (Coming)</div>
+    </div>
+  </div>
+</section>
+
+<!-- USER PERSONAS -->
+<section class="section">
+  <div class="container">
+    <div class="section-eyebrow">Who's It For</div>
+    <h2 class="section-title">谁在用 Muse</h2>
+    <p class="section-sub">灵感捕手不是某个职业的专利。这些人都需要它。</p>
+
+    <div class="personas">
+      <div class="persona">🚀 创业者</div>
+      <div class="persona">✍️ 内容创作者</div>
+      <div class="persona">📋 产品经理</div>
+      <div class="persona">🔬 研究员</div>
+      <div class="persona">💻 开发者</div>
+      <div class="persona">🎓 学生</div>
+    </div>
+  </div>
+</section>
+
+<!-- STORY -->
+<div class="story-block">
+  <div class="container">
+    <div class="story-grid">
+      <div>
+        <blockquote class="story-quote">
+          "灵感本易逝，行动应当时。"
+          <span class="author">— Naval Ravikant</span>
+        </blockquote>
+        <blockquote class="story-quote" style="margin-top:24px;">
+          "很多伟大的产品，都来自于一个简单的想法。"
+          <span class="author">— KevPH</span>
+        </blockquote>
+      </div>
+      <div class="story-text">
+        <h3>Why Muse?</h3>
+        <p>每天我们消费成千上万条信息。灵感像火花一样闪过，然后消失在信息洪流里。</p>
+        <p>Muse 的设计哲学很简单：<strong>灵感不该丢</strong>。浏览器上看到的好句子、Telegram 里聊出的点子、洗澡时冒出的想法 —— 1 秒捕获，AI 整理，永远可查。</p>
+        <p>不是另一个笔记软件。是你灵感库的操作系统。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL -->
+<section class="section" id="install">
+  <div class="container">
+    <div class="section-eyebrow">Get Started</div>
+    <h2 class="section-title">30 秒安装，1 秒捕获</h2>
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>打开扩展页面</h3>
+        <p>Chrome 地址栏输入 <code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;font-size:12px;">chrome://extensions</code></p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>加载扩展</h3>
+        <p>右上角开「开发者模式」→ 点「加载已解压的扩展程序」→ 选 extension 文件夹</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>开捕</h3>
+        <p>浏览任意网页 → 点插件图标或按 Ctrl+Shift+M → 灵感入库 🌀</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-eyebrow">Pricing</div>
+    <h2 class="section-title">简单透明</h2>
+    <p class="section-sub">开源免费，自托管。你的数据，你的机器。</p>
+
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <h4>🆓 自托管</h4>
+        <div class="price">免费</div>
+        <div class="desc">在你自己的机器上跑</div>
+        <ul class="pricing-features">
+          <li>所有功能无限制</li>
+          <li>本地 SQLite 存储</li>
+          <li>Chrome 插件 + API</li>
+          <li>社区支持</li>
+        </ul>
+        <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-outline" target="_blank">GitHub 下载</a>
+      </div>
+      <div class="pricing-card featured">
+        <h4>🤖 含 Bot</h4>
+        <div class="price">免费</div>
+        <div class="desc">自托管 + Telegram Bot</div>
+        <ul class="pricing-features">
+          <li>自托管全部功能</li>
+          <li>Telegram Bot 接入</li>
+          <li>转发消息自动捕获</li>
+          <li>开源，可定制</li>
+        </ul>
+        <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-primary" target="_blank">⭐ 开始使用</a>
+      </div>
+      <div class="pricing-card">
+        <h4>💼 定制</h4>
+        <div class="price">咨询</div>
+        <div class="desc">企业级需求</div>
+        <ul class="pricing-features">
+          <li>私有部署方案</li>
+          <li>多用户协作</li>
+          <li>自定义集成</li>
+          <li>优先技术支持</li>
+        </ul>
+        <a href="#" class="btn btn-outline">联系咨询</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-block">
+  <div class="container">
+    <h2>你的灵感，值得被记住</h2>
+    <p>安装浏览器插件，或连上 Telegram Bot。开始建造你的灵感资产库。</p>
+    <div class="hero-cta-group">
+      <a href="#install" class="btn btn-primary">🌀 安装插件</a>
+      <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-outline" target="_blank">⭐ Star on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="container">
+  <span>🌀 Muse · Catch — AI 灵感捕手 · 开源</span>
+  <span>
+    <a href="https://github.com/KevPH2026/muse-catch" target="_blank">GitHub</a> ·
+    <a href="#">API</a> ·
+    <a href="http://localhost:5200" target="_blank">Dashboard</a>
+  </span>
+</footer>
+
+<!-- Starfield -->
+<script>
+const c=document.getElementById('starfield'),ctx=c.getContext('2d');
+let stars=[];
+function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+resize();window.addEventListener('resize',resize);
+
+for(let i=0;i<120;i++) stars.push({
+  x:Math.random()*c.width,y:Math.random()*c.height,
+  r:Math.random()*1.5+0.3,
+  v:Math.random()*0.3+0.1,
+  o:Math.random()
+});
+
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  stars.forEach(s=>{
+    s.y+=s.v;
+    if(s.y>c.height){s.y=0;s.x=Math.random()*c.width}
+    const a=s.o+0.3*Math.sin(Date.now()*0.001+s.x*0.01);
+    ctx.fillStyle=`rgba(129,140,248,${a})`;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+
+</body>
+</html>

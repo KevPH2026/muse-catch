@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=1280,height=720,initial-scale=0.75">
+<title>Muse · Catch — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05050f;--bg2:#0a0a1a;--card:#0f0f24;--border:#1e1e3a;--purple:#6366f1;--purple-light:#818cf8;--pink:#a855f7;--cyan:#22d3ee;--text:#e8e8f0;--dim:#8888b0;--gradient:linear-gradient(135deg,#6366f1,#a855f7)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);width:1280px;height:720px;overflow:hidden;position:relative}
+
+/* Starfield */
+#stars{position:fixed;inset:0;z-index:0;opacity:.25;pointer-events:none}
+
+/* Nav */
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);position:relative;z-index:2;background:var(--bg)}
+.brand{font-size:18px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-stats{display:flex;gap:20px;font-size:11px;color:var(--dim)}
+.nav-stats em{font-style:normal;color:var(--purple-light);font-weight:700}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:12px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.15);color:var(--cyan);font-size:10px;font-weight:600}
+.badge .dot{width:4px;height:4px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+main{padding:20px 32px;position:relative;z-index:1}
+.row{display:flex;gap:16px}
+
+/* Sidebar */
+.sidebar{width:220px;flex-shrink:0}
+.sb-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.sb-card h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:8px}
+.source-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s}
+.source-item:hover,.source-item.active{background:rgba(99,102,241,.1)}
+.source-dot{width:8px;height:8px;border-radius:50%}
+.source-dot.w{background:var(--purple-light)}.source-dot.t{background:var(--cyan)}.source-dot.i{background:var(--pink)}
+.source-count{font-size:9px;color:var(--dim);margin-left:auto}
+.emotion-item{display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 0;color:var(--dim)}
+
+/* Main content */
+.content{flex:1}
+.ingest-bar{display:flex;gap:8px;margin-bottom:16px}
+.ingest-bar input{flex:1;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;outline:none}
+.ingest-bar input:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(99,102,241,.1)}
+.ingest-bar button{padding:10px 20px;background:var(--gradient);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ingest-bar select{padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;outline:none}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:480px;overflow-y:auto}
+.grid::-webkit-scrollbar{width:4px}.grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:all .3s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,#6366f1,#a855f7,#6366f1);opacity:0;transition:opacity .3s}
+.card:hover::before{opacity:.5}
+.card.new{animation:cardIn .5s ease-out;border-color:rgba(99,102,241,.4)}
+@keyframes cardIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.card-source{font-size:8px;padding:1px 6px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.card-source.w{background:rgba(99,102,241,.18);color:var(--purple-light)}
+.card-source.t{background:rgba(34,211,238,.15);color:var(--cyan)}
+.card-source.i{background:rgba(168,85,247,.15);color:var(--pink)}
+.card-emoji{font-size:16px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.card-summary{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:8px}
+.card-footer{display:flex;justify-content:space-between;align-items:center;font-size:9px;color:var(--dim)}
+.card-tags{display:flex;gap:3px}
+.card-tag{padding:1px 6px;background:rgba(99,102,241,.06);border-radius:6px;color:var(--purple-light)}
+.card-time{white-space:nowrap}
+
+/* Toast */
+.toast{position:fixed;top:14px;right:20px;padding:10px 18px;background:var(--purple);color:#fff;border-radius:8px;font-size:12px;font-weight:600;z-index:100;opacity:0;transform:translateY(-8px);transition:all .3s}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Instruction bar */
+.instruction{text-align:center;font-size:11px;color:var(--dim);padding:8px;background:rgba(99,102,241,.04);border-radius:8px;margin-top:12px}
+.instruction span{color:var(--purple-light);font-weight:600}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<nav>
+  <div class="brand">🎨 Muse · Dashboard</div>
+  <div class="nav-stats"><span id="stat-total">0</span> 条灵感 · <span id="stat-week">0</span> 本周 · <span id="stat-sources">0</span> 来源</div>
+  <div class="badge"><span class="dot"></span> 实时</div>
+</nav>
+<main>
+<div class="row">
+<div class="sidebar">
+  <div class="sb-card">
+    <h3>📍 来源</h3>
+    <div class="source-item active" onclick="filter('all')"><span>📋</span> 全部 <span class="source-count" id="cnt-all">10</span></div>
+    <div class="source-item" onclick="filter('web')"><div class="source-dot w"></div> Web <span class="source-count" id="cnt-web">4</span></div>
+    <div class="source-item" onclick="filter('tg')"><div class="source-dot t"></div> Telegram <span class="source-count" id="cnt-tg">3</span></div>
+    <div class="source-item" onclick="filter('idea')"><div class="source-dot i"></div> Idea <span class="source-count" id="cnt-idea">3</span></div>
+  </div>
+  <div class="sb-card">
+    <h3>🎭 情绪分布</h3>
+    <div class="emotion-item">🔥 兴奋 <span style="margin-left:auto">3</span></div>
+    <div class="emotion-item">🧐 好奇 <span style="margin-left:auto">1</span></div>
+    <div class="emotion-item">✨ 启发 <span style="margin-left:auto">5</span></div>
+    <div class="emotion-item">⚠️ 关注 <span style="margin-left:auto">1</span></div>
+  </div>
+</div>
+<div class="content">
+  <div class="ingest-bar">
+    <input type="text" id="input" placeholder="粘贴链接或文字... 灵感闪现时，别让它跑了 ⚡" autofocus />
+    <select id="source-sel">
+      <option value="web">🌐 Web</option><option value="tg">🤖 Telegram</option><option value="idea">💡 Idea</option>
+    </select>
+    <button onclick="capture()">⚡ 捕获</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="instruction">💡 试试在上方输入框粘贴一段文字，点 <span>⚡ 捕获</span> 看看 AI 怎么自动提炼</div>
+</div>
+</div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://localhost:5200/api';
+const EMOJI={excited:'🔥',curious:'🧐',concerned:'⚠️',inspired:'✨',neutral:'📌'};
+let filterVal='all',items=[];
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function filter(v){
+  filterVal=v;
+  document.querySelectorAll('.source-item').forEach(e=>e.classList.remove('active'));
+  document.querySelector(`.source-item[onclick="filter('${v}')"]`)?.classList.add('active');
+  render();
+}
+async function load(){
+  try{const r=await fetch(API+'/inspirations');items=await r.json()}catch(e){items=[]}
+  try{const r=await fetch(API+'/stats');const s=await r.json();
+    document.getElementById('stat-total').textContent=s.total||0;
+    document.getElementById('stat-week').textContent=s.this_week||0;
+    document.getElementById('stat-sources').textContent=Object.keys(s.sources||{}).length||0;
+    document.getElementById('cnt-all').textContent=s.total||0;
+    document.getElementById('cnt-web').textContent=s.sources?.web||0;
+    document.getElementById('cnt-tg').textContent=s.sources?.tg||0;
+    document.getElementById('cnt-idea').textContent=s.sources?.idea||0;
+  }catch(e){}
+  render();
+}
+function render(){
+  const g=document.getElementById('grid');
+  let f=filterVal==='all'?items:items.filter(i=>i.source===filterVal);
+  g.innerHTML=f.map(i=>`
+    <div class="card" data-id="${i.id}">
+      <div class="card-header">
+        <span class="card-source ${i.source?i.source[0]:'a'}">${i.source||'?'}</span>
+        <span class="card-emoji">${EMOJI[i.emotion]||'📌'}</span>
+      </div>
+      <div class="card-title">${esc(i.title||'未命名')}</div>
+      <div class="card-summary">${esc(i.summary||'').slice(0,100)}</div>
+      <div class="card-footer">
+        <div class="card-tags">${(i.keywords||[]).slice(0,3).map(k=>`<span class="card-tag">${esc(k)}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+async function capture(){
+  const inp=document.getElementById('input'),src=document.getElementById('source-sel');
+  const c=inp.value.trim();if(!c)return;
+  inp.value='';toast('⚡ AI 正在提炼...'); 
+  try{
+    const r=await fetch(API+'/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:c,source:src.value})});
+    const d=await r.json();
+    if(d.ok){toast('✨ 灵感已入库！标题: '+d.title.slice(0,30)+'…');load()}
+  }catch(e){toast('❌ '+e.message)}
+}
+document.getElementById('input').addEventListener('keydown',e=>{if(e.key==='Enter')capture()});
+
+// Stars
+(function(){const s=document.getElementById('stars'),c=s.getContext('2d');s.width=1280;s.height=720;for(let i=0;i<80;i++){c.fillStyle=`rgba(255,255,255,${Math.random()*.5+.1})`;c.fillRect(Math.random()*1280,Math.random()*720,Math.random()*1.5+0.5,Math.random()*1.5+0.5)}})();
+
+// Auto-demo after 3s
+setTimeout(async()=>{
+  const inp=document.getElementById('input');
+  const demos=[
+    {t:'The best way to predict the future is to invent it. — Alan Kay. This applies to AI agents too. If you want to see what agents should do, build it yourself.',s:'web',d:2000},
+  ];
+  for(const d of demos){
+    inp.value=d.t;
+    document.getElementById('source-sel').value=d.s;
+    await new Promise(r=>setTimeout(r,800));
+    await capture();
+    await new Promise(r=>setTimeout(r,2500));
+  }
+},4000);
+
+load();
+</script>
+</body>
+</html>

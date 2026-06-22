@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Muse · Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05050f;--bg2:#0a0a1a;--card:#0f0f24;--border:#1e1e3a;--purple:#6366f1;--purple-light:#818cf8;--pink:#a855f7;--cyan:#22d3ee;--green:#10b981;--text:#e8e8f0;--dim:#8888b0;--gradient:linear-gradient(135deg,#6366f1,#a855f7)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes shimmer{0%{background-position:0% center}100%{background-position:200% center}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 40px;border-bottom:1px solid var(--border)}
+.brand{font-size:22px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-stats{display:flex;gap:24px;font-size:13px;color:var(--dim)}
+.nav-stats span{color:var(--purple-light);font-weight:700}
+
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:28px;font-weight:800}
+.header-actions{display:flex;gap:10px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:16px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.15);color:var(--cyan);font-size:11px;font-weight:600}
+.badge .dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
+
+/* Selection bar */
+.sel-bar{display:none;align-items:center;gap:12px;padding:12px 20px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:12px;margin-bottom:16px;animation:slideDown .3s}
+.sel-bar.show{display:flex}
+.sel-bar .count{font-weight:700;color:var(--purple-light);font-size:14px}
+.btn-sm{padding:8px 18px;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-purple{background:var(--gradient);color:#fff}
+.btn-purple:hover{opacity:.9;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.btn-outline:hover{border-color:var(--purple);color:var(--text)}
+.btn-emerald{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.btn-emerald:hover{opacity:.9}
+.btn-ghost{background:transparent;border:none;color:var(--dim);cursor:pointer}
+.btn-ghost:hover{color:var(--text)}
+
+/* Ingest bar */
+.ingest-bar{display:flex;gap:10px;margin-bottom:20px}
+.ingest-bar input{flex:1;padding:12px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.ingest-bar input:focus{border-color:var(--purple)}
+.ingest-bar select{padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.ingest-bar button{padding:12px 24px;background:var(--gradient);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+
+/* Filters */
+.filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filter{padding:6px 14px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .2s}
+.filter:hover,.filter.active{border-color:var(--purple);color:var(--purple-light);background:rgba(99,102,241,.08)}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden}
+.card:hover{border-color:rgba(99,102,241,.35);transform:translateY(-1px)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,#6366f1,#a855f7,#6366f1);opacity:0;transition:opacity .25s}
+.card:hover::before{opacity:.4}
+.card.selected{border-color:var(--purple);background:rgba(99,102,241,.08)}
+.card.selected::before{opacity:1}
+.card .cb{position:absolute;top:12px;right:12px;width:20px;height:20px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .2s;font-size:12px}
+.card.selected .cb{background:var(--purple);border-color:var(--purple);color:#fff}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-right:28px}
+.card-source{font-size:9px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.card-source.web{background:rgba(99,102,241,.18);color:var(--purple-light)}
+.card-source.tg{background:rgba(34,211,238,.15);color:var(--cyan)}
+.card-source.idea{background:rgba(168,85,247,.15);color:var(--pink)}
+.card-source.api{background:rgba(34,211,238,.12);color:var(--cyan)}
+.card-source.manual{background:rgba(255,255,255,.06);color:var(--dim)}
+.card-emoji{font-size:20px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:6px;line-height:1.4}
+.card-summary{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:10px}
+.card-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--dim)}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.card-tag{padding:2px 8px;background:rgba(99,102,241,.06);border-radius:8px;color:var(--purple-light)}
+.card-time{white-space:nowrap}
+.empty{text-align:center;padding:80px 20px;color:var(--dim)}
+
+/* Topics Panel */
+.topics-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;display:none;animation:slideDown .4s}
+.topics-panel.show{display:block}
+.topics-panel h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.topics-panel .tp-meta{font-size:11px;color:var(--dim);margin-bottom:16px}
+.topic-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;transition:all .2s;cursor:pointer}
+.topic-card:hover{border-color:var(--purple);transform:translateY(-1px)}
+.topic-card .tp-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.topic-card .tp-angle{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:6px}
+.topic-card .tp-why{font-size:11px;color:var(--purple-light);font-style:italic}
+.topic-card .tp-action{font-size:11px;color:var(--purple-light);margin-top:8px;display:none}
+.topic-card:hover .tp-action{display:block}
+
+/* Deep Dive Panel */
+.dive-panel{background:var(--card);border:1px solid var(--purple);border-radius:14px;padding:28px;margin:20px 0;display:none;animation:slideDown .4s}
+.dive-panel.show{display:block}
+.dive-panel h3{font-size:22px;font-weight:800;margin-bottom:4px}
+.dive-panel .dive-meta{font-size:12px;color:var(--dim);margin-bottom:20px}
+.dive-section{margin-bottom:24px}
+.dive-section h4{font-size:14px;font-weight:700;color:var(--purple-light);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.dive-section ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.dive-section li{padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:13px;line-height:1.6}
+.dive-section .hl{font-weight:600;color:var(--text)}
+.dive-structure li::before{content:'§ ';color:var(--purple-light);font-weight:800;margin-right:6px}
+
+.btn-topics{padding:8px 20px;border-radius:10px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:none;font-family:inherit}
+.btn-topics:disabled{opacity:.4;cursor:not-allowed}
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;background:var(--purple);color:#fff;border-radius:10px;font-size:13px;font-weight:600;z-index:100;opacity:0;transform:translateY(-10px);transition:all .3s}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">🎨 Muse · Dashboard</div>
+  <div class="nav-stats">
+    <span id="stat-total">0</span> 条灵感 ·
+    <span id="stat-week">0</span> 本周 ·
+    <span id="stat-sources">0</span> 来源
+  </div>
+</nav>
+<main>
+  <div class="header">
+    <h1>你的灵感库</h1>
+    <div class="header-actions">
+      <button class="btn-topics btn-purple" onclick="generateTopics('random')" id="btn-random">🎲 随机选题</button>
+      <button class="btn-topics btn-purple" onclick="generateTopics('selected')" id="btn-selected" style="display:none">📌 选中生成</button>
+      <div class="badge"><span class="dot"></span> 实时</div>
+    </div>
+  </div>
+
+  <div class="sel-bar" id="sel-bar">
+    <span class="count" id="sel-count">已选 0 条</span>
+    <button class="btn-sm btn-purple" onclick="generateTopics('selected')">📝 基于选中灵感生成选题</button>
+    <button class="btn-sm btn-ghost" onclick="clearSelection()">清除选择</button>
+  </div>
+
+  <div class="ingest-bar">
+    <input type="text" id="ingest-input" placeholder="粘贴链接或文字... 灵感闪现时，别让它跑了" />
+    <select id="ingest-source">
+      <option value="web">🌐 Web</option><option value="tg">🤖 Telegram</option><option value="idea">💡 Idea</option><option value="api">🔌 API</option><option value="manual">✍️ 手动</option>
+    </select>
+    <button onclick="capture()">⚡ 捕获灵感</button>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter active" onclick="setFilter('all')">全部</button>
+    <button class="filter" onclick="setFilter('web')">🌐 Web</button>
+    <button class="filter" onclick="setFilter('tg')">🤖 Telegram</button>
+    <button class="filter" onclick="setFilter('idea')">💡 Idea</button>
+  </div>
+
+  <div class="topics-panel" id="topics-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <h3>📝 AI 选题建议</h3>
+      <button class="btn-sm btn-ghost" onclick="document.getElementById('topics-panel').classList.remove('show')">✕</button>
+    </div>
+    <div class="tp-meta" id="tp-meta"></div>
+    <div id="tp-list"></div>
+  </div>
+
+  <div class="dive-panel" id="dive-panel">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <h3 id="dive-title"></h3>
+      <button class="btn-sm btn-ghost" onclick="document.getElementById('dive-panel').classList.remove('show')">✕ 关闭</button>
+    </div>
+    <div class="dive-meta" id="dive-meta"></div>
+    <div class="dive-section"><h4>💥 爆款角度</h4><ul id="dive-angles"></ul></div>
+    <div class="dive-section"><h4>🔥 爆款标题</h4><ul id="dive-headlines"></ul></div>
+    <div class="dive-section"><h4>📋 文章结构</h4><ul class="dive-structure" id="dive-structure"></ul></div>
+    <div class="dive-section"><h4>✨ 金句</h4><ul id="dive-quotes"></ul></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty"><div style="font-size:48px;margin-bottom:14px">🌀</div><p>还没有灵感。在上面粘贴第一条吧。</p></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const EMOJI={excited:'🔥',curious:'🧐',concerned:'⚠️',inspired:'✨',neutral:'📌'};
+let filter='all',items=[],selected=new Set();
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+function setFilter(f){filter=f;document.querySelectorAll('.filter').forEach(e=>e.classList.toggle('active',e.textContent.includes(f==='all'?'全部':f)));render()}
+
+async function load(){
+  try{const r=await fetch('/api/inspirations');items=await r.json()}catch(e){items=[]}
+  try{const r=await fetch('/api/stats');const s=await r.json();
+    document.getElementById('stat-total').textContent=s.total||0;
+    document.getElementById('stat-week').textContent=s.this_week||0;
+    document.getElementById('stat-sources').textContent=s.sources?Object.keys(s.sources).length:0;
+  }catch(e){}
+  render();
+}
+
+function toggleSelect(id,cardEl){
+  if(selected.has(id)){selected.delete(id);cardEl.classList.remove('selected')}
+  else{selected.add(id);cardEl.classList.add('selected')}
+  updateSelBar();
+}
+
+function clearSelection(){selected.clear();updateSelBar();render()}
+
+function updateSelBar(){
+  const bar=document.getElementById('sel-bar'),count=document.getElementById('sel-count'),btn=document.getElementById('btn-selected');
+  if(selected.size>0){
+    bar.classList.add('show');count.textContent=`已选 ${selected.size} 条`;btn.style.display='inline-flex';
+  }else{
+    bar.classList.remove('show');btn.style.display='none';
+  }
+}
+
+function render(){
+  const g=document.getElementById('grid'),e=document.getElementById('empty');
+  let filtered=filter==='all'?items:items.filter(i=>i.source===filter);
+  if(!filtered.length){g.innerHTML='';e.style.display='block';return}
+  e.style.display='none';
+  g.innerHTML=filtered.map(i=>{
+    const isSel=selected.has(i.id);
+    return `<div class="card${isSel?' selected':''}" id="card-${i.id}" onclick="toggleSelect(${i.id},this)">
+      <div class="cb">${isSel?'✓':''}</div>
+      <div class="card-header">
+        <span class="card-source ${i.source||'manual'}">${i.source||'manual'}</span>
+        <span class="card-emoji">${EMOJI[i.emotion]||'📌'}</span>
+      </div>
+      <div class="card-title">${esc(i.title||'未命名')}</div>
+      <div class="card-summary">${esc(i.summary||'').slice(0,120)}</div>
+      <div class="card-footer">
+        <div class="card-tags">${(i.keywords||[]).slice(0,3).map(k=>`<span class="card-tag">${esc(k)}</span>`).join('')}</div>
+        <span class="card-time">${fmt(i.created_at)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){return(String(s||'')).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmt(d){if(!d)return'';const dt=new Date(d),now=new Date();const diff=now-dt;if(diff<60000)return'刚刚';if(diff<3600000)return Math.floor(diff/60000)+'分钟前';if(diff<86400000)return Math.floor(diff/3600000)+'小时前';return dt.toLocaleDateString('zh-CN')}
+
+async function capture(){
+  const inp=document.getElementById('ingest-input'),src=document.getElementById('ingest-source');
+  const content=inp.value.trim();if(!content)return;inp.value='';
+  try{
+    const r=await fetch('/api/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,source:src.value})});
+    const d=await r.json();if(d.ok){showToast('✨ 灵感已捕获！');load()}else{showToast('❌ '+d.error)}
+  }catch(e){showToast('❌ 连接失败')}
+}
+
+async function generateTopics(mode){
+  const btn=document.getElementById(mode==='random'?'btn-random':'btn-selected'),panel=document.getElementById('topics-panel');
+  btn.disabled=true;btn.textContent='⏳ 分析中...';
+  let url='/api/topics?mode='+mode;
+  if(mode==='selected'&&selected.size>0){url+='&ids='+[...selected].join(',')}
+  try{
+    const r=await fetch(url);const d=await r.json();
+    if(d.error){showToast('⚠️ '+d.error);btn.disabled=false;btn.textContent=mode==='random'?'🎲 随机选题':'📌 选中生成';return}
+    panel.classList.add('show');panel.scrollIntoView({behavior:'smooth'});
+    document.getElementById('tp-meta').textContent=`基于 ${d.source_count} 条灵感 · ${d.method==='llm'?'AI 深度分析':'关键词聚类'} · ${d.mode==='selected'?'手选模式':'随机模式'}`;
+    document.getElementById('tp-list').innerHTML=d.topics.map((t,i)=>`
+      <div class="topic-card" onclick="deepDive('${esc(t.topic)}','${esc(t.angle)}','${t.source_ids||''}')">
+        <div class="tp-title">${i+1}. ${esc(t.topic)}</div>
+        <div class="tp-angle">💡 ${esc(t.angle)}</div>
+        <div class="tp-why">📊 ${esc(t.why)}</div>
+        <div class="tp-action">👆 点击生成爆款标题、结构、金句 →</div>
+      </div>
+    `).join('');
+    showToast(`✅ 生成了 ${d.topics.length} 个选题`);
+  }catch(e){showToast('❌ 分析失败')}
+  btn.disabled=false;btn.textContent=mode==='random'?'🎲 随机选题':'📌 选中生成';
+}
+
+async function deepDive(topic,angle,ids){
+  const panel=document.getElementById('dive-panel');
+  panel.classList.remove('show');
+  document.getElementById('dive-title').textContent='⏳ 正在深度分析...';
+  panel.classList.add('show');panel.scrollIntoView({behavior:'smooth'});
+  
+  try{
+    const url=`/api/topic-deep-dive?topic=${encodeURIComponent(topic)}&angle=${encodeURIComponent(angle)}&ids=${ids}`;
+    const r=await fetch(url);const d=await r.json();
+    document.getElementById('dive-title').textContent=`📝 ${d.topic}`;
+    document.getElementById('dive-meta').textContent=`分析方法: ${d.method==='llm'?'AI 深度生成':'智能模板生成'}`;
+    
+    document.getElementById('dive-angles').innerHTML=(d.viral_angles||[]).map(a=>`<li>🎯 <span class="hl">${esc(a)}</span></li>`).join('');
+    document.getElementById('dive-headlines').innerHTML=(d.headlines||[]).map(h=>`<li>🔥 <span class="hl">${esc(h)}</span></li>`).join('');
+    document.getElementById('dive-structure').innerHTML=(d.structure||[]).map(s=>`<li>${esc(s)}</li>`).join('');
+    document.getElementById('dive-quotes').innerHTML=(d.quotes||[]).map(q=>`<li>✨ "${esc(q)}"</li>`).join('');
+    
+    showToast('✅ 深度内容策划完成');
+  }catch(e){showToast('❌ Deep Dive 失败')}
+}
+
+document.addEventListener('DOMContentLoaded',load);
+document.getElementById('ingest-input').addEventListener('keydown',e=>{if(e.key==='Enter')capture()});
+</script>
+</body>
+</html>
