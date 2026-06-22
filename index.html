@@ -5,12 +5,12 @@
 <title>Muse · Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#05050f;--bg2:#0a0a1a;--card:#0f0f24;--border:#1e1e3a;--purple:#6366f1;--purple-light:#818cf8;--pink:#a855f7;--cyan:#22d3ee;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--text:#e8e8f0;--dim:#8888b0;--gradient:linear-gradient(135deg,#6366f1,#a855f7);--gradient-h:linear-gradient(90deg,#6366f1,#a855f7,#6366f1)}
+:root{--bg:#05050f;--bg2:#0a0a1a;--card:#0f0f24;--border:#1e1e3a;--purple:#6366f1;--purple-light:#818cf8;--pink:#a855f7;--cyan:#22d3ee;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--text:#e8e8f0;--dim:#8888b0;--gradient:linear-gradient(135deg,#6366f1,#a855f7)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:'Inter','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+a{color:inherit;text-decoration:none}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-@keyframes shimmer{0%{background-position:0% center}100%{background-position:200% center}}
 @keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -18,115 +18,146 @@ body{font-family:'Inter','Noto Sans SC',sans-serif;background:var(--bg);color:va
 @keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
-/* NAV */
-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 36px;border-bottom:1px solid var(--border);background:rgba(5,5,15,.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
-.brand{font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px}
-.brand span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.nav-actions{display:flex;gap:12px;align-items:center}
+/* ============ SIDEBAR ============ */
+.sidebar{width:240px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;z-index:50;flex-shrink:0}
+.sidebar-brand{padding:24px 20px 20px;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800}
+.sidebar-brand .icon{font-size:24px}
+.sidebar-brand span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sidebar-nav{flex:1;display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.sidebar-nav .nav-section{margin-top:12px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;padding:6px 12px 4px;font-weight:700}
+.sidebar-nav .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--dim);cursor:pointer;transition:all .15s}
+.sidebar-nav .nav-item:hover{background:rgba(99,102,241,.08);color:var(--text)}
+.sidebar-nav .nav-item.active{background:rgba(99,102,241,.12);color:var(--purple-light);font-weight:600}
+.sidebar-nav .nav-item .nav-icon{font-size:16px;width:20px;text-align:center}
+.sidebar-nav .nav-divider{height:1px;background:var(--border);margin:8px 12px}
+.sidebar-user{margin:12px;padding:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-user .avatar{width:32px;height:32px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-user .user-info{font-size:11px;line-height:1.4;overflow:hidden}
+.sidebar-user .user-name{font-weight:600;color:var(--text)}
+.sidebar-user .user-email{color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-main{max-width:1280px;margin:0 auto;padding:28px 24px}
-
-/* ===== STATS BAR ===== */
-.stats-bar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:14px;margin-bottom:24px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:all .25s}
-.stat-card:hover{border-color:var(--purple);transform:translateY(-2px)}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--gradient-h);opacity:0;transition:opacity .25s}
-.stat-card:hover::before{opacity:.5}
-.stat-big{font-size:42px;font-weight:900;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
-.stat-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:6px}
-
-/* Mini charts inside stats */
-.mini-chart{display:flex;align-items:flex-end;gap:3px;height:36px;margin-top:8px}
-.mini-bar{flex:1;border-radius:2px 2px 0 0;transition:height .5s ease}
-.mini-donut{position:relative;width:48px;height:48px;flex-shrink:0}
-
-.week-heatmap{display:flex;gap:2px;margin-top:8px}
-.heat-cell{width:14px;height:14px;border-radius:3px;background:var(--bg2);transition:all .3s}
-
-.source-row{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:11px;color:var(--dim)}
-.source-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.source-count{margin-left:auto;font-weight:700;color:var(--text)}
-
-/* ===== HEADER + CONTROLS ===== */
-.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
-.header-row h1{font-size:26px;font-weight:800}
-.ctrl-group{display:flex;gap:8px;align-items:center}
-
+/* ============ MAIN ============ */
+.main{flex:1;min-width:0;overflow-x:hidden}
+.main-header{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--border);background:rgba(5,5,15,.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:40}
+.main-header h1{font-size:22px;font-weight:800}
+.time-filter{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px}
+.time-filter button{padding:6px 14px;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--dim);font-family:inherit;transition:all .15s}
+.time-filter button:hover{color:var(--text)}
+.time-filter button.active{background:rgba(99,102,241,.15);color:var(--purple-light);font-weight:600}
+.header-actions{display:flex;gap:10px;align-items:center}
 .btn{padding:8px 18px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--gradient);color:#fff}
-.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-primary:hover{opacity:.92;transform:translateY(-1px);box-shadow:0 4px 18px rgba(99,102,241,.3)}
 .btn-outline{background:transparent;border:1px solid var(--border);color:var(--dim)}
 .btn-outline:hover{border-color:var(--purple);color:var(--text)}
 .btn-ghost{background:transparent;border:none;color:var(--dim);cursor:pointer;padding:8px 12px;font-size:12px;font-family:inherit}
 .btn-ghost:hover{color:var(--text)}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:14px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.15);color:var(--cyan);font-size:10px;font-weight:600}
-.badge .dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
 
-/* Ingest bar */
-.ingest-bar{display:flex;gap:10px;margin-bottom:16px}
-.ingest-bar input{flex:1;padding:12px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.content{padding:28px 32px;max-width:1200px}
+
+/* ============ STATS BAR ============ */
+.stats-bar{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:14px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:all .25s}
+.stat-card:hover{border-color:rgba(99,102,241,.35);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.stat-card .stat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stat-card .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700}
+.stat-card .stat-icon{font-size:14px;opacity:.6}
+.stat-big{font-size:42px;font-weight:900;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:4px}
+.stat-sub{font-size:11px;color:var(--dim)}
+
+/* Heatmap in stat card */
+.heatmap-grid{display:flex;gap:3px;margin-top:10px;justify-content:space-between}
+.heat-col{display:flex;flex-direction:column;gap:3px}
+.heat-cell{width:15px;height:15px;border-radius:3px;background:var(--bg2);transition:all .3s}
+.heat-col-label{font-size:8px;color:var(--dim);text-align:center;margin-bottom:3px;text-transform:uppercase}
+
+/* Mini bar chart */
+.mini-bars{display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:8px}
+.mini-bar{flex:1;border-radius:3px 3px 0 0;transition:all .5s ease;min-width:8px}
+.mini-bar-label{text-align:center;font-size:8px;color:var(--dim);margin-top:3px}
+
+/* Donut */
+.donut-wrap{display:flex;align-items:center;gap:14px;margin-top:6px}
+.donut-legend{font-size:10px;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+.donut-legend-item{display:flex;align-items:center;gap:5px}
+.donut-legend-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* Source dots */
+.source-list-stat{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.source-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
+.source-item .sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.source-item .scount{margin-left:auto;font-weight:700;color:var(--text);font-size:14px}
+
+/* ============ INGEST BAR ============ */
+.ingest-bar{display:flex;gap:10px;margin-bottom:20px}
+.ingest-bar input{flex:1;padding:14px 20px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:all .2s}
 .ingest-bar input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
-.ingest-bar select{padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
-.ingest-bar button{padding:12px 24px;background:var(--gradient);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ingest-bar input::placeholder{color:var(--dim)}
+.ingest-bar select{padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer}
+.ingest-bar button{padding:14px 28px;background:var(--gradient);border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+.ingest-bar button:hover{opacity:.92;box-shadow:0 4px 18px rgba(99,102,241,.3)}
 
-/* Filters */
-.filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.filter{padding:5px 14px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .2s;font-family:inherit}
+/* ============ FILTERS ============ */
+.filters{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.filter{padding:6px 16px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s;font-family:inherit}
 .filter:hover,.filter.active{border-color:var(--purple);color:var(--purple-light);background:rgba(99,102,241,.08)}
 
 /* Selection bar */
 .sel-bar{display:none;align-items:center;gap:12px;padding:12px 20px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;margin-bottom:16px;animation:slideDown .3s}
 .sel-bar.show{display:flex}
 
-/* ===== EMOTION COLOR MAP ===== */
-.emotion-colors{--excited:linear-gradient(135deg,#f59e0b,#ef4444);--curious:linear-gradient(135deg,#6366f1,#818cf8);--inspired:linear-gradient(135deg,#10b981,#22d3ee);--concerned:linear-gradient(135deg,#f59e0b,#d97706);--neutral:linear-gradient(135deg,#6b7280,#9ca3af)}
-.emotion-bg{--excited-bg:rgba(245,158,11,.1);--curious-bg:rgba(99,102,241,.1);--inspired-bg:rgba(16,185,129,.1);--concerned-bg:rgba(245,158,11,.08);--neutral-bg:rgba(107,114,128,.08)}
-.emotion-border{--excited-bd:rgba(245,158,11,.3);--curious-bd:rgba(99,102,241,.3);--inspired-bd:rgba(16,185,129,.3);--concerned-bd:rgba(245,158,11,.2);--neutral-bd:rgba(107,114,128,.2)}
-
-/* ===== INSPIRATION CARDS v2 ===== */
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px}
-.card:hover{border-color:rgba(99,102,241,.35);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+/* ============ CARDS ============ */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.card:hover{border-color:rgba(99,102,241,.35);transform:translateY(-2px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .card.selected{border-color:var(--purple);background:rgba(99,102,241,.06);box-shadow:0 0 24px rgba(99,102,241,.1)}
-.card .cb{position:absolute;top:14px;right:14px;width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .2s;font-size:11px;color:transparent}
+.card .cb{position:absolute;top:16px;right:16px;width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .2s;font-size:11px;color:transparent}
 .card.selected .cb{background:var(--purple);border-color:var(--purple);color:#fff}
-/* Emotion strip on top */
-.card .emotion-strip{position:absolute;top:0;left:0;right:0;height:3px;opacity:.7}
+/* Emotion color strip */
+.card .emotion-strip{position:absolute;top:0;left:0;right:0;height:3px;opacity:.8}
 .excited .emotion-strip{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 .curious .emotion-strip{background:linear-gradient(90deg,#6366f1,#818cf8)}
 .inspired .emotion-strip{background:linear-gradient(90deg,#10b981,#22d3ee)}
 .concerned .emotion-strip{background:linear-gradient(90deg,#f59e0b,#d97706)}
 .neutral .emotion-strip{background:linear-gradient(90deg,#6b7280,#9ca3af)}
 .card-top{display:flex;align-items:center;gap:8px;padding-right:30px}
-.source-chip{font-size:9px;padding:3px 10px;border-radius:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.source-chip{font-size:9px;padding:4px 12px;border-radius:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
 .source-chip.web{background:rgba(99,102,241,.18);color:var(--purple-light)}
 .source-chip.tg{background:rgba(34,211,238,.15);color:var(--cyan)}
 .source-chip.idea{background:rgba(168,85,247,.15);color:var(--pink)}
 .source-chip.api{background:rgba(34,211,238,.12);color:var(--cyan)}
 .source-chip.manual{background:rgba(255,255,255,.06);color:var(--dim)}
-.card-emoji{font-size:18px;margin-left:auto}
-.card-title{font-size:15px;font-weight:700;line-height:1.4}
+.source-chip.extension{background:rgba(16,185,129,.15);color:var(--green)}
+.card-time-chip{font-size:9px;color:var(--dim);margin-left:auto}
+.card-title{font-size:16px;font-weight:700;line-height:1.4}
 .card-summary{font-size:12px;color:var(--dim);line-height:1.6}
-.card-keywords{display:flex;gap:4px;flex-wrap:wrap}
-.card-keywords .kw{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:500}
-.card-keywords .kw:nth-child(1){background:rgba(99,102,241,.1);color:var(--purple-light)}
-.card-keywords .kw:nth-child(2){background:rgba(168,85,247,.1);color:var(--pink)}
-.card-keywords .kw:nth-child(3){background:rgba(16,185,129,.1);color:var(--green)}
-.card-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--dim);border-top:1px solid rgba(255,255,255,.03);padding-top:8px}
-.card-time{display:flex;align-items:center;gap:4px}
+.card-keywords{display:flex;gap:6px;flex-wrap:wrap}
+.card-keywords .kw{padding:4px 10px;border-radius:8px;font-size:10px;font-weight:500}
+.card-keywords .kw:nth-child(1){background:rgba(99,102,241,.12);color:var(--purple-light)}
+.card-keywords .kw:nth-child(2){background:rgba(168,85,247,.12);color:var(--pink)}
+.card-keywords .kw:nth-child(3){background:rgba(16,185,129,.12);color:var(--green)}
+.card-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--dim);border-top:1px solid rgba(255,255,255,.04);padding-top:12px;margin-top:4px}
 .card-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
 .card:hover .card-actions{opacity:1}
-.card-act{padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit;transition:all .2s}
-.card-act:hover{border-color:var(--purple);color:var(--purple-light)}
+.card-act{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}
+.card-act:hover{border-color:var(--purple);color:var(--purple-light);background:rgba(99,102,241,.06)}
 
 .empty-state{text-align:center;padding:80px 20px;color:var(--dim)}
 .empty-state .empty-icon{font-size:64px;margin-bottom:16px;animation:float 3s ease-in-out infinite}
 
-/* ===== TOPICS PANEL ===== */
+/* ============ DNA ============ */
+.dna-badge{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:20px;cursor:pointer;transition:all .2s}
+.dna-badge:hover{border-color:var(--purple);transform:translateY(-1px)}
+.dna-badge .dna-icon{font-size:28px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(99,102,241,.1);border-radius:12px;flex-shrink:0}
+.dna-badge .dna-text{flex:1;font-size:12px;line-height:1.6}
+.dna-badge .dna-text strong{color:var(--purple-light);display:block;font-size:15px;margin-bottom:2px}
+#dna-panel{display:none;animation:slideDown .4s;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+#dna-panel.show{display:block}
+
+/* ============ TOPICS / DIVE PANELS ============ */
 .topics-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;display:none;animation:slideDown .4s}
 .topics-panel.show{display:block}
-.topics-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;margin-top:16px}
 .topic-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden}
 .topic-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gradient);opacity:0;transition:opacity .2s}
 .topic-card:hover{border-color:var(--purple);transform:translateY(-2px)}
@@ -138,7 +169,6 @@ main{max-width:1280px;margin:0 auto;padding:28px 24px}
 .topic-card .tc-action{font-size:11px;color:var(--purple-light);margin-top:10px;opacity:0;transition:opacity .2s}
 .topic-card:hover .tc-action{opacity:1}
 
-/* ===== DEEP DIVE PANEL ===== */
 .dive-panel{background:var(--card);border:1px solid var(--purple);border-radius:14px;padding:28px;margin:20px 0;display:none;animation:slideDown .4s}
 .dive-panel.show{display:block}
 .dive-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
@@ -148,26 +178,11 @@ main{max-width:1280px;margin:0 auto;padding:28px 24px}
 .dive-block li{padding:10px 14px;background:rgba(99,102,241,.04);border-radius:8px;font-size:12px;line-height:1.6;border-left:2px solid var(--purple)}
 .dive-block.full{grid-column:1/-1}
 
-/* ===== DNA PANEL ===== */
-.dna-badge{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:20px;cursor:pointer;transition:all .2s}
-.dna-badge:hover{border-color:var(--purple);transform:translateY(-1px)}
-.dna-badge .dna-icon{font-size:28px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(99,102,241,.1);border-radius:12px}
-.dna-badge .dna-text{flex:1;font-size:12px;line-height:1.6}
-.dna-badge .dna-text strong{color:var(--purple-light);display:block;font-size:14px;margin-bottom:2px}
-#dna-panel{display:none;animation:slideDown .4s}
-#dna-panel.show{display:block}
-.dna-grid{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start}
-.dna-radar{width:180px;height:180px}
-.dna-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.dna-item{background:var(--bg2);border-radius:10px;padding:14px}
-.dna-item .dna-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--purple-light);margin-bottom:4px;font-weight:600}
-.dna-item .dna-value{font-size:13px;line-height:1.5}
-
-/* ===== TOAST ===== */
+/* ============ TOAST ============ */
 .toast{position:fixed;top:20px;right:20px;padding:14px 24px;background:var(--card);border:1px solid var(--purple);border-radius:12px;color:var(--text);font-size:13px;font-weight:600;z-index:300;opacity:0;transform:translateY(-12px);transition:all .3s;box-shadow:0 8px 32px rgba(0,0,0,.4)}
 .toast.show{opacity:1;transform:translateY(0)}
 
-/* ===== ONBOARDING ===== */
+/* ============ ONBOARDING ============ */
 .onboard-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,5,15,.94);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)}
 .onboard-overlay.hide{display:none}
 .onboard-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:540px;width:90%;max-height:85vh;overflow-y:auto;animation:scaleIn .4s}
@@ -189,135 +204,169 @@ main{max-width:1280px;margin:0 auto;padding:28px 24px}
 .ob-loading{text-align:center;padding:40px 20px}
 .ob-loading .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
 
-/* ===== RESPONSIVE ===== */
-@media(max-width:900px){
+/* ============ RESPONSIVE ============ */
+@media(max-width:960px){
+  .sidebar{display:none}
   .stats-bar{grid-template-columns:1fr 1fr}
-  .dna-grid{grid-template-columns:1fr}
   .dive-grid{grid-template-columns:1fr}
   .gallery{grid-template-columns:1fr}
   .topic-grid{grid-template-columns:1fr}
 }
-@media(max-width:520px){
+@media(max-width:600px){
   .stats-bar{grid-template-columns:1fr}
-  nav{padding:12px 16px}
-  main{padding:16px 12px}
+  .main-header{padding:14px 16px;flex-direction:column;gap:10px;align-items:flex-start}
+  .content{padding:16px 12px}
+  .ingest-bar{flex-direction:column}
 }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="brand">🌀 <span>Muse</span></div>
-  <div class="nav-actions">
-    <button class="btn btn-outline" onclick="document.getElementById('topics-panel').classList.toggle('show')">📝 选题</button>
-    <div class="badge"><span class="dot"></span> 实时</div>
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🌀</span><span>Muse</span></div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" onclick="scrollToTop()"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">💡</span>选题建议</a>
+    <div class="nav-divider"></div>
+    <a class="nav-item" onclick="document.getElementById('ingest-input').focus()"><span class="nav-icon">⚡</span>快速捕获</a>
+    <a class="nav-item" href="landing.html" target="_blank"><span class="nav-icon">🌐</span>落地页</a>
+    <a class="nav-item" href="https://github.com/KevPH2026/muse-catch" target="_blank"><span class="nav-icon">📦</span>GitHub</a>
+    <div class="nav-divider"></div>
+    <a class="nav-item" onclick="resetOnboarding()"><span class="nav-icon">⚙️</span>重新认识我</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="avatar">K</div>
+    <div class="user-info">
+      <div class="user-name">Mr.K</div>
+      <div class="user-email">Creator</div>
+    </div>
   </div>
-</nav>
+</aside>
 
-<main>
-  <!-- ===== STATS BAR ===== -->
-  <div class="stats-bar" id="stats-bar">
-    <div class="stat-card">
-      <div class="stat-big" id="stat-total">0</div>
-      <div class="stat-label">总灵感数</div>
-      <div class="week-heatmap" id="week-heatmap"></div>
+<!-- ============ MAIN AREA ============ -->
+<main class="main">
+  <!-- Header -->
+  <div class="main-header">
+    <h1 id="page-scroll-top">Your inspiration overview</h1>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})">💡 选题</button>
+      <button class="btn btn-primary" onclick="document.getElementById('ingest-input').focus()">⚡ Capture Inspiration</button>
     </div>
-    <div class="stat-card">
-      <div class="stat-big" id="stat-week">0</div>
-      <div class="stat-label">本周新增</div>
-      <div class="mini-chart" id="week-chart"></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-big" id="stat-sources">0</div>
-      <div class="stat-label">灵感来源</div>
-      <div id="source-list"></div>
-    </div>
-    <div class="stat-card">
-      <div style="display:flex;align-items:center;gap:12px">
-        <svg id="emotion-donut" width="56" height="56" viewBox="0 0 56 56"></svg>
-        <div>
-          <div class="stat-label" style="margin-top:0">情绪分布</div>
-          <div id="emotion-legend" style="font-size:10px;color:var(--dim);margin-top:4px"></div>
+  </div>
+
+  <div class="content">
+    <!-- ===== STATS BAR ===== -->
+    <div class="stats-bar" id="stats-bar">
+      <!-- Total with heatmap -->
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Total</span><span class="stat-icon">📊</span></div>
+        <div class="stat-big" id="stat-total">0</div>
+        <div class="stat-sub">captured inspirations</div>
+        <div class="heatmap-grid" id="week-heatmap"></div>
+      </div>
+
+      <!-- This week with bars -->
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">This week</span><span class="stat-icon">📈</span></div>
+        <div class="stat-big" id="stat-week">0</div>
+        <div class="stat-sub">new this week</div>
+        <div class="mini-bars" id="week-chart"></div>
+      </div>
+
+      <!-- Sources with dots -->
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Sources</span><span class="stat-icon">🔗</span></div>
+        <div class="stat-big" id="stat-sources">0</div>
+        <div class="stat-sub">active channels</div>
+        <div class="source-list-stat" id="source-list"></div>
+      </div>
+
+      <!-- Emotions donut -->
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Emotions</span><span class="stat-icon">🎭</span></div>
+        <div class="donut-wrap">
+          <svg id="emotion-donut" width="68" height="68" viewBox="0 0 68 68"></svg>
+          <div class="donut-legend" id="emotion-legend"></div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- DNA Badge -->
-  <div class="dna-badge" id="dna-badge" style="display:none" onclick="toggleDnaPanel()">
-    <div class="dna-icon">🧬</div>
-    <div class="dna-text"><strong id="dna-persona">...</strong><span id="dna-stats"></span></div>
-    <div style="font-size:14px;color:var(--purple-light)">→</div>
-  </div>
-  <div id="dna-panel" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0;font-size:20px">🧬 Creator DNA</h3>
-      <button class="btn btn-ghost" onclick="resetOnboarding()">🔄 重新认识我</button>
+    <!-- DNA Badge -->
+    <div class="dna-badge" id="dna-badge" style="display:none" onclick="toggleDnaPanel()">
+      <div class="dna-icon">🧬</div>
+      <div class="dna-text"><strong id="dna-persona">...</strong><span id="dna-stats"></span></div>
+      <div style="font-size:16px;color:var(--purple-light)">→</div>
     </div>
-    <div id="dna-detail"></div>
-  </div>
+    <div id="dna-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0;font-size:20px">🧬 Creator DNA</h3>
+        <button class="btn btn-ghost" onclick="resetOnboarding()">🔄 重新认识我</button>
+      </div>
+      <div id="dna-detail"></div>
+    </div>
 
-  <!-- Selection Bar -->
-  <div class="sel-bar" id="sel-bar">
-    <span style="font-weight:700;color:var(--purple-light);font-size:14px" id="sel-count">已选 0 条</span>
-    <button class="btn btn-primary" onclick="generateTopics('selected')">📝 基于选中生成选题</button>
-    <button class="btn btn-ghost" onclick="clearSelection()">清除选择</button>
-  </div>
+    <!-- Selection Bar -->
+    <div class="sel-bar" id="sel-bar">
+      <span style="font-weight:700;color:var(--purple-light);font-size:14px" id="sel-count">已选 0 条</span>
+      <button class="btn btn-primary" onclick="generateTopics('selected')">📝 基于选中生成选题</button>
+      <button class="btn btn-ghost" onclick="clearSelection()">清除选择</button>
+    </div>
 
-  <!-- Ingest Bar -->
-  <div class="ingest-bar">
-    <input type="text" id="ingest-input" placeholder="粘贴链接或灵感文字... 别让它溜走 ✨" />
-    <select id="ingest-source">
-      <option value="web">🌐 Web</option><option value="tg">🤖 Telegram</option><option value="idea">💡 Idea</option><option value="api">🔌 API</option><option value="manual">✍️ 手动</option>
-    </select>
-    <button onclick="capture()">⚡ 捕获</button>
-  </div>
+    <!-- Ingest Bar -->
+    <div class="ingest-bar">
+      <input type="text" id="ingest-input" placeholder="粘贴链接或灵感文字... 别让它溜走 ✨" />
+      <select id="ingest-source">
+        <option value="web">🌐 Web</option><option value="tg">🤖 Agent</option><option value="idea">💡 Idea</option><option value="api">🔌 API</option><option value="manual">✍️ 手动</option>
+      </select>
+      <button onclick="capture()">⚡ 捕获</button>
+    </div>
 
-  <!-- Filters -->
-  <div class="filters" id="filters">
-    <button class="filter active" onclick="setFilter('all')">全部</button>
-    <button class="filter" onclick="setFilter('web')">🌐 Web</button>
-    <button class="filter" onclick="setFilter('tg')">🤖 Telegram</button>
-    <button class="filter" onclick="setFilter('idea')">💡 Idea</button>
-    <button class="filter" onclick="setFilter('extension')">🔌 插件</button>
-  </div>
+    <!-- Filters -->
+    <div class="filters" id="filters">
+      <button class="filter active" onclick="setFilter('all')">全部</button>
+      <button class="filter" onclick="setFilter('web')">🌐 Web</button>
+      <button class="filter" onclick="setFilter('tg')">🤖 Agent</button>
+      <button class="filter" onclick="setFilter('idea')">💡 Idea</button>
+      <button class="filter" onclick="setFilter('extension')">🔌 插件</button>
+    </div>
 
-  <!-- Topics Panel -->
-  <div class="topics-panel" id="topics-panel">
-    <div class="topics-header">
-      <h3 style="font-size:20px;font-weight:800">📝 AI 选题建议</h3>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-outline" onclick="generateTopics('random')" id="btn-random">🎲 随机选题</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('topics-panel').classList.remove('show')">✕</button>
+    <!-- Topics Panel -->
+    <div class="topics-panel" id="topics-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:20px;font-weight:800">💡 选题建议</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="generateTopics('random')" id="btn-random">🎲 随机选题</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('topics-panel').classList.remove('show')">✕</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:14px" id="tp-meta"></div>
+      <div class="topic-grid" id="tp-list"></div>
+    </div>
+
+    <!-- Deep Dive Panel -->
+    <div class="dive-panel" id="dive-panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <h3 style="font-size:22px;font-weight:800" id="dive-title"></h3>
+        <button class="btn btn-ghost" onclick="document.getElementById('dive-panel').classList.remove('show')">✕ 关闭</button>
+      </div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:4px" id="dive-meta"></div>
+      <div class="dive-grid">
+        <div class="dive-block"><h4>💥 爆款角度</h4><ul id="dive-angles"></ul></div>
+        <div class="dive-block"><h4>🔥 爆款标题</h4><ul id="dive-headlines"></ul></div>
+        <div class="dive-block full"><h4>📋 文章结构</h4><ul id="dive-structure"></ul></div>
+        <div class="dive-block full"><h4>✨ 金句</h4><ul id="dive-quotes"></ul></div>
       </div>
     </div>
-    <div style="font-size:11px;color:var(--dim);margin-bottom:14px" id="tp-meta"></div>
-    <div class="topic-grid" id="tp-list"></div>
-  </div>
 
-  <!-- Deep Dive Panel -->
-  <div class="dive-panel" id="dive-panel">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <h3 style="font-size:22px;font-weight:800" id="dive-title"></h3>
-      <button class="btn btn-ghost" onclick="document.getElementById('dive-panel').classList.remove('show')">✕ 关闭</button>
-    </div>
-    <div style="font-size:12px;color:var(--dim);margin-bottom:4px" id="dive-meta"></div>
-    <div class="dive-grid">
-      <div class="dive-block"><h4>💥 爆款角度</h4><ul id="dive-angles"></ul></div>
-      <div class="dive-block"><h4>🔥 爆款标题</h4><ul id="dive-headlines"></ul></div>
-      <div class="dive-block full"><h4>📋 文章结构</h4><ul id="dive-structure"></ul></div>
-      <div class="dive-block full"><h4>✨ 金句</h4><ul id="dive-quotes"></ul></div>
+    <!-- Cards Grid -->
+    <div class="gallery" id="grid"></div>
+    <div class="empty-state" id="empty">
+      <div class="empty-icon">🌀</div>
+      <p style="font-size:15px;font-weight:600;margin-bottom:6px">还没有灵感</p>
+      <p style="font-size:12px">在上面粘贴第一条，或者装个浏览器插件开始捕获 🚀</p>
     </div>
   </div>
-
-  <!-- Main Gallery -->
-  <div class="gallery" id="grid"></div>
-  <div class="empty-state" id="empty">
-    <div class="empty-icon">🌀</div>
-    <p style="font-size:15px;font-weight:600;margin-bottom:6px">还没有灵感</p>
-    <p style="font-size:12px">在上面粘贴第一条，或者装个浏览器插件开始捕获 🚀</p>
-  </div>
-
 </main>
 
 <div class="toast" id="toast"></div>
@@ -331,22 +380,21 @@ let filter='all',items=[],selected=new Set();
 
 const EMOJI={excited:'🔥',curious:'🧐',concerned:'⚠️',inspired:'✨',neutral:'📌'};
 const EMOTION_CLASS={excited:'excited',curious:'curious',concerned:'concerned',inspired:'inspired',neutral:'neutral'};
+const SOURCE_NAMES={web:'Web',tg:'Agent',idea:'Idea',api:'API',manual:'手动',extension:'插件'};
 
 // =========== UTILS ===========
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function fmt(d){if(!d)return'';const dt=new Date(d),now=new Date();const diff=now-dt;if(diff<60000)return'刚刚';if(diff<3600000)return Math.floor(diff/60000)+'分钟前';if(diff<86400000)return Math.floor(diff/3600000)+'小时前';return dt.toLocaleDateString('zh-CN')}
 function showToast(msg,duration=2000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),duration)}
+function scrollToTop(){document.getElementById('page-scroll-top').scrollIntoView({behavior:'smooth'})}
 
 // =========== DATA LOAD ===========
 async function load(){
   try{const r=await fetch('/api/inspirations');items=await r.json()}catch(e){items=[]}
   try{const r=await fetch('/api/stats');const s=await r.json();
-    const statTotal=document.getElementById('stat-total');
-    const statWeek=document.getElementById('stat-week');
-    const statSources=document.getElementById('stat-sources');
-    if(statTotal)statTotal.textContent=s.total||0;
-    if(statWeek)statWeek.textContent=s.this_week||0;
-    if(statSources)statSources.textContent=s.sources?Object.keys(s.sources).length:0;
+    document.getElementById('stat-total').textContent=s.total||0;
+    document.getElementById('stat-week').textContent=s.this_week||0;
+    document.getElementById('stat-sources').textContent=s.sources?Object.keys(s.sources).length:0;
     renderStats(s);
     renderSourceList(s);
     renderEmotionDonut(s);
@@ -357,18 +405,22 @@ async function load(){
 
 // =========== STATS VISUALIZATIONS ===========
 function renderStats(s){
-  // Week heatmap (last 7 days)
+  // Week heatmap (7 cols × N rows, last 4 weeks)
   const hm=document.getElementById('week-heatmap');
   if(!hm)return;
-  const days=['日','一','二','三','四','五','六'];
+  const days=['M','T','W','T','F','S','S'];
   const today=new Date().getDay();
   let html='';
   for(let i=6;i>=0;i--){
-    const d=(today-i+7)%7;
-    const count=(s.daily_counts&&s.daily_counts[i])||0;
-    const intensity=Math.min(count/3,1);
-    const alpha=intensity>.6?1:intensity>.3?.5:intensity>0?.2:.05;
-    html+=`<div class="heat-cell" title="${days[d]} ${count||0}条" style="background:rgba(99,102,241,${alpha})"></div>`;
+    html+='<div class="heat-col">';
+    html+=`<div class="heat-col-label">${days[(today-i+7)%7]}</div>`;
+    for(let w=0;w<4;w++){
+      const count=(s.daily_counts&&s.daily_counts[i])||0;
+      const intensity=Math.min(count/5,1);
+      const alpha=intensity>.7?1:intensity>.4?.5:intensity>0?.2:.05;
+      html+=`<div class="heat-cell" style="background:rgba(99,102,241,${alpha})"></div>`;
+    }
+    html+='</div>';
   }
   hm.innerHTML=html;
 }
@@ -377,7 +429,7 @@ function renderSourceList(s){
   const el=document.getElementById('source-list');
   if(!el||!s.sources)return;
   const colors={web:'#818cf8',tg:'#22d3ee',idea:'#a855f7',api:'#22d3ee',manual:'#6b7280',extension:'#10b981'};
-  el.innerHTML=Object.entries(s.sources).slice(0,4).map(([k,v])=>`<div class="source-row"><span class="source-dot" style="background:${colors[k]||'#888'}"></span>${k}<span class="source-count">${v}</span></div>`).join('');
+  el.innerHTML=Object.entries(s.sources).slice(0,4).map(([k,v])=>`<div class="source-item"><span class="sdot" style="background:${colors[k]||'#888'}"></span>${SOURCE_NAMES[k]||k}<span class="scount">${v}</span></div>`).join('');
 }
 
 function renderEmotionDonut(s){
@@ -387,28 +439,25 @@ function renderEmotionDonut(s){
   const emotions=s.emotions;
   const total=Object.values(emotions).reduce((a,b)=>a+b,0)||1;
   const colors={excited:'#f59e0b',curious:'#6366f1',inspired:'#10b981',concerned:'#ef4444',neutral:'#6b7280'};
-  const labels={excited:'🔥',curious:'🧐',inspired:'✨',concerned:'⚠️',neutral:'📌'};
+  const labels={excited:'🔥Excited',curious:'🧐Curious',inspired:'✨Inspired',concerned:'⚠️Concerned',neutral:'📌Neutral'};
 
-  // SVG donut
-  const cx=28,cy=28,r=22,sw=8;
-  let angle=-Math.PI/2,html='';
+  const cx=34,cy=34,r=28,sw=8;
+  let angle=-Math.PI/2,paths='';
   const entries=Object.entries(emotions).filter(([,v])=>v>0);
   entries.forEach(([k,v])=>{
     const slice=(v/total)*Math.PI*2;
     const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
-    const x2=cx+r*Math.cos(angle+slice),y2=cy+r*Math.sin(angle+slice);
     const large=slice>Math.PI?1:0;
-    html+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${colors[k]||'#888'}" opacity=".85"/>`;
+    paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${cx+r*Math.cos(angle+slice)},${cy+r*Math.sin(angle+slice)} Z" fill="${colors[k]||'#888'}" opacity=".85"/>`;
     angle+=slice;
   });
-  html+=`<circle cx="${cx}" cy="${cy}" r="${r-sw+1}" fill="var(--bg2)"/>`;
-  html+=`<text x="${cx}" y="${cy+1}" text-anchor="middle" fill="var(--text)" font-size="10" font-weight="800">${total}</text>`;
-  svg.innerHTML=html;
+  paths+=`<circle cx="${cx}" cy="${cy}" r="${r-sw+1}" fill="var(--card)"/>`;
+  paths+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="800">${total}</text>`;
+  svg.innerHTML=paths;
 
-  // Legend
-  legend.innerHTML=entries.slice(0,3).map(([k,v])=>{
+  legend.innerHTML=entries.slice(0,4).map(([k,v])=>{
     const pct=Math.round(v/total*100);
-    return `<span style="color:${colors[k]};margin-right:8px">${labels[k]} ${pct}%</span>`;
+    return `<div class="donut-legend-item"><span class="donut-legend-dot" style="background:${colors[k]}"></span>${labels[k]} ${pct}%</div>`;
   }).join('');
 }
 
@@ -417,10 +466,16 @@ function renderWeekChart(s){
   if(!el||!s.daily_counts)return;
   const max=Math.max(...Object.values(s.daily_counts),1);
   const colors=['#6366f1','#818cf8','#a855f7','#6366f1','#818cf8','#a855f7','#6366f1'];
-  el.innerHTML=Object.entries(s.daily_counts).map(([,v],i)=>{
-    const h=Math.max((v/max)*32,2);
-    return `<div class="mini-bar" style="height:${h}px;background:${colors[i]};opacity:.7"></div>`;
-  }).join('');
+  const days=['M','T','W','T','F','S','S'];
+  let html='';
+  Object.entries(s.daily_counts).forEach(([,v],i)=>{
+    const h=Math.max((v/max)*48,3);
+    html+=`<div style="display:flex;flex-direction:column;align-items:center;flex:1">`;
+    html+=`<div class="mini-bar" style="height:${h}px;background:${colors[i]};opacity:.8;width:100%"></div>`;
+    html+=`<div class="mini-bar-label">${days[i]}</div>`;
+    html+=`</div>`;
+  });
+  el.innerHTML=html;
 }
 
 // =========== RENDER CARDS ===========
@@ -436,17 +491,15 @@ function render(){
       <div class="emotion-strip"></div>
       <div class="cb">${isSel?'✓':''}</div>
       <div class="card-top">
-        <span class="source-chip ${i.source||'manual'}">${i.source||'manual'}</span>
-        <span class="card-emoji">${EMOJI[i.emotion]||'📌'}</span>
+        <span class="source-chip ${i.source||'manual'}">${SOURCE_NAMES[i.source]||i.source||'manual'}</span>
+        <span style="font-size:18px">${EMOJI[i.emotion]||'📌'}</span>
+        <span class="card-time-chip">${fmt(i.created_at)}</span>
       </div>
       <div class="card-title">${esc(i.title||'未命名')}</div>
       <div class="card-summary">${esc(i.summary||'').slice(0,140)}</div>
-      <div class="card-keywords">${(i.keywords||[]).slice(0,3).map((k,j)=>{
-        const hues=['purple','pink','green'];
-        return `<span class="kw">${esc(k)}</span>`;
-      }).join('')}</div>
+      <div class="card-keywords">${(i.keywords||[]).slice(0,3).map(k=>`<span class="kw">${esc(k)}</span>`).join('')}</div>
       <div class="card-footer">
-        <span class="card-time">🕐 ${fmt(i.created_at)}</span>
+        <span>📎 ${i.source?SOURCE_NAMES[i.source]||i.source:'unknown'}</span>
         <div class="card-actions">
           <button class="card-act" onclick="event.stopPropagation();expandInspiration(${i.id})">🔀 发散</button>
           <button class="card-act" onclick="event.stopPropagation();generateQuoteCard(${i.id})">💎 金句</button>
@@ -468,7 +521,10 @@ function updateSelBar(){
   if(selected.size>0){bar.classList.add('show');count.textContent=`已选 ${selected.size} 条`}
   else{bar.classList.remove('show')}
 }
-function setFilter(f){filter=f;document.querySelectorAll('.filter').forEach(el=>el.classList.toggle('active',el.textContent.trim().startsWith(f==='all'?'全部':(f==='extension'?'插件':f))));render()}
+function setFilter(f){filter=f;document.querySelectorAll('.filter').forEach(el=>{
+  const t=el.textContent.trim();
+  el.classList.toggle('active',f==='all'?t==='全部':t.includes(f==='tg'?'Agent':f==='extension'?'插件':f));
+});render()}
 
 // =========== CAPTURE ===========
 async function capture(){
@@ -567,7 +623,7 @@ async function deepDive(topic,angle,ids){
   }catch(e){showToast('❌ 深度拆解失败')}
 }
 
-// =========== DNA PANEL ===========
+// =========== DNA ===========
 function toggleDnaPanel(){
   const p=document.getElementById('dna-panel');
   p.classList.toggle('show');
