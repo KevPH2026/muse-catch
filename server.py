@@ -148,13 +148,25 @@ def close_db(exception):
     if db: db.close()
 
 # ========== LLM PROCESSING ==========
+def _get_user_model_config(db):
+    """Read user's custom model config from creator_profile"""
+    try:
+        row = db.execute("SELECT model_config FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+        if row and row["model_config"]:
+            mc = json.loads(row["model_config"])
+            if mc.get("model") and mc.get("endpoint") and mc.get("key"):
+                return mc
+    except:
+        pass
+    return None
+
 def llm_extract(raw_text, source="web"):
     """Extract title, summary, keywords — TokenRouter cloud"""
     prompt = f"""Analyze this content snippet. Return ONLY valid JSON:
 {{"title":"max 80 chars", "summary":"max 200 chars", "keywords":"3-5 comma-separated", "emotion":"excited|curious|concerned|inspired|neutral", "tags":"2-3 category keywords"}}
 
 Content: {raw_text[:1500]}"""
-    content = call_llm(prompt, task="ingest")
+    content = call_llm(prompt, task="ingest", user_config=_get_user_model_config(db))
     if content:
         result = extract_json(content)
         if result:
@@ -390,7 +402,7 @@ def analyze_dna():
 {{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"结构偏好","strengths":[{{"name":"优势名","score":75}},{{"name":"优势2","score":82}},{{"name":"优势3","score":68}}],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
 内容({len(texts)}条):
 {sample_text[:6000]}"""
-        content = call_llm(prompt, task="dna")
+        content = call_llm(prompt, task="dna", user_config=_get_user_model_config(db))
         if not content:
             return jsonify({"error": "Agent 内置 LLM 返回空。请确认 Agent 连接正常。"}), 500
         dna = extract_json(content)
@@ -489,7 +501,7 @@ def scan_sessions_dna():
 {{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"思维结构","strengths":[{{"name":"优势名","score":80}},{{"name":"优势2","score":75}},{{"name":"优势3","score":70}}],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
 消息({len(user_texts)}条，来自Agent会话+灵感库):
 {sample_text[:8000]}"""
-        content = call_llm(prompt, task="dna")
+        content = call_llm(prompt, task="dna", user_config=_get_user_model_config(db))
         if not content:
             return jsonify({"error": "Agent 内置 LLM 返回空。"}), 500
         dna = extract_json(content)
@@ -657,7 +669,7 @@ def generate_topics():
 
 灵感素材:
 {context[:4000]}"""
-            content = call_llm(prompt, task="topics")
+            content = call_llm(prompt, task="topics", user_config=_get_user_model_config(db))
             if content:
                 topics = extract_json(content)
                 if isinstance(topics, list):
@@ -729,7 +741,7 @@ def topic_deep_dive():
 
 返回JSON：
 {{"viral_angles":["3个爆款角度，有冲突感",...],"headlines":["5个标题≤40字",...],"structure":["5-7段大纲",...],"quotes":["5条金句≤80字，有观点",...]}}"""
-            content = call_llm(prompt, task="deep_dive")
+            content = call_llm(prompt, task="deep_dive", user_config=_get_user_model_config(db))
             if content:
                 result = extract_json(content)
                 if result:
@@ -801,7 +813,7 @@ def expand_inspiration():
     if not content: return jsonify({"error": "需要 content 或有效的 id"}), 400
     prompt = f"""基于这条灵感做3个不同角度的发散思考。返回JSON数组：[{{"angle":"角度名","expanded":"发散内容100-200字","hook":"钩子≤40字"}}]
 灵感：{content[:1200]}"""
-    result = call_llm(prompt, task="expand")
+    result = call_llm(prompt, task="expand", user_config=_get_user_model_config(db))
     if result:
         arr_match = re.search(r'\[.*\]', result, re.DOTALL)
         if arr_match:
@@ -824,7 +836,7 @@ def classify_inspirations():
     items = "\n".join([f"[{r['id']}] {r['title']}: {r['summary'][:100]}" for r in rows])
     prompt = f"""把这些灵感分为4-6个聚类。JSON：{{"clusters":[{{"name":"簇名","count":3,"ids":[1,2,3],"desc":"描述"}}],"suggested_tags":["标签1"]}}
 条目({len(rows)}条)：{items[:4000]}"""
-    result = call_llm(prompt, task="classify")
+    result = call_llm(prompt, task="classify", user_config=_get_user_model_config(db))
     if result:
         obj = extract_json(result)
         if obj and "clusters" in obj:
@@ -847,7 +859,7 @@ def generate_quote_card():
     # Step 1: 金句
     q_prompt = f"""提炼3条金句(≤60字)，用于社交媒体配图。JSON：{{"quotes":["金句1","金句2","金句3"]}}
 内容：{input_text[:1500]}"""
-    q_result = call_llm(q_prompt, task="quotes")
+    q_result = call_llm(q_prompt, task="quotes", user_config=_get_user_model_config(db))
     quotes = []
     if q_result:
         q = extract_json(q_result)
@@ -1001,7 +1013,7 @@ Focus on making each item feel authentic to the creator's DNA. Not generic calen
 Return ONLY valid JSON array, no markdown."""
 
     try:
-        result = call_llm(prompt, temp=0.85, max_tokens=3000)
+        result = call_llm(prompt, temp=0.85, max_tokens=3000, user_config=_get_user_model_config(db))
         items = extract_json(result)
         if not isinstance(items, list):
             return jsonify({"ok": False, "error": "Failed to parse AI response", "raw": str(result)[:300]})
@@ -1363,6 +1375,17 @@ def chat():
     
     messages.append({"role": "user", "content": message})
     
+    # Try user's custom model config first (from Settings)
+    user_config = _get_user_model_config(db)
+    if user_config:
+        try:
+            result = call_llm(message, task="chat", user_config=user_config)
+            if result:
+                return jsonify({"reply": result, "actions": ["ai"]})
+        except Exception as e:
+            print(f"User model chat error: {e}")
+    
+    # Fall back to TR_API_KEY
     api_key = os.environ.get("TR_API_KEY", "")
     if not api_key:
         return jsonify({"reply": fallback_chat(message, db), "actions": ["fallback"]})

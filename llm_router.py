@@ -30,6 +30,7 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
 
 # 模型路由表
 ROUTE = {
+    "chat":        {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.7, "max_tokens": 2000},
     "expand":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 1200},
     "classify":    {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 1500},
     "topics":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 800},
@@ -76,11 +77,20 @@ def _read_agent_config():
 _AGENT_KEY, _AGENT_BASE, _AGENT_MODEL = _read_agent_config()
 
 
-def call_llm(prompt, task="ingest", system=None, temp=None, max_tokens=None):
-    """统一 LLM 调用入口。优先级：TR_API_KEY > Agent 自身 LLM > 规则兜底"""
+def call_llm(prompt, task="ingest", system=None, temp=None, max_tokens=None, user_config=None):
+    """统一 LLM 调用入口。优先级：用户自定义模型 > TR_API_KEY > Agent 自身 LLM > 规则兜底"""
     cfg = ROUTE.get(task, ROUTE["ingest"])
     _temp = temp if temp is not None else cfg["temp"]
     _max_tokens = max_tokens if max_tokens is not None else cfg["max_tokens"]
+    
+    # 0. 用户自定义模型（Settings 配置），最高优先级
+    if user_config and user_config.get("model") and user_config.get("endpoint") and user_config.get("key"):
+        result = _call_openai_compat(
+            user_config["endpoint"], user_config["key"],
+            user_config["model"], prompt, _temp, _max_tokens, system
+        )
+        if result:
+            return result
     
     # 1. TokenRouter cloud (if user configured key)
     if TR_KEY:
@@ -132,6 +142,39 @@ def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
             content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
             if content:
                 return content
+    return None
+
+
+def _call_openai_compat(endpoint, key, model, prompt, temp=0.5, max_tokens=1000, system=None):
+    """Call any OpenAI-compatible API (DeepSeek, SiliconFlow, custom)"""
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    
+    body = {
+        "model": model,
+        "messages": messages,
+        "temperature": temp,
+        "max_tokens": max_tokens
+    }
+    headers = {"Authorization": f"Bearer {key}"}
+    
+    # Try multiple endpoint patterns
+    base = endpoint.rstrip("/")
+    urls = [
+        f"{base}/v1/chat/completions",
+        f"{base}/chat/completions",
+    ]
+    for url in urls:
+        resp = _http_post_json(url, body, headers)
+        if resp:
+            content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if content:
+                if not system or "system" not in str(system).lower()[:20]:
+                    print(f"[LLM Router] User custom model OK: {model}")
+                return content
+    print(f"[LLM Router] User custom model failed: {model} @ {endpoint}")
     return None
 
 
