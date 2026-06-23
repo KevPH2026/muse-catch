@@ -1,6 +1,6 @@
 ---
 name: muse
-description: Muse · Catch — AI 灵感捕手。浏览器插件+Telegram Bot一键捕获灵感，AI自动提炼，Web Dashboard浏览。当用户说「灵感」「捕获」「Muse」「Catch」「记下来」「收藏」「稍后读」时自动触发。
+description: Muse · Catch — AI灵感捕手。浏览器插件+Telegram Bot一键捕获，AI自动提炼，Dashboard浏览+DNA雷达+OPC Market。当用户说「灵感」「捕获」「Muse」「Catch」「记下来」「收藏」时触发。
 category: product
 ---
 
@@ -10,6 +10,8 @@ category: product
 >
 > 浏览器插件 + Telegram Bot → 1秒捕获 → AI 提炼 → 灵感卡片墙。
 > 不是笔记软件。是你灵感库的操作系统。
+>
+> **v1.4 新功能：** 🧬 Creator DNA 雷达图 · 🏪 OPC Market 生态 · 🗑 删除管理
 
 ---
 
