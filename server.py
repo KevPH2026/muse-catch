@@ -662,6 +662,10 @@ def topic_deep_dive():
 
 # ========== WEB DASHBOARD ==========
 @app.route("/")
+def landing():
+    return open(Path(__file__).parent / "landing.html").read()
+
+@app.route("/app")
 def dashboard():
     return open(Path(__file__).parent / "index.html").read()
 
