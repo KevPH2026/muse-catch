@@ -172,14 +172,14 @@ cp .env.example .env
 ```bash
 # TokenRouter API (optional — get key at https://tokenrouter.com)
 TR_BASE_URL=https://api.tokenrouter.com/v1
-TR_API_KEY=***
+TR_API_KEY=
 
 # Local Ollama (optional — privacy-first fallback)  
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:14b
 ```
 
-**优先级：** TokenRouter（如有配置）→ Ollama 本地 → 规则兜底。不配任何 Key 也能跑。
+**优先级：** TokenRouter（如有配置）→ Agent 自身 LLM（继承 Hermes 配置）→ Ollama 本地 → 规则兜底。不配任何 Key 也能跑。
 
 ## 🔌 API 参考
 
@@ -253,7 +253,7 @@ curl http://localhost:5200/api/profile
 |---|---|
 | API 连不上 | `curl localhost:5200/api/stats` |
 | 端口被占 | `lsof -i :5200` → `kill <PID>` |
-| LLM 不工作 | 检查 `.env` 是否配置 `TR_API_KEY`（TokenRouter）或 Ollama 是否运行。不配 Key 也能跑基础功能（规则提取） |
+| LLM 不工作 | 不配 Key也能跑（Agent 自身 LLM）。可选配 `TR_API_KEY` 解锁更多模型。Ollama 也行 |
 | 插件捕获失败 | 确认 CORS 已启用（server.py 已内置） |
 | Bot 没反应 | `echo $MUSE_BOT_KEY` 确认已设 |
 | DNA 分析超时 | 确认 Agent 模型可用。DNA 分析走 Agent 内置 LLM，不依赖外部服务 |

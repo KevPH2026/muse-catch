@@ -3,7 +3,7 @@ Muse Catch — 分级 LLM 路由层
 - Agent 内置 LLM：隐私数据不出对话上下文（Onboarding DNA、个人画像分析）
 - TokenRouter 云端：公开功能（灵感分析、选题、金句配图）— 用户自行配置 API Key
 
-缺省模式：未配置 TR_API_KEY 时自动使用 Agent 本地模型（Ollama / 内置）。
+缺省模式：未配置 TR_API_KEY 时自动使用 Agent 自身的 LLM 能力。
 TokenRouter 注册：https://tokenrouter.com
 """
 import os
@@ -15,6 +15,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent / ".env")
+# Also inherit Agent's own API keys (Hermes Agent env)
+_load_agent = Path(os.path.expanduser("~/.hermes/.env"))
+if _load_agent.exists():
+    load_dotenv(_load_agent, override=False)  # don't override skill's .env
 
 TZ = timezone(timedelta(hours=8))
 TR_BASE = os.environ.get("TR_BASE_URL", "https://api.tokenrouter.com/v1")
@@ -35,8 +39,14 @@ ROUTE = {
 }
 
 
+# Agent 自身的 LLM 配置（从 Hermes Agent 继承）
+_AGENT_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+_AGENT_BASE = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+_AGENT_MODEL = "deepseek-chat"
+
+
 def call_llm(prompt, task="ingest", system=None):
-    """统一 LLM 调用入口。优先级：TR_API_KEY > Ollama 本地 > 错误提示"""
+    """统一 LLM 调用入口。优先级：TR_API_KEY > Agent 自身 LLM > 规则兜底"""
     cfg = ROUTE.get(task, ROUTE["ingest"])
     temp = cfg["temp"]
     max_tokens = cfg["max_tokens"]
@@ -48,13 +58,52 @@ def call_llm(prompt, task="ingest", system=None):
         if result:
             return result
     
-    # 2. Local Ollama fallback
+    # 2. Agent 自身的 LLM 能力（继承 Hermes Agent 的 API Key）
+    if _AGENT_KEY:
+        result = _call_agent_model(_AGENT_MODEL, prompt, temp, max_tokens, system)
+        if result:
+            return result
+    
+    # 3. Local Ollama fallback
     local_model = cfg.get("model_local") or OLLAMA_MODEL
     result = _call_ollama(local_model, prompt, temp, max_tokens, system)
     if result:
         return result
     
-    print("[LLM Router] No LLM available. Set TR_API_KEY in .env or run Ollama locally.")
+    print("[LLM Router] No LLM available. Set TR_API_KEY in .env or let your Agent handle analysis.")
+    return None
+
+
+def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
+    """调用 Agent 自身的 LLM（DeepSeek API — 继承 Hermes Agent 配置）"""
+    if not _AGENT_KEY:
+        return None
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    
+    body = {
+        "model": model,
+        "messages": messages,
+        "temperature": temp,
+        "max_tokens": max_tokens
+    }
+    
+    try:
+        r = subprocess.run([
+            "curl", "-s", "--max-time", "30",
+            f"{_AGENT_BASE}/v1/chat/completions",
+            "-H", f"Authorization: Bearer {_AGENT_KEY}",
+            "-H", "Content-Type: application/json",
+            "-d", json.dumps(body, ensure_ascii=False)
+        ], capture_output=True, text=True, timeout=35)
+        
+        if r.returncode == 0 and r.stdout.strip():
+            resp = json.loads(r.stdout)
+            return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
+    except Exception as e:
+        print(f"[LLM Router] Agent model error: {e}")
     return None
 
 
