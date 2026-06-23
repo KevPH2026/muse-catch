@@ -272,6 +272,89 @@ if (host.includes('mp.weixin.qq.com')) {
   navObserver.observe(document.body, { childList: true, subtree: true });
 }
 
+// ============ 微信读书 — 划线/笔记自动捕获 ============
+if (host.includes('weread.qq.com')) {
+  const capturedWeread = new Set(); // dedup by text hash
+  let lastHighlight = '';
+
+  function getBookContext() {
+    // Try multiple selectors for book info (WeRead UI changes)
+    const title = document.querySelector('.readerTopBar_title_link')?.innerText?.trim()
+      || document.querySelector('.readerBookInfo .bookTitle')?.innerText?.trim()
+      || document.querySelector('[class*="bookTitle"]')?.innerText?.trim()
+      || document.title?.replace(' - 微信读书', '')?.trim()
+      || '';
+    const author = document.querySelector('.readerBookInfo .bookAuthor')?.innerText?.trim()
+      || document.querySelector('[class*="bookAuthor"]')?.innerText?.trim()
+      || '';
+    const chapter = document.querySelector('.readerTopBar_chapter')?.innerText?.trim()
+      || document.querySelector('[class*="chapter"]')?.innerText?.trim()
+      || '';
+    return { title, author, chapter };
+  }
+
+  // Method 1: Monitor DOM for highlight popup (WeRead shows a toolbar when text is selected)
+  const highlightObserver = new MutationObserver(() => {
+    // Check for highlight action buttons
+    const highlightBtn = document.querySelector('.readerNoteDialog, [class*="highlight"], [class*="underline"]');
+    if (!highlightBtn) return;
+
+    const selection = window.getSelection()?.toString()?.trim();
+    if (!selection || selection.length < 3 || selection === lastHighlight) return;
+    lastHighlight = selection;
+
+    const hash = selection.slice(0, 50);
+    if (capturedWeread.has(hash)) return;
+
+    // Wait a moment for the user to confirm the highlight (or add note)
+    setTimeout(() => {
+      const noteText = document.querySelector('.readerNoteDialog textarea, [class*="ideaInput"]')?.value?.trim() || '';
+      const ctx = getBookContext();
+      const finalText = noteText ? `💡 ${noteText}\n\n📖 ${selection}` : `📖 ${selection}`;
+
+      capturedWeread.add(hash);
+      sendToMuse({
+        source: 'weread',
+        content: finalText,
+        title: ctx.title ? `《${ctx.title}》${ctx.chapter ? ' · ' + ctx.chapter : ''}` : selection.slice(0, 60),
+        url: location.href,
+        note: `📚 微信读书 · ${ctx.author || ''}`,
+        tags: ['微信读书', '划线']
+      }).then((res) => {
+        if (res.ok) showToast(`已捕获: ${ctx.title ? '《'+ctx.title.slice(0,15)+'》' : '划线'}`);
+        else showToast('Muse API 未连接', false);
+      });
+    }, 800);
+  });
+  highlightObserver.observe(document.body, { childList: true, subtree: false });
+
+  // Method 2: Listen for Ctrl+C / Cmd+C after selection (fallback)
+  document.addEventListener('copy', () => {
+    const selection = window.getSelection()?.toString()?.trim();
+    if (!selection || selection.length < 10) return;
+    const hash = selection.slice(0, 50);
+    if (capturedWeread.has(hash)) return;
+
+    // Check if copy happened on weread (not an input field)
+    if (document.activeElement?.closest('input, textarea, [contenteditable]')) return;
+
+    const ctx = getBookContext();
+    if (!ctx.title) return; // not on a book page
+
+    capturedWeread.add(hash);
+    sendToMuse({
+      source: 'weread',
+      content: `📖 ${selection}`,
+      title: `《${ctx.title}》${ctx.chapter ? ' · ' + ctx.chapter : ''}`,
+      url: location.href,
+      note: `📚 微信读书 · ${ctx.author || ''}`,
+      tags: ['微信读书', '划线']
+    }).then((res) => {
+      if (res.ok) showToast(`已捕获: 《${ctx.title.slice(0, 12)}》划线`);
+    });
+  });
+}
+
 // ============ 通用 — 选中文字追踪 ============
 let lastSelection = '';
 document.addEventListener('selectionchange', () => {
