@@ -5,19 +5,5 @@
     { "source": "/demo.js", "destination": "/demo.js" },
     { "source": "/onboard.js", "destination": "/onboard.js" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "functions": {
-    "api/topics": {
-      "maxDuration": 60
-    },
-    "api/topic-deep-dive": {
-      "maxDuration": 60
-    },
-    "api/expand": {
-      "maxDuration": 60
-    },
-    "api/classify": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }

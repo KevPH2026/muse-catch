@@ -32,9 +32,9 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
 ROUTE = {
     "expand":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 1200},
     "classify":    {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 1500},
-    "topics":      {"provider": "auto", "model_tr": "anthropic/claude-sonnet-4", "model_local": None, "temp": 0.8, "max_tokens": 1500},
-    "deep_dive":   {"provider": "auto", "model_tr": "anthropic/claude-sonnet-4", "model_local": None, "temp": 0.7, "max_tokens": 2000},
-    "quotes":      {"provider": "auto", "model_tr": "anthropic/claude-sonnet-4", "model_local": None, "temp": 0.9, "max_tokens": 800},
+    "topics":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 800},
+    "deep_dive":   {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.7, "max_tokens": 1200},
+    "quotes":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.9, "max_tokens": 600},
     "dna":         {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.5, "max_tokens": 1200, "label": "Agent 内置 LLM"},
     "ingest":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 400},
     "onboarding":  {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.5, "max_tokens": 800, "label": "Agent 内置 LLM"},
