@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Muse · Catch",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "一键捕获正在浏览的内容到 Muse 灵感库 — 任何网页、任何想法，瞬间入库。",
   "action": {
     "default_popup": "popup.html",
