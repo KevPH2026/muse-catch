@@ -283,6 +283,7 @@
     transition:all .2s;
   }
   .integration-item:hover { border-color:var(--border-glow); }
+  .integration-item.active { border-color:var(--purple); background:rgba(99,102,241,0.08); }
   .integration-dot { width:7px; height:7px; border-radius:50%; background:var(--purple); box-shadow:0 0 6px var(--purple); }
 
   /* ===== Extension Section ===== */
@@ -597,7 +598,7 @@
   </section>
 
   <div class="hero-stats">
-    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Capture Channels</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">Platform Integrations</div></div>
     <div class="stat"><div class="stat-num">&lt;1s</div><div class="stat-label">Capture Speed</div></div>
     <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Your Data</div></div>
     <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Ideas Capacity</div></div>
@@ -614,8 +615,8 @@
     <div class="features-grid">
       <div class="feature-card floating" style="animation-delay:0s">
         <div class="feature-icon">🔌</div>
-        <h3>Omnichannel Capture</h3>
-        <p>Chrome extension one-click capture. Any Agent forward-to-save. REST API for any tool. Platform-agnostic by design.</p>
+        <h3>Platform Native Capture</h3>
+        <p>🐦 Twitter likes→capture. 📱 公众号 3s auto-save. 📚 微信读书 highlights sync. Any webpage one-click. Built for creators who live everywhere.</p>
       </div>
       <div class="feature-card floating" style="animation-delay:1s">
         <div class="feature-icon">🧠</div>
@@ -674,11 +675,13 @@
     </div>
 
     <div class="integration-bar">
-      <div class="integration-item"><span class="integration-dot"></span> Chrome Extension</div>
-      <div class="integration-item"><span class="integration-dot"></span> Any Agent</div>
-      <div class="integration-item"><span class="integration-dot"></span> REST API</div>
-      <div class="integration-item"><span class="integration-dot"></span> WeChat (Coming)</div>
-      <div class="integration-item"><span class="integration-dot"></span> Slack (Coming)</div>
+      <div class="integration-item active"><span class="integration-dot"></span> 🐦 Twitter</div>
+      <div class="integration-item active"><span class="integration-dot"></span> 📱 公众号</div>
+      <div class="integration-item active"><span class="integration-dot"></span> 📚 微信读书</div>
+      <div class="integration-item active"><span class="integration-dot"></span> 🌐 Any Webpage</div>
+      <div class="integration-item"><span class="integration-dot"></span> 🔌 REST API</div>
+      <div class="integration-item"><span class="integration-dot"></span> 🎙️ 小宇宙 (Coming)</div>
+      <div class="integration-item"><span class="integration-dot"></span> 📕 小红书 (Coming)</div>
     </div>
   </div>
 </section>
@@ -715,25 +718,25 @@
       </div>
 
       <div class="ext-info">
-        <h3>No app switching</h3>
-        <p>See something great in your browser? Capture it right there. Title, URL, and selected text auto-filled. Add a tag, done.</p>
+        <h3>Live where you browse</h3>
+        <p>Muse auto-detects which platform you're on. No copy-paste. No context switching. Your ideas, captured in their native context.</p>
 
         <div class="ext-feature-list">
           <div class="ext-feature-item">
+            <div class="ef-icon">🐦</div>
+            <div><strong>Twitter/X</strong><br><span style="color:var(--text-dim);font-size:11px">Like a tweet → auto-captured. Bookmark → auto-captured. Zero effort.</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">📱</div>
+            <div><strong>公众号</strong><br><span style="color:var(--text-dim);font-size:11px">Read >3 seconds → auto-captured with title + URL + text preview.</span></div>
+          </div>
+          <div class="ext-feature-item">
+            <div class="ef-icon">📚</div>
+            <div><strong>微信读书</strong><br><span style="color:var(--text-dim);font-size:11px">Highlight or note → captured with book title, chapter, author. API bulk sync supported.</span></div>
+          </div>
+          <div class="ext-feature-item">
             <div class="ef-icon">⌨️</div>
-            <div><strong>Keyboard Shortcut</strong><br><span style="color:var(--text-dim);font-size:11px">Ctrl+Shift+M — capture without lifting your hands</span></div>
-          </div>
-          <div class="ext-feature-item">
-            <div class="ef-icon">📋</div>
-            <div><strong>Context Menu</strong><br><span style="color:var(--text-dim);font-size:11px">Right-click anywhere → "Capture to Muse"</span></div>
-          </div>
-          <div class="ext-feature-item">
-            <div class="ef-icon">🤖</div>
-            <div><strong>Smart Pre-fill</strong><br><span style="color:var(--text-dim);font-size:11px">Auto-grabs title, URL, selected text. You just add a tag.</span></div>
-          </div>
-          <div class="ext-feature-item">
-            <div class="ef-icon">🔔</div>
-            <div><strong>Capture Notification</strong><br><span style="color:var(--text-dim);font-size:11px">System notification on success — never breaks your flow</span></div>
+            <div><strong>Any Webpage</strong><br><span style="color:var(--text-dim);font-size:11px">Ctrl+Shift+M or right-click → capture selected text. Auto-fills title + URL.</span></div>
           </div>
         </div>
 
@@ -993,7 +996,7 @@
         <ul class="pricing-features">
           <li>All features unlimited</li>
           <li>Local SQLite storage</li>
-          <li>Chrome extension + API</li>
+          <li>Chrome extension — 4 platforms</li>
           <li>Community support</li>
         </ul>
         <a href="https://github.com/KevPH2026/muse-catch" class="btn btn-outline" target="_blank">GitHub Download</a>
