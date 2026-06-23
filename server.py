@@ -764,13 +764,13 @@ def weread_sync():
     errors = []
     
     try:
-        req = __import__("urllib.request")
+        from urllib import request as urlreq
         
         # Step 1: Get bookshelf (books with highlights)
         shelf_url = f"https://i.weread.qq.com/shelf?apiKey={api_key}"
-        shelf_req = req.Request(shelf_url, headers={"User-Agent": "Muse-Catch/1.4"})
+        shelf_req = urlreq.Request(shelf_url, headers={"User-Agent": "Muse-Catch/1.4"})
         try:
-            with req.urlopen(shelf_req, timeout=15) as resp:
+            with urlreq.urlopen(shelf_req, timeout=15) as resp:
                 shelf_data = json.loads(resp.read())
         except Exception as e:
             return jsonify({"error": f"微信读书 API 读取书架失败 (检查 API Key): {str(e)}"}), 502
@@ -795,8 +795,8 @@ def weread_sync():
             try:
                 # Get highlights for this book
                 hl_url = f"https://i.weread.qq.com/book/bookmarklist?bookId={book_id}&apiKey={api_key}"
-                hl_req = req.Request(hl_url, headers={"User-Agent": "Muse-Catch/1.4"})
-                with req.urlopen(hl_req, timeout=15) as resp:
+                hl_req = urlreq.Request(hl_url, headers={"User-Agent": "Muse-Catch/1.4"})
+                with urlreq.urlopen(hl_req, timeout=15) as resp:
                     hl_data = json.loads(resp.read())
                 
                 highlights = hl_data.get("updated", [])
