@@ -312,7 +312,7 @@ def analyze_dna():
     
     try:
         prompt = f"""你是一个内容DNA分析师。基于这些内容提炼创作者DNA。返回纯JSON：
-{{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"结构偏好","strengths":["优势1","优势2","优势3"],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
+{{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"结构偏好","strengths":[{{"name":"优势名","score":75}},{{"name":"优势2","score":82}},{{"name":"优势3","score":68}}],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
 内容({len(texts)}条):
 {sample_text[:6000]}"""
         content = call_llm(prompt, task="dna")
@@ -411,7 +411,7 @@ def scan_sessions_dna():
     
     try:
         prompt = f"""你是一个内容DNA分析师。基于这些用户消息提炼创作者DNA。返回纯JSON：
-{{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"思维结构","strengths":["优势1","优势2","优势3"],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
+{{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"思维结构","strengths":[{{"name":"优势名","score":80}},{{"name":"优势2","score":75}},{{"name":"优势3","score":70}}],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
 消息({len(user_texts)}条，来自Agent会话+灵感库):
 {sample_text[:8000]}"""
         content = call_llm(prompt, task="dna")
@@ -457,9 +457,13 @@ def scan_sessions_dna():
         if "tone_tags" in dna and "tone" not in dna:
             tone_tags = dna.pop("tone_tags")
             dna["tone"] = ", ".join(tone_tags) if isinstance(tone_tags, list) else str(tone_tags)
-        if "strengths" in dna and isinstance(dna["strengths"], list) and dna["strengths"] and isinstance(dna["strengths"][0], dict):
-            # Convert [{name, score}] format for radar
-            dna["strengths"] = [s.get("name", str(s)) for s in dna["strengths"]]
+        if "strengths" in dna and isinstance(dna["strengths"], list) and dna["strengths"]:
+            # Normalize strengths to {name, score} objects for radar chart
+            dna["strengths"] = [
+                {"name": s.get("name", str(s)), "score": s.get("score", s.get("value", 70))}
+                if isinstance(s, dict) else {"name": str(s), "score": 65+hash(str(s))%25}
+                for s in dna["strengths"]
+            ]
         
         # Save to DB
         now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")

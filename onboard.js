@@ -71,13 +71,16 @@ function renderDna(p){
   if(!p.dna)return;
   document.getElementById('dna-badge').style.display='flex';
   document.getElementById('dna-persona').textContent=p.dna.persona||'创作者DNA画像';
-  document.getElementById('dna-stats').textContent=(p.dna.themes||p.dna.topics||[]).map(t=>'#'+t).join(' ');
+  // Use same stats format as displayDNA
+  const normStrengths = typeof normalizeStrengths==='function' ? normalizeStrengths(p.dna.strengths) : (p.dna.strengths||[]);
+  const scoreAvg = normStrengths.length ? Math.round(normStrengths.reduce((s,x)=>s+(typeof x==='object'?x.score||0:x||0),0)/normStrengths.length) : 0;
+  document.getElementById('dna-stats').textContent = `${normStrengths.length}维 · 综合${scoreAvg}分 · ${(p.dna.topics||[]).length}个核心话题`;
   
   // Handle both old (strings) and new (objects) strengths format
-  const strengths=p.dna.strengths||[];
-  const strengthHtml=strengths.length&&typeof strengths[0]==='object'
+  const strengths=normStrengths;  // Use normalized strengths for consistency
+  const strengthHtml=strengths.length
     ? strengths.map(s=>`<div style="display:flex;justify-content:space-between;margin:2px 0"><span>✅ ${esc(s.name)}</span><span style="color:var(--purple-light);font-weight:700">${s.score}</span></div>`).join('')
-    : strengths.map(s=>'✅ '+esc(s)).join('<br>');
+    : '';
   
   document.getElementById('dna-detail').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:12px;line-height:1.8">
@@ -90,8 +93,8 @@ function renderDna(p){
       <div style="grid-column:1/-1"><strong style="color:var(--purple-light)">💡 突破建议</strong><br>${esc(p.dna.growth_tip||'-')}</div>
     </div>`;
   
-  // Draw radar if new format strengths
-  if(strengths.length&&typeof strengths[0]==='object'&&typeof drawRadar==='function'){
+  // Draw radar with normalized strengths
+  if(strengths.length&&typeof drawRadar==='function'){
     setTimeout(()=>drawRadar(strengths),200);
   }
   document.getElementById('dna-panel').classList.add('show');
