@@ -196,23 +196,43 @@ a{color:inherit;text-decoration:none}
 .skills-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 .skills-toolbar input{flex:1;min-width:180px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;font-family:inherit}
 .skills-toolbar input:focus{outline:none;border-color:var(--accent)}
+
+/* Market Category Tabs */
+.market-cats{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;overflow-x:auto;padding-bottom:4px}
+.market-cats .mcat{
+  padding:6px 16px;border-radius:20px;font-size:12px;font-weight:500;
+  border:1px solid var(--border);background:var(--bg);color:var(--dim);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.market-cats .mcat:hover{border-color:var(--purple);color:var(--text)}
+.market-cats .mcat.active{background:var(--purple);color:#fff;border-color:var(--purple);font-weight:600}
+
 .skills-tags{display:flex;gap:6px;flex-wrap:wrap}
 .skills-tags .tag{padding:3px 10px;border-radius:12px;font-size:11px;border:1px solid var(--border);cursor:pointer;transition:all .15s;white-space:nowrap;background:var(--bg);color:var(--dim)}
 .skills-tags .tag:hover,.skills-tags .tag.active{background:rgba(99,102,241,.1);border-color:var(--accent);color:var(--accent)}
-.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
 .skill-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all .2s;cursor:default;display:flex;flex-direction:column;gap:10px;position:relative}
 .skill-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(0,0,0,.12);transform:translateY(-1px)}
 .skill-card.featured{border-color:rgba(99,102,241,.25);background:linear-gradient(135deg,rgba(99,102,241,.03),var(--bg))}
 .skill-card .skill-top{display:flex;gap:12px;align-items:flex-start}
 .skill-card .skill-icon{font-size:28px;line-height:1;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--surface2)}
 .skill-card .skill-info{flex:1;min-width:0}
-.skill-card .skill-name{font-size:14px;font-weight:700;margin:0 0 2px;display:flex;align-items:center;gap:6px}
+.skill-card .skill-name{font-size:14px;font-weight:700;margin:0 0 2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .skill-card .skill-author{font-size:11px;color:var(--dim)}
 .skill-card .skill-desc{font-size:11px;color:var(--dim);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .skill-card .skill-tags{display:flex;gap:4px;flex-wrap:wrap}
 .skill-card .skill-tag{font-size:10px;padding:1px 6px;border-radius:8px;background:var(--surface2);color:var(--dim)}
 .skill-card .skill-actions{display:flex;gap:8px;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border)}
 .badge-official{font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(99,102,241,.12);color:var(--accent);font-weight:600}
+/* Score stars */
+.mk-score{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:700;color:var(--orange);margin-left:auto}
+.mk-score .mk-star{font-size:10px}
+.mk-score .mk-num{font-size:11px}
+/* Market card badge row */
+.mk-badges{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.badge-featured{font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(245,158,11,.12);color:var(--orange);font-weight:600}
+.badge-category{font-size:9px;padding:1px 6px;border-radius:8px;background:var(--surface2);color:var(--dim)}
+.mk-pricing{font-size:10px;color:var(--purple-light);padding-top:4px}
 .badge-installed{font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(40,200,64,.12);color:#28c840;font-weight:600}
 .badge-custom{font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(245,158,11,.12);color:#f59e0b;font-weight:600}
 
@@ -490,7 +510,7 @@ a{color:inherit;text-decoration:none}
     <a class="nav-item active" onclick="switchTab('dashboard', this)"><span class="nav-icon">📊</span>Dashboard</a>
     <a class="nav-item" onclick="switchTab('dna', this)"><span class="nav-icon">🧬</span>DNA</a>
     <a class="nav-item" onclick="switchTab('ship', this)"><span class="nav-icon">📅</span>Ship</a>
-    <a class="nav-item" onclick="switchTab('skills', this)"><span class="nav-icon">🛠️</span>Skills</a>
+    <a class="nav-item" onclick="switchTab('skills', this)"><span class="nav-icon">🏪</span>OPC Market</a>
     <a class="nav-item" onclick="switchTab('settings', this)"><span class="nav-icon">⚙️</span>Settings</a>
     <a class="nav-item" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">💡</span>选题建议</a>
     <div class="nav-divider"></div>
@@ -705,50 +725,60 @@ a{color:inherit;text-decoration:none}
     <!-- ===== SKILLS PAGE (Marketplace) ===== -->
     <div id="skills-page">
       <div class="skills-header">
-        <h2>🛠️ OPC Skill Market</h2>
-        <p>创作者工具市场 — 一键安装你的创作武器库。官方精选 + 社区上传</p>
+        <h2>🏪 OPC Market</h2>
+        <p>创作者生态市场 — 技能 · Agent · 模型 · 中转 · 咨询 · 赞助。官方精选 + 社区共建</p>
       </div>
+
+      <!-- Market Category Tabs -->
+      <div class="market-cats" id="market-cats">
+        <span class="mcat active" onclick="switchMarketCat('', this)">🔥 全部</span>
+        <span class="mcat" onclick="switchMarketCat('skills', this)">🛠️ Skills</span>
+        <span class="mcat" onclick="switchMarketCat('agents', this)">🤖 Agents</span>
+        <span class="mcat" onclick="switchMarketCat('models', this)">🎯 模型订阅</span>
+        <span class="mcat" onclick="switchMarketCat('relay', this)">🔄 中转站</span>
+        <span class="mcat" onclick="switchMarketCat('consulting', this)">💬 人工咨询</span>
+        <span class="mcat" onclick="switchMarketCat('sponsorship', this)">💰 模型赞助</span>
+      </div>
+
+      <!-- Toolbar -->
       <div class="skills-toolbar">
-        <input type="text" id="skill-search" placeholder="🔍 搜索技能..." oninput="filterSkills()">
-        <button class="btn btn-outline" onclick="toggleUploadForm()" style="font-size:12px">📤 上传技能</button>
-      </div>
-      <div class="skills-tags" id="skill-tags">
-        <span class="tag active" onclick="filterByCategory('', this)">全部</span>
+        <input type="text" id="skill-search" placeholder="🔍 搜索整个生态..." oninput="filterSkills()">
+        <button class="btn btn-outline" onclick="toggleUploadForm()" style="font-size:12px">📤 我要上架</button>
       </div>
 
       <!-- Upload form -->
       <div class="upload-form" id="upload-form">
-        <h4>📤 上传新技能</h4>
+        <h4>📤 上架新产品</h4>
+        <p style="font-size:10px;color:var(--dim);margin-bottom:10px">Skills / Agents / 服务 — 都可以上架到 OPC Market，经审核后展示</p>
         <div class="form-row">
-          <input type="text" id="upload-name" placeholder="技能名称 *" maxlength="80">
+          <input type="text" id="upload-name" placeholder="产品名称 *" maxlength="80">
           <input type="text" id="upload-url" placeholder="网址 (可选)">
         </div>
         <div class="form-row">
           <input type="text" id="upload-desc" placeholder="简短描述">
           <select id="upload-category">
-            <option value="tools">🛠️ 工具</option>
-            <option value="content">✍️ 内容</option>
-            <option value="analytics">📊 分析</option>
-            <option value="deploy">🚀 部署</option>
-            <option value="social">📱 社交</option>
-            <option value="design">🎨 设计</option>
-            <option value="capture">🔖 采集</option>
-            <option value="sync">🔄 同步</option>
+            <option value="skills">🛠️ Skills</option>
+            <option value="agents">🤖 Agents</option>
+            <option value="models">🎯 模型订阅</option>
+            <option value="relay">🔄 中转站</option>
+            <option value="consulting">💬 人工咨询</option>
+            <option value="sponsorship">💰 赞助</option>
           </select>
           <input type="text" id="upload-tags" placeholder="标签，逗号分隔">
         </div>
         <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn btn-primary" onclick="uploadSkill()" style="font-size:12px">上传</button>
+          <button class="btn btn-primary" onclick="uploadSkill()" style="font-size:12px">提交</button>
           <button class="btn btn-ghost" onclick="toggleUploadForm()" style="font-size:12px">取消</button>
         </div>
       </div>
 
-      <!-- Skill cards -->
+      <!-- Market cards -->
       <div class="skills-grid" id="skills-grid"></div>
 
       <!-- Installed section -->
       <div class="installed-section" id="installed-section" style="display:none">
-        <h3>📦 已安装</h3>
+        <h3>📦 我的工具箱</h3>
+        <p style="font-size:10px;color:var(--dim);margin-bottom:12px">已安装/订阅的产品和服务</p>
         <div class="installed-grid" id="installed-grid"></div>
       </div>
     </div>
@@ -939,6 +969,7 @@ const SOURCE_NAMES={web:'Web',tg:'Agent',idea:'Idea',api:'API',manual:'手动',e
 
 // =========== UTILS ===========
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function escAttr(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function fmt(d){if(!d)return'';const dt=new Date(d),now=new Date();const diff=now-dt;if(diff<60000)return'刚刚';if(diff<3600000)return Math.floor(diff/60000)+'分钟前';if(diff<86400000)return Math.floor(diff/3600000)+'小时前';return dt.toLocaleDateString('zh-CN')}
 function showToast(msg,duration=2000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),duration)}
 function scrollToTop(){document.getElementById('page-scroll-top').scrollIntoView({behavior:'smooth'})}
@@ -1468,6 +1499,7 @@ function switchTab(tab, el){
     if(topicsPanel) topicsPanel.classList.remove('show');
     if(divePanel) divePanel.classList.remove('show');
     dnaPage.classList.remove('show');
+    if(skillsPage) skillsPage.classList.remove('show');
     shipPage.classList.add('show');
     if(settingsPage) settingsPage.classList.remove('show');
     document.getElementById('model-config').style.display = 'none';
@@ -1477,6 +1509,8 @@ function switchTab(tab, el){
     [statsBar, dnaBadge, dnaPanel, selBar, filters, pf, grid, empty].forEach(el => { if(el) el.style.display = 'none'; });
     if(topicsPanel) topicsPanel.classList.remove('show');
     if(divePanel) divePanel.classList.remove('show');
+    if(shipPage) shipPage.classList.remove('show');
+    if(skillsPage) skillsPage.classList.remove('show');
     // Show DNA page
     dnaPage.classList.add('show');
     if(settingsPage) settingsPage.classList.remove('show');
@@ -1676,24 +1710,22 @@ async function startWritingOn(platform){
 }
 
 
-// ---- Skills Marketplace ----
+// ---- OPC Market ----
 let allSkills = [], installedIds = [], currentCategory = '';
 let filteredSkills = [];
+
+function switchMarketCat(cat, el){
+  currentCategory = cat;
+  document.querySelectorAll('#market-cats .mcat').forEach(t => t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  filterSkills();
+}
 
 async function loadSkills(){
   const r = await fetch('/api/skills');
   const d = await r.json();
   allSkills = d.skills || [];
   installedIds = d.installed_ids || [];
-  
-  // Build category tags
-  const cats = d.categories || [];
-  const catNames = {tools:'🛠️ 工具',content:'✍️ 内容',analytics:'📊 分析',deploy:'🚀 部署',social:'📱 社交',design:'🎨 设计',capture:'🔖 采集',sync:'🔄 同步'};
-  const tagsDiv = document.getElementById('skill-tags');
-  let tagHtml = '<span class="tag active" onclick="filterByCategory(\'\', this)">全部</span>';
-  cats.forEach(c => { tagHtml += `<span class="tag" onclick="filterByCategory('${c}', this)">${catNames[c] || c}</span>`; });
-  tagsDiv.innerHTML = tagHtml;
-  
   filterSkills();
   loadInstalledSkills();
 }
@@ -1711,19 +1743,17 @@ function filterSkills(){
   renderSkillCards();
 }
 
-function filterByCategory(cat, el){
-  currentCategory = cat;
-  document.querySelectorAll('#skill-tags .tag').forEach(t => t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  filterSkills();
-}
+const catLabels = {
+  skills:'🛠️ Skills', agents:'🤖 Agents', models:'🎯 模型订阅',
+  relay:'🔄 中转站', consulting:'💬 人工咨询', sponsorship:'💰 赞助'
+};
 
 function renderSkillCards(){
   const grid = document.getElementById('skills-grid');
   if(!grid) return;
   
   if(!filteredSkills.length){
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);font-size:13px">📦 没有找到匹配的技能<br><br>试试换个关键词，或者点"📤 上传技能"添加你自己的</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);font-size:13px">📦 这个分类还没有产品<br><br>试试换个分类，或者点"📤 我要上架"提交你自己的</div>';
     return;
   }
   
@@ -1731,25 +1761,33 @@ function renderSkillCards(){
     const installed = installedIds.includes(s.id);
     const meta = s.meta_json ? (() => { try{return JSON.parse(s.meta_json)}catch(e){return{}} })() : {};
     const isFeatured = meta.featured;
+    const score = s.score || 0;
+    const stars = score >= 4.7 ? '⭐⭐⭐⭐⭐' : score >= 4.3 ? '⭐⭐⭐⭐' : score >= 3.8 ? '⭐⭐⭐' : score >= 3.0 ? '⭐⭐' : score > 0 ? '⭐' : '';
     return `
       <div class="skill-card ${isFeatured ? 'featured' : ''}">
         <div class="skill-top">
-          <div class="skill-icon">${s.icon || '🛠️'}</div>
+          <div class="skill-icon">${s.icon || '📦'}</div>
           <div class="skill-info">
             <div class="skill-name">
               ${escHtml(s.name)}
-              ${s.is_official ? '<span class="badge-official">官方</span>' : ''}
+              <div class="mk-badges">
+                ${s.is_official ? '<span class="badge-official">官方</span>' : ''}
+                ${isFeatured ? '<span class="badge-featured">🔥 推荐</span>' : ''}
+                <span class="badge-category">${catLabels[s.category] || s.category}</span>
+              </div>
             </div>
             <div class="skill-author">by ${escHtml(s.author || 'Community')}</div>
           </div>
+          ${stars ? `<div class="mk-score"><span class="mk-star">${stars}</span><span class="mk-num">${score.toFixed(1)}</span></div>` : ''}
         </div>
         <div class="skill-desc">${escHtml(s.description || '')}</div>
+        ${meta.pricing ? `<div class="mk-pricing">💲 ${meta.pricing}</div>` : ''}
         <div class="skill-tags">${(s.tags || '').split(',').filter(Boolean).map(t => `<span class="skill-tag">${t.trim()}</span>`).join('')}</div>
         <div class="skill-actions">
           ${s.url ? `<a href="${escAttr(s.url)}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none">🔗 访问</a>` : '<span style="font-size:11px;color:var(--dim)">内置</span>'}
           ${installed 
             ? `<button class="btn btn-outline" onclick="doUninstall(${s.id})" style="font-size:11px;color:#ef4444">卸载</button>`
-            : `<button class="btn btn-primary btn-sm" onclick="doInstall(${s.id})" style="font-size:11px">安装</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="doInstall(${s.id})" style="font-size:11px">${s.category === 'consulting' ? '预约' : s.category === 'sponsorship' ? '申请' : '安装'}</button>`
           }
         </div>
       </div>`;

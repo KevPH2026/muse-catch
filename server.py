@@ -100,6 +100,7 @@ def init_db():
             is_official INTEGER DEFAULT 0,
             tags TEXT DEFAULT '',
             installs INTEGER DEFAULT 0,
+            score REAL DEFAULT 0,
             meta_json TEXT DEFAULT '{}',
             created_at TIMESTAMP DEFAULT (datetime('now','localtime'))
         );
@@ -129,6 +130,9 @@ def init_db():
         db.execute("ALTER TABLE creator_profile ADD COLUMN image_model_config TEXT DEFAULT '{}'")
     except:
         pass
+    # OPC Market: add score column
+    try: db.execute("ALTER TABLE skill_market ADD COLUMN score REAL DEFAULT 0")
+    except: pass
     try:
         db.execute("ALTER TABLE creator_profile ADD COLUMN updated_at TIMESTAMP")
     except:
@@ -1105,23 +1109,50 @@ def manage_calendar(item_id):
 
 # ========== SKILL MARKETPLACE — OPC App Store ==========
 def _seed_skills(db):
-    """Pre-seed official skills if table is empty"""
+    """Pre-seed official OPC Market items if table is empty"""
     count = db.execute("SELECT COUNT(*) FROM skill_market").fetchone()[0]
     if count > 0:
         return
-    skills = [
-        ("DNA Creator Analysis", "深度创作DNA画像分析——识别你的创作风格、话题偏好、语气特征，让AI真正懂你", "analytics", "https://dna.superk.ai", "🧬", "Muse Team", 1, "dna,analytics,personality,creator", 0, '{"app_type":"web","featured":true}'),
-        ("MiniLaunch", "一键把任何HTML/CSS/JS项目部署上线——支持Vercel、GitHub Pages，零配置", "deploy", "https://github.com/KevPH2026/minilaunch", "🚀", "KevPH", 1, "deploy,launch,hosting,vercel,github", 0, '{"app_type":"github","featured":true}'),
-        ("AI Content Writer", "基于你的DNA画像，自动生成符合你风格的长文/推文/邮件——不是通用AI，是你的AI", "content", "", "✍️", "Muse Team", 1, "writing,content,ai,creator", 0, '{"app_type":"builtin","featured":false}'),
-        ("Inspiration Capture", "浏览器插件一键捕获灵感——网页/推文/图片秒存到你的灵感池", "capture", "", "🔖", "Muse Team", 1, "capture,browser,extension,bookmark", 0, '{"app_type":"extension","featured":false}'),
-        ("Social Scheduler", "多平台内容排期发布——写一次，自动适配Twitter/LinkedIn/公众号格式", "social", "", "📱", "Muse Team", 1, "social,schedule,twitter,linkedin", 0, '{"app_type":"builtin","featured":false}'),
-        ("AI Quote Card Generator", "金句自动生成精美卡片——9种风格模版，一键分享到社交平台", "design", "", "🎨", "Muse Team", 1, "design,quote,card,social", 0, '{"app_type":"builtin","featured":false}'),
-        ("Notion Sync", "灵感池 ↔ Notion 双向同步——你的知识库永不丢失", "sync", "", "🔄", "Muse Team", 1, "sync,notion,knowledge,backup", 0, '{"app_type":"integration","featured":false}'),
-        ("Analytics Dashboard", "创作者数据看板——粉丝增长、内容表现、最佳发布时间", "analytics", "", "📊", "Muse Team", 1, "analytics,dashboard,metrics,growth", 0, '{"app_type":"builtin","featured":false}'),
+    market = [
+        # ── Skills ──
+        ("DNA Creator Analysis", "深度创作DNA画像分析——识别你的创作风格、话题偏好、语气特征，让AI真正懂你", "skills", "https://dna.superk.ai", "🧬", "Muse Team", 1, "dna,analytics,personality,creator", 5, 4.8, '{"app_type":"web","featured":true}'),
+        ("MiniLaunch", "一键部署上线——支持Vercel、GitHub Pages，零配置", "skills", "https://github.com/KevPH2026/minilaunch", "🚀", "KevPH", 1, "deploy,launch,hosting,vercel", 3, 4.5, '{"app_type":"github","featured":true}'),
+        ("AI Content Writer", "基于DNA画像自动生成符合你风格的长文/推文/邮件", "skills", "", "✍️", "Muse Team", 1, "writing,content,ai,creator", 2, 4.3, '{"app_type":"builtin"}'),
+        ("Inspiration Capture", "浏览器插件一键捕获灵感——网页/推文/图片秒存灵感池", "skills", "", "🔖", "Muse Team", 1, "capture,browser,extension", 4, 4.6, '{"app_type":"extension"}'),
+        ("Social Scheduler", "多平台内容排期——写一次，自动适配Twitter/LinkedIn/公众号", "skills", "", "📱", "Muse Team", 1, "social,schedule,cross-platform", 1, 4.0, '{"app_type":"builtin"}'),
+        ("AI Quote Card Generator", "金句自动生成精美卡片——9种风格模版，一键分享", "skills", "", "🎨", "Muse Team", 1, "design,quote,card,social", 2, 4.2, '{"app_type":"builtin"}'),
+        ("Notion Sync", "灵感池 ↔ Notion 双向同步——知识库永不丢失", "skills", "", "🔄", "Muse Team", 1, "sync,notion,knowledge", 3, 4.4, '{"app_type":"integration"}'),
+        ("Analytics Dashboard", "创作者数据看板——粉丝增长、内容表现、最佳发布时间", "skills", "", "📊", "Muse Team", 1, "analytics,dashboard,metrics", 2, 4.1, '{"app_type":"builtin"}'),
+        # ── Agents ──
+        ("With · Human 4.0", "云端记忆+感知层——你的第二大脑，实时理解你的上下文和需求", "agents", "https://with.superk.ai", "🧠", "Mr.K Lab", 1, "agent,memory,context,assistant", 5, 4.9, '{"app_type":"web","featured":true}'),
+        ("小P同学", "全天候AI战略伙伴——陪你聊天、帮你干活、一起想办法", "agents", "", "🤖", "Muse Team", 1, "agent,companion,strategy,assistant", 4, 4.8, '{"app_type":"builtin","featured":true}'),
+        ("小P · 闲鱼卖家版", "闲鱼小卖家专属AI Bot——自动回复、商品推荐、成交话术", "agents", "", "🐟", "社区用户", 0, "agent,xianyu,ecommerce,automation", 2, 4.0, '{"app_type":"web"}'),
+        ("微信公众号AI助手", "自动抓取热点+生成推文+定时发布——公众号运营者的AI搭档", "agents", "", "📮", "社区用户", 0, "agent,wechat,content,auto", 1, 3.8, '{"app_type":"web"}'),
+        # ── Models ──
+        ("MiniMax-M3", "国产顶级大模型，中文理解力极强，性价比极高", "models", "https://platform.minimax.io", "🎯", "MiniMax", 1, "model,llm,chinese,multimodal", 5, 4.7, '{"app_type":"api","featured":true,"pricing":"按量付费"}'),
+        ("DeepSeek V4 Pro", "推理型旗舰模型，复杂逻辑分析能力业界顶尖", "models", "https://platform.deepseek.com", "🔬", "DeepSeek", 1, "model,reasoning,deep-think", 5, 4.8, '{"app_type":"api","featured":true,"pricing":"¥0.14/百万tokens"}'),
+        ("GLM-5.1", "智谱最新旗舰——128K长上下文，多模态理解", "models", "https://open.bigmodel.cn", "🌐", "智谱AI", 1, "model,long-context,multimodal", 3, 4.5, '{"app_type":"api","pricing":"按量付费"}'),
+        ("Qwen-2.5-72B", "通义千问开源旗舰——72B参数，可私有化部署", "models", "https://tongyi.aliyun.com", "☁️", "阿里云", 1, "model,opensource,large,private", 2, 4.3, '{"app_type":"api","pricing":"¥0.12/百万tokens"}'),
+        ("SiliconFlow 模型集市", "20+模型聚合平台——按需切换，统一API，零门槛", "models", "https://siliconflow.cn", "🔥", "SiliconFlow", 1, "model,aggregator,api,multi-model", 4, 4.6, '{"app_type":"api","featured":true,"pricing":"¥0.04起/百万tokens"}'),
+        # ── Relay ──
+        ("TokenRouter", "全球模型路由——自动选择最优API，多模型负载均衡，永不限流", "relay", "https://api.tokenrouter.com", "🔄", "TokenRouter", 1, "relay,router,api,load-balance", 4, 4.7, '{"app_type":"api","featured":true,"pricing":"按调用量计费"}'),
+        ("OpenRouter", "开放模型路由——接入100+模型，统一计费，一键切换", "relay", "https://openrouter.ai", "🌍", "OpenRouter", 1, "relay,api,multi-model,open", 3, 4.4, '{"app_type":"api","pricing":"按量付费"}'),
+        ("Cloudflare AI Gateway", "免费AI网关——缓存+监控+限流，CF全球边缘网络", "relay", "https://developers.cloudflare.com/ai-gateway", "⚡", "Cloudflare", 1, "relay,gateway,cache,free-tier", 2, 4.5, '{"app_type":"api","featured":true,"pricing":"免费层100万次/月"}'),
+        ("社区中转站", "社区自建API中转——国内直连，低延迟，支持主流模型", "relay", "", "🏠", "社区用户", 0, "relay,community,china,low-latency", 1, 3.5, '{"app_type":"web"}'),
+        # ── Consulting ──
+        ("Mr.K 1v1 咨询", "15年跨境营销经验——独立站/DTC/广告投放/AI工作流，预约你的专属时间", "consulting", "", "💼", "KevPH", 1, "consulting,cross-border,dtc,ads", 3, 4.9, '{"app_type":"booking","featured":true,"pricing":"¥1,500/小时"}'),
+        ("AI工作流架构师", "为你量身定制AI自动化工作流——从需求分析到上线交付，全周期服务", "consulting", "", "🏗️", "Muse Team", 1, "consulting,workflow,automation,architecture", 2, 4.6, '{"app_type":"booking","pricing":"¥800/小时"}'),
+        ("内容策略顾问", "IP定位+选题规划+分发策略——帮你建立可持续的内容增长引擎", "consulting", "", "📝", "社区用户", 0, "consulting,content,strategy,ip,growth", 1, 4.2, '{"app_type":"booking"}'),
+        ("技术支持小时包", "技术问题快速解决——部署/调试/代码审查，按小时计费", "consulting", "", "🔧", "社区用户", 0, "consulting,tech,debug,deploy", 0, 3.9, '{"app_type":"booking"}'),
+        # ── Sponsorship ──
+        ("独立创作者Token基金", "Mr.K Lab 每月提供100万tokens免费额度——支持独立创作者使用AI模型", "sponsorship", "", "💰", "Mr.K Lab", 1, "sponsorship,token,free,independent", 5, 4.9, '{"app_type":"apply","featured":true,"pricing":"100万tokens/月"}'),
+        ("DeepSeek 开发者扶持", "DeepSeek API 新用户赠送500万tokens——注册即领", "sponsorship", "https://platform.deepseek.com", "🎁", "DeepSeek", 1, "sponsorship,token,free,new-user", 4, 4.7, '{"app_type":"apply","pricing":"500万tokens新人礼"}'),
+        ("SiliconFlow 开源贡献者计划", "开源项目贡献者每月15元额度——支持所有模型API", "sponsorship", "https://siliconflow.cn", "🌟", "SiliconFlow", 1, "sponsorship,opensource,credit,monthly", 3, 4.5, '{"app_type":"apply","featured":true,"pricing":"¥15/月额度"}'),
+        ("ZAI 社区额度", "社区用户互助计划——闲置API额度共享，按需申请", "sponsorship", "", "🤝", "社区用户", 0, "sponsorship,community,share,peer", 1, 3.8, '{"app_type":"apply"}'),
     ]
-    for s in skills:
+    for s in market:
         db.execute(
-            "INSERT INTO skill_market (name, description, category, url, icon, author, is_official, tags, installs, meta_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO skill_market (name, description, category, url, icon, author, is_official, tags, installs, score, meta_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             s
         )
     db.commit()
