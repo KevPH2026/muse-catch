@@ -19,7 +19,7 @@ def add_cors(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PATCH, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
-DB = Path(__file__).parent / "muse.db"
+DB = Path(os.environ.get("MUSE_DB_PATH", "/tmp/muse.db" if os.environ.get("VERCEL") else os.path.join(os.path.dirname(__file__), "muse.db")))
 TZ = timezone(timedelta(hours=8))
 
 # ========== DATABASE ==========
@@ -60,6 +60,12 @@ def init_db():
     """)
     db.commit()
     db.close()
+
+# Run init on import (needed for Vercel cold starts)
+try:
+    init_db()
+except Exception:
+    pass
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -339,96 +345,127 @@ def analyze_dna():
     except Exception as e:
         return jsonify({"error": f"DNA分析失败: {str(e)}"}), 500
 
-
-# ========== ADVANCED BETA — 会话扫描 DNA ==========
+# ========== SESSION SCAN DNA (Advanced Beta) ==========
 @app.route("/api/dna/scan", methods=["POST"])
 def scan_sessions_dna():
-    """高级Beta: 扫描本地 Agent 会话 + 灵感库，生成雷达图 DNA"""
-    sources = []
+    """Scan local Agent sessions for user messages → DNA analysis.
+    Reads OpenClaw trajectory files, extracts user content, feeds to LLM.
+    Local-only feature (needs filesystem access to session data).
+    """
+    data = request.get_json() or {}
+    max_sessions = int(data.get("max_sessions", 30))
     
-    # 1. 扫描 Hermes 会话数据库
-    try:
-        import sqlite3 as sql
-        session_db = Path(os.path.expanduser("~/.hermes/sessions.db"))
-        if session_db.exists():
-            sdb = sql.connect(str(session_db))
-            sdb.row_factory = sql.Row
-            rows = sdb.execute(
-                "SELECT role, content FROM messages WHERE role='user' AND length(content)>20 ORDER BY id DESC LIMIT 200"
-            ).fetchall()
-            for r in rows:
-                text = r["content"].strip()
-                if len(text) > 30 and not text.startswith("/"):
-                    sources.append(text[:300])
-            sdb.close()
-    except Exception as e:
-        print(f"[DNA Scan] Session scan: {e}")
+    session_dir = Path.home() / ".openclaw" / "agents" / "main" / "sessions"
+    if not session_dir.exists():
+        return jsonify({"error": "Session目录不存在。此功能需在本地运行。"}), 400
     
-    # 2. 扫描灵感库
-    try:
-        db = get_db()
-        rows = db.execute(
-            "SELECT title, summary, raw_content FROM inspirations ORDER BY created_at DESC LIMIT 100"
-        ).fetchall()
-        for r in rows:
-            text = r["raw_content"] or f"{r['title']}: {r['summary']}"
-            if len(text) > 20:
-                sources.append(text[:300])
-    except Exception as e:
-        print(f"[DNA Scan] Inspiration scan: {e}")
+    # Collect recent trajectory files
+    traj_files = sorted(
+        session_dir.glob("*.trajectory.jsonl"),
+        key=lambda x: x.stat().st_mtime, reverse=True
+    )[:max_sessions]
     
-    if len(sources) < 10:
-        return jsonify({"error": f"需要至少10条可分析内容，当前只有{len(sources)}条。请多捕获灵感或聊天。"}), 400
+    if not traj_files:
+        return jsonify({"error": "未找到会话记录。"}), 400
     
-    # 去重 + 限制数量
+    # Extract user (Mr.K) messages from context.compiled prompt fields
+    user_texts = []
     seen = set()
-    unique = []
-    for s in sources:
-        key = s[:50]
-        if key not in seen:
-            seen.add(key)
-            unique.append(s)
-    sources = unique[:80]
+    for tf in traj_files:
+        try:
+            with open(tf) as f:
+                for line in f:
+                    d = json.loads(line)
+                    if d.get("type") == "context.compiled":
+                        prompt = d.get("data", {}).get("prompt", "")
+                        # Match Mr.K messages in the format:
+                        #   #12345 Day Date Time GMT+8 Mr.K: (content)
+                        for m in re.findall(r'Mr\.K:\s*(.+?)(?=\n#\d+\s|\nOpenClaw:|\nWith-)', prompt, re.DOTALL):
+                            m = m.strip()
+                            # Skip image-only, very short, or duplicate
+                            if len(m) < 10 or "[image" in m or m in seen:
+                                continue
+                            seen.add(m)
+                            user_texts.append(m)
+        except Exception:
+            pass
     
-    sample_text = "\n---\n".join([f"[{i+1}] {s}" for i, s in enumerate(sources)])
+    # Also include inspirations from DB
+    db = get_db()
+    rows = db.execute(
+        "SELECT raw_content, title, summary FROM inspirations ORDER BY created_at DESC LIMIT 50"
+    ).fetchall()
+    for r in rows:
+        txt = r["raw_content"] if r["raw_content"] else f"{r['title']}: {r['summary']}"
+        if txt and txt not in seen:
+            seen.add(txt)
+            user_texts.append(txt[:500])
     
-    prompt = f"""你是DNA分析师。基于这些对话和灵感片段，提炼创作者DNA。返回纯JSON：
-{{
-  "persona": "一句话画像(≤80字)",
-  "themes": ["主题1","主题2","主题3","主题4","主题5"],
-  "tone_tags": ["语气标签1","语气标签2","语气标签3","语气标签4","语气标签5"],
-  "strengths": [
-    {{"name":"创造力","score":88}},
-    {{"name":"逻辑力","score":75}},
-    {{"name":"感召力","score":70}},
-    {{"name":"执行力","score":80}},
-    {{"name":"趋势嗅觉","score":72}},
-    {{"name":"跨界力","score":78}}
-  ],
-  "audience_hook": "受众钩子(≤60字)",
-  "growth_tip": "突破建议(≤80字)"
-}}
-strengths 的 score 是0-100，基于内容真实打分。
-内容({len(sources)}条):\n{sample_text[:8000]}"""
-
+    if not user_texts:
+        return jsonify({"error": "未找到可分析的用户内容。请先安装Skill并完成一些交互。"}), 400
+    
+    # Build DNA analysis prompt
+    sample_text = "\n---\n".join(
+        [f"[{i+1}] {t[:300]}" for i, t in enumerate(user_texts[:100])]
+    )
+    
     try:
+        prompt = f"""你是一个内容DNA分析师。基于这些用户消息提炼创作者DNA。返回纯JSON：
+{{"persona":"一句话画像(≤80字)","topics":["话题1","话题2","话题3","话题4","话题5"],"tone":"语气特征","sentence_style":"句式特征","structure":"思维结构","strengths":["优势1","优势2","优势3"],"blind_spots":["盲区1","盲区2"],"audience_hook":"受众钩子(≤60字)","growth_tip":"突破建议(≤80字)"}}
+消息({len(user_texts)}条，来自Agent会话+灵感库):
+{sample_text[:8000]}"""
         content = call_llm(prompt, task="dna")
         if not content:
-            return jsonify({"error": "Agent LLM 返回空"}), 500
+            return jsonify({"error": "Agent 内置 LLM 返回空。"}), 500
         dna = extract_json(content)
+        # Multi-strategy fallback for stubborn LLM outputs
         if not dna:
-            arr_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if arr_match:
-                try: dna = json.loads(arr_match.group())
-                except: pass
+            # Strip any markdown or prefix text
+            cleaned = content.strip()
+            # Remove markdown code blocks
+            cleaned = re.sub(r'```(?:json)?\s*', '', cleaned)
+            cleaned = re.sub(r'```\s*$', '', cleaned)
+            # Try brace-balanced extraction
+            depth = 0
+            start = cleaned.find('{')
+            if start != -1:
+                for i in range(start, len(cleaned)):
+                    c = cleaned[i]
+                    if c == '{': depth += 1
+                    elif c == '}':
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                dna = json.loads(cleaned[start:i+1])
+                            except json.JSONDecodeError:
+                                # Try fixing common issues
+                                fixed = re.sub(r',\s*([}\]])', r'\1', cleaned[start:i+1])  # trailing commas
+                                try:
+                                    dna = json.loads(fixed)
+                                except Exception:
+                                    pass
+                            break
         if not dna:
-            return jsonify({"error": "DNA解析失败", "raw": content[:300]}), 500
+            return jsonify({
+                "error": "Agent LLM 返回了内容但无法解析为JSON。",
+                "content_len": len(content),
+                "raw_preview": content[:800]
+            }), 500
+        # Normalize field names (LLMs sometimes use different keys)
+        if "themes" in dna and "topics" not in dna:
+            dna["topics"] = dna.pop("themes")
+        if "tone_tags" in dna and "tone" not in dna:
+            tone_tags = dna.pop("tone_tags")
+            dna["tone"] = ", ".join(tone_tags) if isinstance(tone_tags, list) else str(tone_tags)
+        if "strengths" in dna and isinstance(dna["strengths"], list) and dna["strengths"] and isinstance(dna["strengths"][0], dict):
+            # Convert [{name, score}] format for radar
+            dna["strengths"] = [s.get("name", str(s)) for s in dna["strengths"]]
         
         # Save to DB
         now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
         existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
         if existing:
-            db.execute("UPDATE creator_profile SET dna_json=?, analyzed_at=? WHERE id=?",
+            db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
                        (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
         else:
             db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
@@ -438,12 +475,14 @@ strengths 的 score 是0-100，基于内容真实打分。
         return jsonify({
             "ok": True,
             "dna": dna,
-            "source_count": len(sources),
-            "session_msgs": len([s for s in sources if len(s) > 80]),
-            "method": "agent_llm_scan"
+            "source_count": len(user_texts),
+            "session_msgs": len(user_texts) - len(rows),
+            "inspiration_count": len(rows),
+            "sessions_scanned": len(traj_files),
+            "method": "agent_llm"
         })
     except Exception as e:
-        return jsonify({"error": f"DNA扫描失败: {str(e)}"}), 500
+        return jsonify({"error": f"扫描失败: {str(e)}"}), 500
 
 
 # ========== TOPIC GENERATION (v2 — selected/random + deep dive + DNA) ==========
