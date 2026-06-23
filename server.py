@@ -803,7 +803,180 @@ def muse_demo_mp4():
     return send_file(Path(__file__).parent / "muse-demo.mp4", mimetype="video/mp4")
 
 # ========== WEREAD SYNC (微信读书 API 一键同步) ==========
-@app.route("/api/weread/sync", methods=["POST"])
+# ========== CONVERSATIONAL AGENT (v1 — natural language Muse interface) ==========
+MUSE_CHAT_SYSTEM = """你是 Muse AI，K 的创作灵感管家。你可以通过对话完成以下所有操作：
+
+【你的能力】
+1. 捕获灵感：用户说"记一下：xxx"或"捕获xxx"→你立即执行 /api/ingest
+2. 生成选题：用户说"给我选题"、"有什么选题建议"→你生成3-5个选题
+3. 深度分析：用户说"拆解XX"、"分析这个选题"→你调用 deep-dive
+4. 查看灵感库：用户说"我的灵感库"、"最近有什么灵感"→列出最近灵感
+5. 统计数据：用户说"数据"、"统计"→返回灵感统计数据
+6. Onboarding：新用户自动引导完成 DNA 采集
+7. 闲聊：回答关于 Muse 的问题
+
+【你的风格】
+- 温暖、有见解、像创作伙伴
+- 回复简洁有力，不用长篇大论
+- 知道 K 的赛道（AI/跨境/内容创作），说话直接切中要害
+- 用 🌀💡✨🔥📊🧬💎 这些符号点缀
+
+【重要规则】
+- 如果用户是第一次对话，先3个问题完成 Onboarding（领域、职业、平台）
+- 用户说"选题"时，检查灵感库≥3条才生成，不够就说"灵感还太少，先捕几条"
+- 每次回复控制在2-4句话以内
+- 不要承诺做不到的事"""
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    """Conversational AI agent for Muse — natural language control"""
+    data = request.get_json() or {}
+    message = (data.get("message") or "").strip()
+    history = data.get("history", [])
+    
+    if not message:
+        return jsonify({"reply": "😊 你想做什么？试试：记一下灵感 / 给我选题 / 查看灵感库", "actions": []})
+    
+    db = get_db()
+    
+    # Build context for the agent
+    # 1. Stats
+    stats_query = """
+        SELECT 
+            (SELECT COUNT(*) FROM inspirations) as total,
+            (SELECT COUNT(*) FROM inspirations WHERE created_at >= datetime('now','localtime','-7 days')) as week_count
+    """
+    stats = db.execute(stats_query).fetchone()
+    
+    # 2. Profile (if exists)
+    profile_parts = []
+    profile_row = db.execute("SELECT domain, style, platforms, dna_json FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+    has_profile = False
+    if profile_row:
+        has_profile = True
+        if profile_row["domain"]: profile_parts.append(f"领域：{profile_row['domain']}")
+        if profile_row["style"]: profile_parts.append(f"风格：{profile_row['style']}")
+        if profile_row["platforms"]: profile_parts.append(f"平台：{profile_row['platforms']}")
+        if profile_row["dna_json"]:
+            try:
+                dna = json.loads(profile_row["dna_json"])
+                if dna.get("niche"): profile_parts.append(f"赛道：{dna['niche']}")
+                if dna.get("topics"): profile_parts.append(f"核心话题：{', '.join(dna['topics'])}")
+            except: pass
+    
+    # 3. Recent inspirations
+    recent = db.execute("SELECT id, title, summary, tags, source FROM inspirations ORDER BY created_at DESC LIMIT 5").fetchall()
+    recent_str = "\n".join([f"[{r['id']}] {r['title']}: {r['summary'][:80]} ({r['tags'] or 'no tags'})" for r in recent])
+    
+    # Build context block
+    context_block = f"""当前状态：
+灵感总数：{stats['total']} 条（本周 {stats['week_count']} 条）
+{"创作者资料：" + "；".join(profile_parts) if profile_parts else "尚未完成 Onboarding（创作者资料缺失）"}
+最近灵感：{"无" if not recent else "\\n" + recent_str}"""
+    
+    # Build messages for LLM
+    messages = [
+        {"role": "system", "content": MUSE_CHAT_SYSTEM + "\n\n" + context_block},
+    ]
+    
+    # Add recent history (last 6 messages)
+    for h in history[-6:]:
+        messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+    
+    messages.append({"role": "user", "content": message})
+    
+    api_key = os.environ.get("TR_API_KEY", "")
+    if not api_key:
+        return jsonify({"reply": fallback_chat(message, db), "actions": ["fallback"]})
+    
+    try:
+        result = call_llm_via_tr(api_key, messages)
+        if result:
+            return jsonify({"reply": result, "actions": ["ai"]})
+    except Exception as e:
+        print(f"Chat agent error: {e}")
+    
+    return jsonify({"reply": fallback_chat(message, db), "actions": ["fallback"]})
+
+
+def call_llm_via_tr(api_key, messages):
+    """Direct TokenRouter call with chat message list"""
+    import urllib.request, ssl
+    body = json.dumps({
+        "model": "deepseek/deepseek-v4-pro",
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 400
+    }, ensure_ascii=True).encode("utf-8")
+    
+    ctx = ssl.create_default_context()
+    req = urllib.request.Request(
+        "https://api.tokenrouter.com/v1/chat/completions",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        method="POST"
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            raw = resp.read().decode("utf-8")
+            data = json.loads(raw)
+            return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    except Exception as e:
+        print(f"call_llm_via_tr error: {e}")
+        return None
+
+
+def fallback_chat(message, db):
+    """Rule-based fallback when LLM unavailable"""
+    msg = message.lower()
+    
+    # Onboarding detection
+    if any(w in msg for w in ['onboard', '认识', '帮我分析', 'dna', '我的赛道', '我的领域']):
+        profile = db.execute("SELECT domain, style, platforms FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+        if profile and profile["domain"]:
+            return f"✨ 你的创作者 DNA 已建立：领域 {profile['domain']}，风格 {profile['style'] or '待分析'}。捕获更多灵感后我会自动更新。"
+        else:
+            return "🧬 我还不了解你呢。回答三个问题：①你专注哪些领域？②你的职业是什么？③有创作平台吗？（Twitter/公众号/小红书/博客）"
+    
+    # Stats
+    if any(w in msg for w in ['数据', '统计', 'stats', '多少']):
+        total = db.execute("SELECT COUNT(*) FROM inspirations").fetchone()[0]
+        week = db.execute("SELECT COUNT(*) FROM inspirations WHERE created_at >= datetime('now','localtime','-7 days')").fetchone()[0]
+        return f"📊 {total} 条灵感，本周新增 {week} 条。继续捕！"
+    
+    # Topics request
+    if any(w in msg for w in ['选题', '话题', '什么写', 'topic']):
+        count = db.execute("SELECT COUNT(*) FROM inspirations").fetchone()[0]
+        if count < 3:
+            return f"🌀 灵感还太少（{count} 条），至少需要 3 条才能生成选题。点击快速捕获输入框，随便记几条先？"
+        return "💡 点击「随机选题」按钮，我来生成~ 或者指定灵感说「用我最近选的3条生成选题」"
+    
+    # Browse inspirations
+    if any(w in msg for w in ['灵感', '列表', '最近', '看看']):
+        rows = db.execute("SELECT id, title, summary, source FROM inspirations ORDER BY created_at DESC LIMIT 5").fetchall()
+        if not rows:
+            return "🌀 灵感库是空的。第一步：在「快速捕获」输入框随便记点什么——一个想法、一条推特、一篇文章摘要。"
+        items = [f"• [{r['id']}] {r['title'][:40]}" for r in rows]
+        return "📚 最近灵感：\n" + "\n".join(items) + "\n\n选中几条 → 点击「选题建议」生成创作方向 ✨"
+    
+    # Capture
+    if any(w in msg for w in ['记', '捕获', '保存', '存', 'capture']) or len(message) > 30:
+        return f"✨ 收到！下次直接复制内容到「快速捕获」输入框按回车即可。你想存的内容是：\"{message[:60]}...\" 对吗？在确认交互前，可以先手动捕获～"
+    
+    # Default help
+    return """🌀 我能帮你：
+📝 捕获灵感（"记一下：xxx"）
+💡 生成选题（"给我选题"）
+🔍 深度拆解（选中选题后点深度分析）
+📊 查看数据（"统计"）
+🧬 生成 DNA（"分析我的创作DNA"）
+
+试试看？"""
+
 def weread_sync():
     """Sync WeRead highlights to Muse via official API.
     Requires WEREAD_API_KEY (get from https://weread.qq.com/r/weread-skills)

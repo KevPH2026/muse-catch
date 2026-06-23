@@ -248,6 +248,36 @@ a{color:inherit;text-decoration:none}
   .content{padding:16px 12px}
   .ingest-bar{flex-direction:column}
 }
+/* ============ CHAT PANEL ============ */
+#chat-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:var(--gradient);border:none;cursor:pointer;z-index:300;box-shadow:0 6px 28px rgba(99,102,241,.45);display:flex;align-items:center;justify-content:center;font-size:26px;transition:all .25s;color:#fff}
+#chat-fab:hover{transform:scale(1.08);box-shadow:0 8px 36px rgba(99,102,241,.55)}
+#chat-fab .badge{position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;display:none}
+#chat-panel{position:fixed;bottom:96px;right:28px;width:380px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:18px;z-index:299;display:none;flex-direction:column;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.5);animation:scaleIn .2s}
+#chat-panel.open{display:flex}
+.chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(99,102,241,.06)}
+.chat-header .title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.chat-header .status{font-size:10px;color:var(--green)}
+.chat-close{background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:8px}
+.chat-close:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;max-height:360px}
+.chat-msg{max-width:88%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;animation:fadeIn .3s}
+.chat-msg.user{align-self:flex-end;background:rgba(99,102,241,.18);border-bottom-right-radius:4px}
+.chat-msg.muse{align-self:flex-start;background:rgba(255,255,255,.04);border-bottom-left-radius:4px}
+.chat-msg .time{font-size:9px;color:var(--dim);margin-top:4px;text-align:right}
+.chat-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg2)}
+.chat-footer input{flex:1;background:transparent;border:1px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border .15s}
+.chat-footer input:focus{border-color:var(--purple)}
+.chat-footer button{background:var(--gradient);border:none;border-radius:12px;padding:10px 16px;color:#fff;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;transition:opacity .15s}
+.chat-footer button:hover{opacity:.9}
+.chat-footer button:disabled{opacity:.4;cursor:not-allowed}
+.chat-hint{text-align:center;padding:18px 12px;color:var(--dim);font-size:11px;line-height:1.6}
+.chat-hint span{background:rgba(99,102,241,.1);padding:2px 8px;border-radius:6px;color:var(--purple-light);cursor:pointer;transition:background .15s;margin:0 2px}
+.chat-hint span:hover{background:rgba(99,102,241,.25)}
+.chat-typing{display:flex;gap:4px;padding:8px 14px;align-self:flex-start;opacity:.6}
+.chat-typing span{width:6px;height:6px;border-radius:50%;background:var(--purple-light);animation:pulse 1s infinite}
+.chat-typing span:nth-child(2){animation-delay:.15s}
+.chat-typing span:nth-child(3){animation-delay:.3s}
+@media(max-width:600px){#chat-panel{width:calc(100vw-32px);right:16px;bottom:84px;max-height:60vh}}
 </style>
 </head>
 <body>
@@ -943,5 +973,136 @@ document.getElementById('ingest-input').addEventListener('keydown',e=>{if(e.key=
 
 <script src="demo.js"></script>
 <script src="onboard.js"></script>
+
+<!-- ============ CHAT AGENT ============ -->
+<button id="chat-fab" onclick="toggleChat()" title="Muse AI 助理">🌀<span class="badge" id="chat-badge"></span></button>
+
+<div id="chat-panel">
+  <div class="chat-header">
+    <div class="title">🌀 Muse AI <span class="status">● 在线</span></div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-body" id="chat-body">
+    <div class="chat-hint" id="chat-hint">
+      嘿！我是你的创作管家 🌀<br><br>
+      试试这些：<br>
+      <span onclick="sendHint('给我选题建议')">💡 给我选题</span>
+      <span onclick="sendHint('我的灵感库')">📚 灵感库</span>
+      <span onclick="sendHint('分析我的创作DNA')">🧬 DNA分析</span>
+      <br><br>
+      或者直接和我聊天 🎯
+    </div>
+  </div>
+  <div class="chat-footer">
+    <input type="text" id="chat-input" placeholder="和 Muse AI 聊天..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button id="chat-send-btn" onclick="sendChat()">→</button>
+  </div>
+</div>
+
+<script>
+// =========== CHAT AGENT ===========
+let chatHistory = [];
+const CHAT_KEY = 'muse_chat_history';
+
+function toggleChat(){
+  const p=document.getElementById('chat-panel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')){
+    document.getElementById('chat-input').focus();
+    loadChatHistory();
+  }
+}
+
+function sendHint(text){
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+function loadChatHistory(){
+  try{
+    const saved = localStorage.getItem(CHAT_KEY);
+    if(saved) chatHistory = JSON.parse(saved);
+  }catch(e){}
+  renderChatHistory();
+}
+
+function saveChatHistory(){
+  try{ localStorage.setItem(CHAT_KEY, JSON.stringify(chatHistory.slice(-50))); }catch(e){}
+}
+
+function renderChatHistory(){
+  const body = document.getElementById('chat-body');
+  const hint = document.getElementById('chat-hint');
+  if(!chatHistory.length){ if(hint)hint.style.display=''; return }
+  if(hint)hint.style.display='none';
+  body.innerHTML = chatHistory.map(m => 
+    `<div class="chat-msg ${m.role}">
+      ${m.content.replace(/\n/g,'<br>')}
+      <div class="time">${m.time||''}</div>
+    </div>`
+  ).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+function addChatMessage(role, content){
+  const now = new Date();
+  const time = now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  chatHistory.push({role, content, time});
+  saveChatHistory();
+  renderChatHistory();
+}
+
+function showTyping(){
+  const body = document.getElementById('chat-body');
+  const typing = document.createElement('div');
+  typing.className = 'chat-typing';
+  typing.id = 'chat-typing';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  body.appendChild(typing);
+  body.scrollTop = body.scrollHeight;
+}
+
+function hideTyping(){
+  const t = document.getElementById('chat-typing');
+  if(t)t.remove();
+}
+
+async function sendChat(){
+  const inp = document.getElementById('chat-input');
+  const btn = document.getElementById('chat-send-btn');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  
+  inp.value = '';
+  inp.disabled = true;
+  btn.disabled = true;
+  
+  addChatMessage('user', msg);
+  showTyping();
+  
+  try{
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg, history: chatHistory.slice(-10)})
+    });
+    const d = await r.json();
+    hideTyping();
+    addChatMessage('muse', d.reply || '😅 抱歉，我暂时没法回答。试试别的？');
+  }catch(e){
+    hideTyping();
+    addChatMessage('muse', '🔌 连接失败，检查一下 Muse 服务是否在运行（localhost:5200）');
+  }
+  
+  inp.disabled = false;
+  btn.disabled = false;
+  inp.focus();
+}
+
+// Load history on page load if panel was open
+document.addEventListener('DOMContentLoaded', ()=>{
+  chatHistory = JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
+});
+</script>
 </body>
 </html>
