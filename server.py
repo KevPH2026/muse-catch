@@ -54,8 +54,10 @@ def init_db():
             platforms TEXT,
             profile_links TEXT,
             dna_json TEXT,
+            model_config TEXT DEFAULT '{}',
             analyzed_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT (datetime('now','localtime'))
+            created_at TIMESTAMP DEFAULT (datetime('now','localtime')),
+            updated_at TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS evolution_records (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,6 +119,15 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_us_skill ON user_skills(skill_id);
     """)
+    # Migration: add model_config to existing databases
+    try:
+        db.execute("ALTER TABLE creator_profile ADD COLUMN model_config TEXT DEFAULT '{}'")
+    except:
+        pass
+    try:
+        db.execute("ALTER TABLE creator_profile ADD COLUMN updated_at TIMESTAMP")
+    except:
+        pass
     db.commit()
     db.close()
 
@@ -936,10 +947,11 @@ def generate_calendar():
 
     # Get DNA profile
     profile = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
-    dna = json.loads(profile["dna_json"]) if profile and profile["dna_json"] else {}
+    dna_raw = json.loads(profile["dna_json"]) if profile and profile["dna_json"] else {}
+    dna = dna_raw if isinstance(dna_raw, dict) else {}
     domain = (profile["domain"] if profile else "") or dna.get("domain", "")
     style = (profile["style"] if profile else "") or dna.get("style", "")
-    platforms = (profile["platforms"] if profile else "") or ",".join(dna.get("platforms", []))
+    platforms = (profile["platforms"] if profile else "") or ",".join(dna.get("platforms", [])) if isinstance(dna.get("platforms"), list) else dna.get("platforms", "")
 
     # Get recent inspirations
     inspirations = db.execute(
@@ -1196,6 +1208,52 @@ def get_installed():
         "SELECT us.*, sm.author, sm.url as market_url FROM user_skills us LEFT JOIN skill_market sm ON us.skill_id = sm.id WHERE us.status = 'installed' ORDER BY us.installed_at DESC"
     ).fetchall()
     return jsonify({"ok": True, "installed": [dict(r) for r in rows], "total": len(rows)})
+
+# ========== MODEL CONFIG ==========
+@app.route("/api/model-config", methods=["GET"])
+def get_model_config():
+    """Get user's custom model configuration"""
+    db = get_db()
+    row = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+    mc = json.loads(row["model_config"]) if row and row["model_config"] else {}
+    configured = bool(mc.get("model") and mc.get("endpoint"))
+    if configured and mc.get("key"):
+        masked = mc["key"][:4] + "****" + mc["key"][-4:] if len(mc["key"]) > 8 else "****"
+    else:
+        masked = ""
+    return jsonify({
+        "ok": True,
+        "configured": configured,
+        "name": mc.get("name", ""),
+        "provider": mc.get("provider", ""),
+        "endpoint": mc.get("endpoint", ""),
+        "model": mc.get("model", ""),
+        "masked_key": masked
+    })
+
+@app.route("/api/model-config", methods=["POST"])
+def save_model_config():
+    """Save user's custom model configuration"""
+    db = get_db()
+    data = request.get_json() or {}
+    mc = {
+        "name": (data.get("name") or "").strip(),
+        "provider": (data.get("provider") or "openai").strip(),
+        "endpoint": (data.get("endpoint") or "").strip(),
+        "model": (data.get("model") or "").strip(),
+        "key": (data.get("key") or "").strip()
+    }
+    if not mc["model"]:
+        return jsonify({"ok": False, "error": "Model name is required"})
+    
+    row = db.execute("SELECT id, model_config FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+    if row:
+        db.execute("UPDATE creator_profile SET model_config = ?, updated_at = datetime('now','localtime') WHERE id = ?",
+                   (json.dumps(mc, ensure_ascii=False), row["id"]))
+    else:
+        db.execute("INSERT INTO creator_profile (model_config) VALUES (?)", (json.dumps(mc, ensure_ascii=False),))
+    db.commit()
+    return jsonify({"ok": True, "saved": mc["model"]})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():

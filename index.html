@@ -844,6 +844,7 @@ document.getElementById('demo-result').classList.add('show');document.getElement
     sendMsg(inp.value || '');
   };
   
+  window.toggleChat = toggleChat;
   window.sendHint = function(t) {
     document.getElementById('chat-panel').classList.add('open');
     sendMsg(t);
