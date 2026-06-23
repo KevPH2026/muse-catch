@@ -747,6 +747,10 @@ def demo():
 def onboard_js():
     return send_file(Path(__file__).parent / "onboard.js")
 
+@app.route("/demo.js")
+def demo_js():
+    return send_file(Path(__file__).parent / "demo.js")
+
 # ========== WEREAD SYNC (微信读书 API 一键同步) ==========
 @app.route("/api/weread/sync", methods=["POST"])
 def weread_sync():

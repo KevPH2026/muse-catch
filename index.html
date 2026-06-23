@@ -154,6 +154,24 @@ a{color:inherit;text-decoration:none}
 .card-act{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}
 .card-act:hover{border-color:var(--purple);color:var(--purple-light);background:rgba(99,102,241,.06)}
 
+/* ============ DEMO TOUR ============ */
+.demo-overlay{position:fixed;inset:0;background:rgba(5,5,15,.88);z-index:300;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+.demo-overlay.show{display:flex}
+.demo-highlight{position:fixed;z-index:301;border:2px solid var(--purple-light);border-radius:14px;box-shadow:0 0 40px rgba(99,102,241,.3),0 0 80px rgba(168,85,247,.15);pointer-events:none;animation:demoPulse 2s infinite;transition:all .5s cubic-bezier(.4,0,.2,1);display:none}
+@keyframes demoPulse{0%,100%{box-shadow:0 0 40px rgba(99,102,241,.3),0 0 80px rgba(168,85,247,.15)}50%{box-shadow:0 0 60px rgba(99,102,241,.5),0 0 100px rgba(168,85,247,.25)}}
+.demo-bubble{position:fixed;z-index:302;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;max-width:380px;animation:scaleIn .35s;display:none;box-shadow:0 12px 48px rgba(0,0,0,.6)}
+.demo-bubble .demo-step{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--purple-light);font-weight:700;margin-bottom:8px}
+.demo-bubble .demo-title{font-size:18px;font-weight:800;margin-bottom:6px}
+.demo-bubble .demo-desc{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:16px}
+.demo-bubble .demo-progress{display:flex;gap:4px;margin-bottom:14px}
+.demo-bubble .demo-dot{width:24px;height:4px;border-radius:2px;background:var(--border);transition:all .4s}
+.demo-bubble .demo-dot.done{background:var(--purple-light)}
+.demo-bubble .demo-dot.active{background:var(--purple);width:32px}
+.demo-complete{position:fixed;z-index:310;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;animation:scaleIn .5s;display:none}
+.demo-complete .dc-icon{font-size:64px;margin-bottom:12px}
+.demo-complete .dc-title{font-size:28px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.demo-complete .dc-sub{font-size:14px;color:var(--dim);margin-bottom:20px}
+
 .empty-state{text-align:center;padding:80px 20px;color:var(--dim)}
 .empty-state .empty-icon{font-size:64px;margin-bottom:16px;animation:float 3s ease-in-out infinite}
 
@@ -263,7 +281,8 @@ a{color:inherit;text-decoration:none}
     <h1 id="page-scroll-top">Your inspiration overview</h1>
     <div class="header-actions">
       <button class="btn btn-outline" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})">💡 选题</button>
-      <button class="btn btn-primary" onclick="document.getElementById('ingest-input').focus()">⚡ Capture Inspiration</button>
+      <button class="btn btn-primary" onclick="startAutoDemo()" id="btn-demo">🎬 Demo</button>
+      <button class="btn btn-outline" onclick="document.getElementById('ingest-input').focus()">⚡ Capture Inspiration</button>
     </div>
   </div>
 
@@ -790,6 +809,27 @@ function drawRadar(strengths){
 document.addEventListener('DOMContentLoaded',async()=>{await load();await checkOnboarding()});
 document.getElementById('ingest-input').addEventListener('keydown',e=>{if(e.key==='Enter')capture()});
 </script>
+
+<div class="demo-overlay" id="demo-overlay"></div>
+<div class="demo-highlight" id="demo-highlight"></div>
+<div class="demo-bubble" id="demo-bubble">
+  <div class="demo-step" id="demo-step-label">Step 1/7</div>
+  <div class="demo-title" id="demo-title"></div>
+  <div class="demo-desc" id="demo-desc"></div>
+  <div class="demo-progress" id="demo-progress"></div>
+  <div class="demo-actions">
+    <button class="demo-btn demo-btn-secondary" onclick="skipDemo()">跳过</button>
+    <button class="demo-btn demo-btn-primary" id="demo-next-btn" onclick="advanceDemo()">继续 →</button>
+  </div>
+</div>
+<div class="demo-complete" id="demo-complete">
+  <div class="dc-icon">🎉</div>
+  <div class="dc-title">Demo 完成！</div>
+  <div class="dc-sub">Muse 已就绪，开始捕获你的灵感吧</div>
+  <button class="demo-btn demo-btn-primary" onclick="finishDemo()">🚀 开始使用</button>
+</div>
+
+<script src="demo.js"></script>
 <script src="onboard.js"></script>
 </body>
 </html>
