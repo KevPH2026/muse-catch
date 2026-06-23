@@ -247,7 +247,7 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
                 <div class="url">🎬 Muse · 捕获 → 连接 → 创作</div>
             </div>
             <div class="video-wrap">
-            <video class="hero-video" id="hero-video" src="muse-demo.mp4" autoplay loop muted playsinline preload="auto" poster="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='506'><rect fill='%23181818' width='900' height='506'/><text fill='%23555' font-size='18' font-family='sans-serif' x='50%' y='50%' text-anchor='middle' dy='.3em'>Muse Demo Video</text></svg>"></video>
+            <video class="hero-video" id="hero-video" src="muse-demo.mp4" autoplay loop muted playsinline preload="auto"></video>
             <button class="sound-btn muted" id="sound-btn" onclick="toggleSound()" title="开启声音">🔇</button>
             </div>
         </div>
@@ -589,6 +589,9 @@ document.getElementById('demo-result').classList.add('show');document.getElement
   const btn=document.getElementById('sound-btn');
   if(!v||!btn)return;
   let userUnmuted=false;
+  // force play muted on load (belt-and-suspenders with autoplay attr)
+  v.load();
+  v.play().catch(()=>{});
   // toggle button
   window.toggleSound=function(){
     v.muted=!v.muted;
