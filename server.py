@@ -69,6 +69,23 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_ev_feedback ON evolution_records(feedback_type);
         CREATE INDEX IF NOT EXISTS idx_ev_created ON evolution_records(created_at DESC);
+        CREATE TABLE IF NOT EXISTS content_calendar (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            content_type TEXT DEFAULT 'article',
+            platform TEXT DEFAULT 'twitter',
+            topic TEXT,
+            angle TEXT,
+            dna_dimension TEXT,
+            scheduled_date TEXT,
+            status TEXT DEFAULT 'planned',
+            source_ids TEXT,
+            meta_json TEXT DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT (datetime('now','localtime')),
+            updated_at TIMESTAMP DEFAULT (datetime('now','localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_cal_date ON content_calendar(scheduled_date);
+        CREATE INDEX IF NOT EXISTS idx_cal_status ON content_calendar(status);
     """)
     db.commit()
     db.close()
@@ -877,6 +894,155 @@ def get_evolution_records():
         "records": [dict(r) for r in rows],
         "stats": {"positive": pos, "negative": neg, "total": pos + neg}
     })
+
+# ========== CONTENT CALENDAR — Ship Yourself ==========
+@app.route("/api/calendar/generate", methods=["POST"])
+def generate_calendar():
+    """AI generates a content schedule based on DNA + inspiration pool"""
+    db = get_db()
+    data = request.get_json() or {}
+    weeks = data.get("weeks", 2)
+    force = data.get("force", False)
+
+    # Get DNA profile
+    profile = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+    dna = json.loads(profile["dna_json"]) if profile and profile["dna_json"] else {}
+    domain = (profile["domain"] if profile else "") or dna.get("domain", "")
+    style = (profile["style"] if profile else "") or dna.get("style", "")
+    platforms = (profile["platforms"] if profile else "") or ",".join(dna.get("platforms", []))
+
+    # Get recent inspirations
+    inspirations = db.execute(
+        "SELECT id, title, summary, keywords, tags, emotion, source FROM inspirations ORDER BY created_at DESC LIMIT 30"
+    ).fetchall()
+
+    insp_text = "\n".join([f"- [{r['id']}] {r['title'] or 'Untitled'}: {r['summary'] or ''} (tags: {r['tags'] or ''}, emotion: {r['emotion'] or ''})" for r in inspirations])
+
+    # Get existing calendar for context
+    existing = db.execute("SELECT scheduled_date, title, topic FROM content_calendar ORDER BY scheduled_date").fetchall()
+    existing_dates = [r["scheduled_date"] for r in existing] if existing else []
+
+    today = datetime.now(TZ).strftime("%Y-%m-%d")
+    
+    prompt = f"""You are a content strategist. Generate a {weeks}-week content schedule for a creator.
+
+CREATOR DNA:
+- Domain: {domain or 'tech/AI'}
+- Style: {style or 'analytical, direct'}
+- Platforms: {platforms or 'twitter'}
+
+INSPIRATION POOL (recent captures):
+{insp_text[:3000] if insp_text else 'No inspirations yet.'}
+
+EXISTING SCHEDULED DATES (avoid these):
+{existing_dates[:20] if existing_dates else 'None'}
+
+TODAY: {today}
+
+Generate a JSON array of {weeks * 4} content items. Each item:
+- title: catchy but specific
+- content_type: "thread"|"article"|"post"|"video"
+- platform: from the creator's platforms
+- topic: the core topic (1-3 words)
+- angle: unique angle or hook (1 sentence)
+- dna_dimension: which DNA aspect it leverages (e.g. "analytical depth", "personal experience", "trend commentary")
+- scheduled_date: YYYY-MM-DD, spread across the next {weeks} weeks, 3-5 items per week
+- source_ids: comma-separated inspiration IDs that inspired this (from pool above)
+
+Focus on making each item feel authentic to the creator's DNA. Not generic calendars — SHIP THE CREATOR.
+
+Return ONLY valid JSON array, no markdown."""
+
+    try:
+        result = call_llm(prompt, temperature=0.85, max_tokens=3000)
+        items = extract_json(result)
+        if not isinstance(items, list):
+            return jsonify({"ok": False, "error": "Failed to parse AI response", "raw": str(result)[:300]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+    if force:
+        db.execute("DELETE FROM content_calendar")
+    
+    inserted = 0
+    for item in items:
+        if not item.get("title") or not item.get("scheduled_date"):
+            continue
+        db.execute(
+            """INSERT INTO content_calendar (title, content_type, platform, topic, angle, dna_dimension, scheduled_date, source_ids, meta_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                item.get("title", ""),
+                item.get("content_type", "article"),
+                item.get("platform", "twitter"),
+                item.get("topic", ""),
+                item.get("angle", ""),
+                item.get("dna_dimension", ""),
+                item.get("scheduled_date", ""),
+                str(item.get("source_ids", "")),
+                json.dumps(item, ensure_ascii=False)
+            )
+        )
+        inserted += 1
+    
+    db.commit()
+    return jsonify({"ok": True, "inserted": inserted, "total": len(items)})
+
+@app.route("/api/calendar", methods=["GET"])
+def list_calendar():
+    """List calendar entries, optionally filtered by date range"""
+    db = get_db()
+    from_date = request.args.get("from", "")
+    to_date = request.args.get("to", "")
+    
+    if from_date and to_date:
+        rows = db.execute(
+            "SELECT * FROM content_calendar WHERE scheduled_date >= ? AND scheduled_date <= ? ORDER BY scheduled_date, created_at",
+            (from_date, to_date)
+        ).fetchall()
+    elif from_date:
+        rows = db.execute(
+            "SELECT * FROM content_calendar WHERE scheduled_date >= ? ORDER BY scheduled_date, created_at",
+            (from_date,)
+        ).fetchall()
+    else:
+        rows = db.execute("SELECT * FROM content_calendar ORDER BY scheduled_date, created_at").fetchall()
+    
+    stats = db.execute("""
+        SELECT status, COUNT(*) as cnt FROM content_calendar GROUP BY status
+    """).fetchall()
+    
+    return jsonify({
+        "ok": True,
+        "items": [dict(r) for r in rows],
+        "stats": {s["status"]: s["cnt"] for s in stats},
+        "total": len(rows)
+    })
+
+@app.route("/api/calendar/<int:item_id>", methods=["PUT", "PATCH", "DELETE"])
+def manage_calendar(item_id):
+    """Update or delete a calendar entry"""
+    db = get_db()
+    
+    if request.method == "DELETE":
+        db.execute("DELETE FROM content_calendar WHERE id = ?", (item_id,))
+        db.commit()
+        return jsonify({"ok": True, "deleted": item_id})
+    
+    data = request.get_json() or {}
+    allowed = ["title", "content_type", "platform", "topic", "angle", "scheduled_date", "status"]
+    updates = {k: data[k] for k in allowed if k in data}
+    if not updates:
+        return jsonify({"ok": False, "error": "No valid fields to update"})
+    updates["updated_at"] = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+    
+    sets = ", ".join(f"{k} = ?" for k in updates)
+    values = list(updates.values()) + [item_id]
+    db.execute(f"UPDATE content_calendar SET {sets} WHERE id = ?", values)
+    db.commit()
+    
+    row = db.execute("SELECT * FROM content_calendar WHERE id = ?", (item_id,)).fetchone()
+    return jsonify({"ok": True, "item": dict(row) if row else None})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
