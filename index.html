@@ -301,9 +301,13 @@ a{color:inherit;text-decoration:none}
     <div id="dna-panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3 style="margin:0;font-size:20px">🧬 Creator DNA</h3>
-        <button class="btn btn-ghost" onclick="resetOnboarding()">🔄 重新认识我</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="scanSessionsDNA()" id="btn-scan-dna" style="font-size:11px">🧬 高级Beta: 扫描会话</button>
+          <button class="btn btn-ghost" onclick="resetOnboarding()">🔄 重新认识我</button>
+        </div>
       </div>
       <div id="dna-detail"></div>
+      <canvas id="dna-radar" width="320" height="320" style="display:none;margin:16px auto;max-width:100%"></canvas>
     </div>
 
     <!-- Selection Bar -->
@@ -628,6 +632,90 @@ function toggleDnaPanel(){
   const p=document.getElementById('dna-panel');
   p.classList.toggle('show');
   if(p.classList.contains('show'))p.scrollIntoView({behavior:'smooth'});
+}
+
+// =========== DNA SCAN + RADAR ===========
+async function scanSessionsDNA(){
+  const btn=document.getElementById('btn-scan-dna');
+  btn.disabled=true;btn.textContent='⏳ 扫描中...';
+  showToast('🧬 正在扫描本地会话 + 灵感库...',0);
+  try{
+    const r=await fetch('/api/dna/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d=await r.json();
+    if(d.error){showToast('⚠️ '+d.error);btn.disabled=false;btn.textContent='🧬 高级Beta: 扫描会话';return}
+    // Display DNA detail
+    displayDNA(d.dna);
+    // Draw radar if strengths exist
+    if(d.dna.strengths) drawRadar(d.dna.strengths);
+    showToast(`✅ 扫描完成！分析了 ${d.source_count} 条内容（含 ${d.session_msgs||0} 条对话）`);
+  }catch(e){showToast('❌ 扫描失败')}
+  btn.disabled=false;btn.textContent='🧬 高级Beta: 扫描会话';
+}
+
+function drawRadar(strengths){
+  const canvas=document.getElementById('dna-radar');
+  if(!canvas)return;
+  canvas.style.display='block';
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const cx=W/2,cy=H/2,r=120;
+  const n=strengths.length;
+  ctx.clearRect(0,0,W,H);
+  
+  // Grid
+  for(let i=1;i<=4;i++){
+    ctx.beginPath();
+    for(let j=0;j<n;j++){
+      const a=Math.PI*2*j/n-Math.PI/2;
+      const x=cx+Math.cos(a)*r*i/4,y=cy+Math.sin(a)*r*i/4;
+      j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle='rgba(99,102,241,'+(0.1+i*0.05)+')';
+    ctx.lineWidth=1;ctx.stroke();
+  }
+  
+  // Axes
+  for(let i=0;i<n;i++){
+    const a=Math.PI*2*i/n-Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+    ctx.strokeStyle='rgba(136,136,176,0.3)';ctx.stroke();
+  }
+  
+  // Data polygon
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const a=Math.PI*2*i/n-Math.PI/2;
+    const s=strengths[i].score/100;
+    const x=cx+Math.cos(a)*r*s,y=cy+Math.sin(a)*r*s;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(99,102,241,0.15)';ctx.fill();
+  ctx.strokeStyle='rgba(168,85,247,0.8)';ctx.lineWidth=2;ctx.stroke();
+  
+  // Dots + labels
+  ctx.font='bold 11px Inter,Noto Sans SC,sans-serif';
+  ctx.fillStyle='#e8e8f0';
+  ctx.textAlign='center';
+  for(let i=0;i<n;i++){
+    const a=Math.PI*2*i/n-Math.PI/2;
+    const s=strengths[i].score/100;
+    const x=cx+Math.cos(a)*r*s,y=cy+Math.sin(a)*r*s;
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle='#a855f7';ctx.fill();
+    
+    // Label outside
+    const lx=cx+Math.cos(a)*(r+28),ly=cy+Math.sin(a)*(r+28);
+    ctx.fillStyle='#e8e8f0';ctx.fillText(strengths[i].name,lx,ly+4);
+    
+    // Score inside
+    ctx.fillStyle='#a855f7';ctx.font='bold 10px Inter,sans-serif';
+    ctx.fillText(strengths[i].score,cx+Math.cos(a)*r*s*0.65,cy+Math.sin(a)*r*s*0.65+4);
+    ctx.font='bold 11px Inter,Noto Sans SC,sans-serif';
+  }
 }
 
 // =========== INIT ===========

@@ -340,6 +340,112 @@ def analyze_dna():
         return jsonify({"error": f"DNA分析失败: {str(e)}"}), 500
 
 
+# ========== ADVANCED BETA — 会话扫描 DNA ==========
+@app.route("/api/dna/scan", methods=["POST"])
+def scan_sessions_dna():
+    """高级Beta: 扫描本地 Agent 会话 + 灵感库，生成雷达图 DNA"""
+    sources = []
+    
+    # 1. 扫描 Hermes 会话数据库
+    try:
+        import sqlite3 as sql
+        session_db = Path(os.path.expanduser("~/.hermes/sessions.db"))
+        if session_db.exists():
+            sdb = sql.connect(str(session_db))
+            sdb.row_factory = sql.Row
+            rows = sdb.execute(
+                "SELECT role, content FROM messages WHERE role='user' AND length(content)>20 ORDER BY id DESC LIMIT 200"
+            ).fetchall()
+            for r in rows:
+                text = r["content"].strip()
+                if len(text) > 30 and not text.startswith("/"):
+                    sources.append(text[:300])
+            sdb.close()
+    except Exception as e:
+        print(f"[DNA Scan] Session scan: {e}")
+    
+    # 2. 扫描灵感库
+    try:
+        db = get_db()
+        rows = db.execute(
+            "SELECT title, summary, raw_content FROM inspirations ORDER BY created_at DESC LIMIT 100"
+        ).fetchall()
+        for r in rows:
+            text = r["raw_content"] or f"{r['title']}: {r['summary']}"
+            if len(text) > 20:
+                sources.append(text[:300])
+    except Exception as e:
+        print(f"[DNA Scan] Inspiration scan: {e}")
+    
+    if len(sources) < 10:
+        return jsonify({"error": f"需要至少10条可分析内容，当前只有{len(sources)}条。请多捕获灵感或聊天。"}), 400
+    
+    # 去重 + 限制数量
+    seen = set()
+    unique = []
+    for s in sources:
+        key = s[:50]
+        if key not in seen:
+            seen.add(key)
+            unique.append(s)
+    sources = unique[:80]
+    
+    sample_text = "\n---\n".join([f"[{i+1}] {s}" for i, s in enumerate(sources)])
+    
+    prompt = f"""你是DNA分析师。基于这些对话和灵感片段，提炼创作者DNA。返回纯JSON：
+{{
+  "persona": "一句话画像(≤80字)",
+  "themes": ["主题1","主题2","主题3","主题4","主题5"],
+  "tone_tags": ["语气标签1","语气标签2","语气标签3","语气标签4","语气标签5"],
+  "strengths": [
+    {{"name":"创造力","score":88}},
+    {{"name":"逻辑力","score":75}},
+    {{"name":"感召力","score":70}},
+    {{"name":"执行力","score":80}},
+    {{"name":"趋势嗅觉","score":72}},
+    {{"name":"跨界力","score":78}}
+  ],
+  "audience_hook": "受众钩子(≤60字)",
+  "growth_tip": "突破建议(≤80字)"
+}}
+strengths 的 score 是0-100，基于内容真实打分。
+内容({len(sources)}条):\n{sample_text[:8000]}"""
+
+    try:
+        content = call_llm(prompt, task="dna")
+        if not content:
+            return jsonify({"error": "Agent LLM 返回空"}), 500
+        dna = extract_json(content)
+        if not dna:
+            arr_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if arr_match:
+                try: dna = json.loads(arr_match.group())
+                except: pass
+        if not dna:
+            return jsonify({"error": "DNA解析失败", "raw": content[:300]}), 500
+        
+        # Save to DB
+        now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+        existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+        if existing:
+            db.execute("UPDATE creator_profile SET dna_json=?, analyzed_at=? WHERE id=?",
+                       (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
+        else:
+            db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
+                       (json.dumps(dna, ensure_ascii=False), now_str))
+        db.commit()
+        
+        return jsonify({
+            "ok": True,
+            "dna": dna,
+            "source_count": len(sources),
+            "session_msgs": len([s for s in sources if len(s) > 80]),
+            "method": "agent_llm_scan"
+        })
+    except Exception as e:
+        return jsonify({"error": f"DNA扫描失败: {str(e)}"}), 500
+
+
 # ========== TOPIC GENERATION (v2 — selected/random + deep dive + DNA) ==========
 @app.route("/api/topics")
 def generate_topics():
