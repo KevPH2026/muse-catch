@@ -76,28 +76,28 @@ def _read_agent_config():
 _AGENT_KEY, _AGENT_BASE, _AGENT_MODEL = _read_agent_config()
 
 
-def call_llm(prompt, task="ingest", system=None):
+def call_llm(prompt, task="ingest", system=None, temp=None, max_tokens=None):
     """统一 LLM 调用入口。优先级：TR_API_KEY > Agent 自身 LLM > 规则兜底"""
     cfg = ROUTE.get(task, ROUTE["ingest"])
-    temp = cfg["temp"]
-    max_tokens = cfg["max_tokens"]
+    _temp = temp if temp is not None else cfg["temp"]
+    _max_tokens = max_tokens if max_tokens is not None else cfg["max_tokens"]
     
     # 1. TokenRouter cloud (if user configured key)
     if TR_KEY:
         model = cfg.get("model_tr", "deepseek/deepseek-v4-pro")
-        result = _call_tr(model, prompt, temp, max_tokens, system)
+        result = _call_tr(model, prompt, _temp, _max_tokens, system)
         if result:
             return result
     
     # 2. Agent 自身的 LLM 能力（继承 Hermes Agent 的 API Key）
     if _AGENT_KEY:
-        result = _call_agent_model(_AGENT_MODEL, prompt, temp, max_tokens, system)
+        result = _call_agent_model(_AGENT_MODEL, prompt, _temp, _max_tokens, system)
         if result:
             return result
     
     # 3. Local Ollama fallback
     local_model = cfg.get("model_local") or OLLAMA_MODEL
-    result = _call_ollama(local_model, prompt, temp, max_tokens, system)
+    result = _call_ollama(local_model, prompt, _temp, _max_tokens, system)
     if result:
         return result
     
@@ -221,41 +221,49 @@ def call_tr_image(prompt, size="1024x1024"):
 
 
 def extract_json(content):
-    """从 LLM 输出中提取第一个 JSON 对象"""
+    """从 LLM 输出中提取第一个 JSON 对象或数组"""
     if not content:
         return None
+    # Strip markdown code fences
+    content = content.strip()
+    for fence in ['```json', '```']:
+        if content.startswith(fence):
+            content = content[len(fence):].strip()
+        if content.endswith('```'):
+            content = content[:-3].strip()
     # Try direct parse first
     try:
-        return json.loads(content.strip())
+        return json.loads(content)
     except:
         pass
-    # Try regex extraction — find first { that pairs correctly
-    start = content.find('{')
-    if start == -1:
-        return None
-    depth = 0
-    in_str = False
-    escape = False
-    for i in range(start, len(content)):
-        c = content[i]
-        if escape:
-            escape = False
+    # Try regex extraction — find first { or [ that pairs correctly
+    for opener, closer in [('{', '}'), ('[', ']')]:
+        start = content.find(opener)
+        if start == -1:
             continue
-        if c == '\\':
-            escape = True
-            continue
-        if c == '"':
-            in_str = not in_str
-            continue
-        if not in_str:
-            if c == '{':
-                depth += 1
-            elif c == '}':
-                depth -= 1
-                if depth == 0:
-                    substr = content[start:i+1]
-                    try:
-                        return json.loads(substr)
-                    except:
-                        return None
+        depth = 0
+        in_str = False
+        escape = False
+        for i in range(start, len(content)):
+            c = content[i]
+            if escape:
+                escape = False
+                continue
+            if c == '\\':
+                escape = True
+                continue
+            if c == '"':
+                in_str = not in_str
+                continue
+            if not in_str:
+                if c == opener:
+                    depth += 1
+                elif c == closer:
+                    depth -= 1
+                    if depth == 0:
+                        substr = content[start:i+1]
+                        try:
+                            return json.loads(substr)
+                        except:
+                            return None
     return None
