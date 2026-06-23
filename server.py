@@ -663,15 +663,15 @@ def topic_deep_dive():
 # ========== WEB DASHBOARD ==========
 @app.route("/")
 def landing():
-    return open(Path(__file__).parent / "landing.html").read()
+    return open(Path(__file__).parent / "index.html").read()
 
 @app.route("/app")
 def dashboard():
-    return open(Path(__file__).parent / "index.html").read()
+    return open(Path(__file__).parent / "app.html").read()
 
 @app.route("/landing")
 def landing_root():
-    return open(Path(__file__).parent / "landing.html").read()
+    return open(Path(__file__).parent / "index.html").read()
 
 # ========== NEW — 发散 / 分类 / 金句配图 ==========
 @app.route("/api/expand", methods=["POST"])
@@ -750,10 +750,6 @@ def generate_quote_card():
 @app.route("/demo")
 def demo():
     return open(Path(__file__).parent / "demo.html").read()
-
-@app.route("/landing")
-def landing():
-    return open(Path(__file__).parent / "landing.html").read()
 
 @app.route("/onboard.js")
 def onboard_js():
