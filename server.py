@@ -55,6 +55,7 @@ def init_db():
             profile_links TEXT,
             dna_json TEXT,
             model_config TEXT DEFAULT '{}',
+            image_model_config TEXT DEFAULT '{}',
             analyzed_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT (datetime('now','localtime')),
             updated_at TIMESTAMP
@@ -122,6 +123,10 @@ def init_db():
     # Migration: add model_config to existing databases
     try:
         db.execute("ALTER TABLE creator_profile ADD COLUMN model_config TEXT DEFAULT '{}'")
+    except:
+        pass
+    try:
+        db.execute("ALTER TABLE creator_profile ADD COLUMN image_model_config TEXT DEFAULT '{}'")
     except:
         pass
     try:
@@ -1215,7 +1220,7 @@ def get_model_config():
     """Get user's custom model configuration"""
     db = get_db()
     row = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
-    mc = json.loads(row["model_config"]) if row and row["model_config"] else {}
+    mc = json.loads(row["model_config"]) if row and "model_config" in row.keys() and row["model_config"] else {}
     configured = bool(mc.get("model") and mc.get("endpoint"))
     if configured and mc.get("key"):
         masked = mc["key"][:4] + "****" + mc["key"][-4:] if len(mc["key"]) > 8 else "****"
@@ -1252,6 +1257,51 @@ def save_model_config():
                    (json.dumps(mc, ensure_ascii=False), row["id"]))
     else:
         db.execute("INSERT INTO creator_profile (model_config) VALUES (?)", (json.dumps(mc, ensure_ascii=False),))
+    db.commit()
+    return jsonify({"ok": True, "saved": mc["model"]})
+
+@app.route("/api/image-model-config", methods=["GET"])
+def get_image_model_config():
+    """Get user's custom image model configuration"""
+    db = get_db()
+    row = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+    mc = json.loads(row["image_model_config"]) if row and "image_model_config" in row.keys() and row["image_model_config"] else {}
+    configured = bool(mc.get("model") and mc.get("endpoint"))
+    if configured and mc.get("key"):
+        masked = mc["key"][:4] + "****" + mc["key"][-4:] if len(mc["key"]) > 8 else "****"
+    else:
+        masked = ""
+    return jsonify({
+        "ok": True,
+        "configured": configured,
+        "name": mc.get("name", ""),
+        "provider": mc.get("provider", ""),
+        "endpoint": mc.get("endpoint", ""),
+        "model": mc.get("model", ""),
+        "masked_key": masked
+    })
+
+@app.route("/api/image-model-config", methods=["POST"])
+def save_image_model_config():
+    """Save user's custom image model configuration"""
+    db = get_db()
+    data = request.get_json() or {}
+    mc = {
+        "name": (data.get("name") or "").strip(),
+        "provider": (data.get("provider") or "openai").strip(),
+        "endpoint": (data.get("endpoint") or "").strip(),
+        "model": (data.get("model") or "").strip(),
+        "key": (data.get("key") or "").strip()
+    }
+    if not mc["model"]:
+        return jsonify({"ok": False, "error": "Model name is required"})
+    
+    row = db.execute("SELECT id FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+    if row:
+        db.execute("UPDATE creator_profile SET image_model_config = ?, updated_at = datetime('now','localtime') WHERE id = ?",
+                   (json.dumps(mc, ensure_ascii=False), row["id"]))
+    else:
+        db.execute("INSERT INTO creator_profile (image_model_config) VALUES (?)", (json.dumps(mc, ensure_ascii=False),))
     db.commit()
     return jsonify({"ok": True, "saved": mc["model"]})
 

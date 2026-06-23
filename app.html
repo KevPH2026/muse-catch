@@ -242,7 +242,22 @@ a{color:inherit;text-decoration:none}
 }
 
 
-/* ===== Model Config ===== */
+
+/* ===== Settings Page ===== */
+#settings-page{display:none}
+#settings-page.show{display:block}
+.settings-section{margin-bottom:24px}
+.settings-section h3{font-size:16px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:6px}
+.settings-section .section-desc{font-size:11px;color:var(--dim);margin-bottom:12px}
+.settings-section form{display:flex;flex-direction:column;gap:8px}
+.settings-section .form-row{display:flex;gap:8px;flex-wrap:wrap}
+.settings-section input,.settings-section select{flex:1;min-width:120px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;font-family:inherit}
+.settings-section input:focus,.settings-section select:focus{outline:none;border-color:var(--accent)}
+.settings-section input[type="password"]{font-family:monospace;letter-spacing:1px}
+.settings-status{font-size:11px;margin-top:4px;padding:4px 8px;border-radius:6px;display:inline-block}
+.settings-status.success{background:rgba(40,200,64,.1);color:#28c840}
+.settings-status.none{background:var(--surface2);color:var(--dim)}
+ */
 .model-config{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
 .model-config h3{font-size:16px;font-weight:700;margin:0 0 4px}
 .model-config .config-desc{font-size:11px;color:var(--dim);margin-bottom:12px}
@@ -253,6 +268,36 @@ a{color:inherit;text-decoration:none}
 .model-config .config-status{font-size:11px;margin-top:4px;padding:4px 8px;border-radius:6px;display:inline-block}
 .config-status.success{background:rgba(40,200,64,.1);color:#28c840}
 .config-status.none{background:var(--surface2);color:var(--dim)}
+
+
+/* ===== Loading Overlay ===== */
+.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(12,14,12,.85);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.loading-overlay.show{display:flex}
+.loading-spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--dim);text-align:center;max-width:300px}
+.loading-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin:0 3px;animation:drip 1.4s infinite}
+.loading-dots span:nth-child(2){animation-delay:.2s}
+.loading-dots span:nth-child(3){animation-delay:.4s}
+@keyframes drip{0%,80%,100%{opacity:0;transform:translateY(0)}40%{opacity:1;transform:translateY(-6px)}}
+
+
+/* ===== Platform Selector Modal ===== */
+.platform-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(12,14,12,.7);z-index:9998;display:none;align-items:center;justify-content:center}
+.platform-modal.show{display:flex}
+.platform-modal .modal-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:slideUp .25s}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.platform-modal h3{margin:0 0 4px;font-size:18px}
+.platform-modal .modal-sub{font-size:11px;color:var(--dim);margin-bottom:16px}
+.platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.platform-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--text);font-family:inherit}
+.platform-btn:hover{border-color:var(--accent);background:rgba(99,102,241,.05);transform:translateY(-1px)}
+.platform-btn .pf-icon{font-size:20px;flex-shrink:0}
+.platform-btn .pf-name{font-weight:600}
+.platform-btn .pf-hint{font-size:10px;color:var(--dim);display:block}
+.platform-modal .cancel-link{display:block;text-align:center;margin-top:12px;font-size:11px;color:var(--dim);cursor:pointer}
+.platform-modal .cancel-link:hover{color:var(--text)}
+@media(max-width:400px){.platform-grid{grid-template-columns:1fr}}
 
 /* ===== Ship Page (Content Calendar) ===== */
 #ship-page{display:none}
@@ -429,7 +474,14 @@ a{color:inherit;text-decoration:none}
 @media(max-width:600px){#chat-panel{width:calc(100vw-32px);right:16px;bottom:84px;max-height:60vh}}
 </style>
 </head>
+
 <body>
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">AI 思考中...</div>
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
 
 <!-- ============ SIDEBAR ============ -->
 <aside class="sidebar">
@@ -439,6 +491,7 @@ a{color:inherit;text-decoration:none}
     <a class="nav-item" onclick="switchTab('dna', this)"><span class="nav-icon">🧬</span>DNA</a>
     <a class="nav-item" onclick="switchTab('ship', this)"><span class="nav-icon">📅</span>Ship</a>
     <a class="nav-item" onclick="switchTab('skills', this)"><span class="nav-icon">🛠️</span>Skills</a>
+    <a class="nav-item" onclick="switchTab('settings', this)"><span class="nav-icon">⚙️</span>Settings</a>
     <a class="nav-item" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">💡</span>选题建议</a>
     <div class="nav-divider"></div>
     <a class="nav-item" onclick="document.getElementById('ingest-input').focus()"><span class="nav-icon">⚡</span>快速捕获</a>
@@ -701,6 +754,69 @@ a{color:inherit;text-decoration:none}
     </div>
 
 
+    <!-- ===== SETTINGS PAGE ===== -->
+    <div id="settings-page">
+      <div class="skills-header">
+        <h2>⚙️ Settings</h2>
+        <p>配置你的 AI 模型和其他偏好</p>
+      </div>
+
+      <!-- Text LLM Config -->
+      <div class="settings-section">
+        <h3>💬 文本生成模型</h3>
+        <p class="section-desc">用于排期生成、写作辅助、DNA 分析等文本 AI 任务</p>
+        <form onsubmit="saveTextLLM(event)">
+          <div class="form-row">
+            <input type="text" id="st-name" placeholder="名称 (如: 我的DeepSeek)" maxlength="40">
+            <select id="st-provider">
+              <option value="openai">OpenAI 兼容</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="siliconflow">SiliconFlow</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="custom">自定义</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="text" id="st-endpoint" placeholder="API Endpoint (如 https://api.deepseek.com/v1)">
+            <input type="text" id="st-model" placeholder="模型名 (如 deepseek-chat)">
+          </div>
+          <div class="form-row">
+            <input type="password" id="st-key" placeholder="API Key" style="flex:2">
+            <button type="submit" class="btn btn-primary" style="font-size:12px">💾 保存</button>
+          </div>
+        </form>
+        <div class="settings-status none" id="st-status">未配置 — 使用默认模型</div>
+      </div>
+
+      <!-- Image Gen Model Config -->
+      <div class="settings-section">
+        <h3>🎨 图片生成模型</h3>
+        <p class="section-desc">用于封面图、卡片、信息图等视觉 AI 任务</p>
+        <form onsubmit="saveImageLLM(event)">
+          <div class="form-row">
+            <input type="text" id="si-name" placeholder="名称 (如: Gemini Pro)" maxlength="40">
+            <select id="si-provider">
+              <option value="openai">OpenAI (DALL-E)</option>
+              <option value="gemini">Gemini (Imagen)</option>
+              <option value="siliconflow">SiliconFlow</option>
+              <option value="stability">Stability AI</option>
+              <option value="custom">自定义</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="text" id="si-endpoint" placeholder="API Endpoint">
+            <input type="text" id="si-model" placeholder="模型名 (如 gpt-image-2)">
+          </div>
+          <div class="form-row">
+            <input type="password" id="si-key" placeholder="API Key" style="flex:2">
+            <button type="submit" class="btn btn-primary" style="font-size:12px">💾 保存</button>
+          </div>
+        </form>
+        <div class="settings-status none" id="si-status">未配置 — 使用默认模型</div>
+      </div>
+
+    </div>
+
     <!-- ===== MODEL CONFIG (in control panel) ===== -->
     <div id="model-config" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
       <h3>🤖 自定义模型</h3>
@@ -726,6 +842,41 @@ a{color:inherit;text-decoration:none}
       </form>
       <div class="config-status none" id="mc-status" style="margin-top:6px">未配置 — 使用默认模型</div>
     </div>
+
+<!-- Platform Selector Modal -->
+<div class="platform-modal" id="platform-modal">
+  <div class="modal-card">
+    <h3>📝 选择发布平台</h3>
+    <div class="modal-sub" id="platform-modal-sub">AI 会根据平台调整写作风格</div>
+    <div class="platform-grid">
+      <button class="platform-btn" onclick="startWritingOn('wechat')">
+        <span class="pf-icon">💚</span>
+        <span><span class="pf-name">公众号</span><span class="pf-hint">深度长文 · 排版精致</span></span>
+      </button>
+      <button class="platform-btn" onclick="startWritingOn('douyin')">
+        <span class="pf-icon">🎵</span>
+        <span><span class="pf-name">抖音</span><span class="pf-hint">短视频脚本 · 口语化</span></span>
+      </button>
+      <button class="platform-btn" onclick="startWritingOn('linkedin')">
+        <span class="pf-icon">🔷</span>
+        <span><span class="pf-name">LinkedIn</span><span class="pf-hint">专业叙事 · 双语可选</span></span>
+      </button>
+      <button class="platform-btn" onclick="startWritingOn('twitter')">
+        <span class="pf-icon">🐦</span>
+        <span><span class="pf-name">Twitter/X</span><span class="pf-hint">碎片洞察 · thread体</span></span>
+      </button>
+      <button class="platform-btn" onclick="startWritingOn('xiaohongshu')">
+        <span class="pf-icon">📕</span>
+        <span><span class="pf-name">小红书</span><span class="pf-hint">种草笔记 · 视觉化</span></span>
+      </button>
+      <button class="platform-btn" onclick="startWritingOn('facebook')">
+        <span class="pf-icon">📘</span>
+        <span><span class="pf-name">Facebook</span><span class="pf-hint">社区叙事 · 互动导向</span></span>
+      </button>
+    </div>
+    <span class="cancel-link" onclick="closePlatformModal()">取消</span>
+  </div>
+</div>
 
     <!-- ===== SHIP PAGE (Content Calendar) ===== -->
     <div id="ship-page">
@@ -1292,7 +1443,18 @@ function switchTab(tab, el){
 
   const skillsPage = document.getElementById('skills-page');
   const shipPage = document.getElementById('ship-page');
-  if(tab === 'skills'){
+  const settingsPage = document.getElementById('settings-page');
+  if(tab === 'settings'){
+    [statsBar, dnaBadge, dnaPanel, selBar, filters, pf, grid, empty].forEach(el => { if(el) el.style.display = 'none'; });
+    if(topicsPanel) topicsPanel.classList.remove('show');
+    if(divePanel) divePanel.classList.remove('show');
+    dnaPage.classList.remove('show');
+    if(shipPage) shipPage.classList.remove('show');
+    if(skillsPage) skillsPage.classList.remove('show');
+    document.getElementById('model-config').style.display = 'none';
+    settingsPage.classList.add('show');
+    loadSettings();
+  }else if(tab === 'skills'){
     [statsBar, dnaBadge, dnaPanel, selBar, filters, pf, grid, empty].forEach(el => { if(el) el.style.display = 'none'; });
     if(topicsPanel) topicsPanel.classList.remove('show');
     if(divePanel) divePanel.classList.remove('show');
@@ -1307,6 +1469,7 @@ function switchTab(tab, el){
     if(divePanel) divePanel.classList.remove('show');
     dnaPage.classList.remove('show');
     shipPage.classList.add('show');
+    if(settingsPage) settingsPage.classList.remove('show');
     document.getElementById('model-config').style.display = 'none';
     loadCalendar();
   }else if(tab === 'dna'){
@@ -1316,6 +1479,7 @@ function switchTab(tab, el){
     if(divePanel) divePanel.classList.remove('show');
     // Show DNA page
     dnaPage.classList.add('show');
+    if(settingsPage) settingsPage.classList.remove('show');
     document.getElementById('model-config').style.display = 'none';
     loadEvolutionRecords();
     // Also load DNA analysis if profile exists
@@ -1325,6 +1489,8 @@ function switchTab(tab, el){
     dnaPage.classList.remove('show');
     if(shipPage) shipPage.classList.remove('show');
     if(skillsPage) skillsPage.classList.remove('show');
+    const settingsPage = document.getElementById('settings-page');
+    if(settingsPage) settingsPage.classList.remove('show');
     [statsBar, dnaBadge, dnaPanel, selBar, filters, pf, grid, empty].forEach(el => { if(el) el.style.display = ''; });
     document.getElementById('model-config').style.display = 'block';
     loadModelConfig();
@@ -1332,6 +1498,90 @@ function switchTab(tab, el){
 }
 
 
+
+
+
+// ---- Loading ----
+function showLoading(msg){
+  const ov = document.getElementById('loading-overlay');
+  const txt = document.getElementById('loading-text');
+  if(txt) txt.textContent = msg || 'AI 思考中...';
+  if(ov) ov.classList.add('show');
+}
+function hideLoading(){
+  const ov = document.getElementById('loading-overlay');
+  if(ov) ov.classList.remove('show');
+}
+
+
+// ---- Settings ----
+async function loadSettings(){
+  try{
+    const r = await fetch('/api/model-config');
+    const d = await r.json();
+    if(d.configured){
+      document.getElementById('st-name').value = d.name || '';
+      document.getElementById('st-provider').value = d.provider || 'openai';
+      document.getElementById('st-endpoint').value = d.endpoint || '';
+      document.getElementById('st-model').value = d.model || '';
+      document.getElementById('st-key').value = d.masked_key || '';
+      document.getElementById('st-status').className = 'settings-status success';
+      document.getElementById('st-status').textContent = '✅ 已配置 — ' + (d.model || 'Custom');
+    }
+    // Load image config
+    const ir = await fetch('/api/image-model-config');
+    const id = await ir.json();
+    if(id.configured){
+      document.getElementById('si-name').value = id.name || '';
+      document.getElementById('si-provider').value = id.provider || 'openai';
+      document.getElementById('si-endpoint').value = id.endpoint || '';
+      document.getElementById('si-model').value = id.model || '';
+      document.getElementById('si-key').value = id.masked_key || '';
+      document.getElementById('si-status').className = 'settings-status success';
+      document.getElementById('si-status').textContent = '✅ 已配置 — ' + (id.model || 'Custom');
+    }
+  }catch(e){}
+}
+
+async function saveTextLLM(e){
+  e.preventDefault();
+  const body = {
+    name: document.getElementById('st-name').value.trim(),
+    provider: document.getElementById('st-provider').value,
+    endpoint: document.getElementById('st-endpoint').value.trim(),
+    model: document.getElementById('st-model').value.trim(),
+    key: document.getElementById('st-key').value.trim()
+  };
+  if(!body.model){ alert('请输入模型名'); return; }
+  const r = await fetch('/api/model-config', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if(d.ok){
+    document.getElementById('st-status').className = 'settings-status success';
+    document.getElementById('st-status').textContent = '✅ 已配置 — ' + body.model;
+  }else{ alert(d.error || '保存失败'); }
+}
+
+async function saveImageLLM(e){
+  e.preventDefault();
+  const body = {
+    name: document.getElementById('si-name').value.trim(),
+    provider: document.getElementById('si-provider').value,
+    endpoint: document.getElementById('si-endpoint').value.trim(),
+    model: document.getElementById('si-model').value.trim(),
+    key: document.getElementById('si-key').value.trim()
+  };
+  if(!body.model){ alert('请输入模型名'); return; }
+  const r = await fetch('/api/image-model-config', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if(d.ok){
+    document.getElementById('si-status').className = 'settings-status success';
+    document.getElementById('si-status').textContent = '✅ 已配置 — ' + body.model;
+  }else{ alert(d.error || '保存失败'); }
+}
 
 
 // ---- Model Config ----
@@ -1374,6 +1624,55 @@ async function saveModelConfig(e){
   }else{
     alert(d.error || 'Save failed');
   }
+}
+
+
+
+// ---- Platform Selector ----
+let pendingCalId = null;
+
+function showPlatformModal(calId, topic){
+  pendingCalId = calId;
+  const sub = document.getElementById('platform-modal-sub');
+  if(sub && topic) sub.textContent = `选题「${topic.replace(/'/g,"\'")}」— AI 会根据平台调整写作风格`;
+  document.getElementById('platform-modal').classList.add('show');
+}
+
+function closePlatformModal(){
+  document.getElementById('platform-modal').classList.remove('show');
+  pendingCalId = null;
+}
+
+async function startWritingOn(platform){
+  if(!pendingCalId){
+    closePlatformModal();
+    return;
+  }
+  const platNames = {
+    wechat:'微信公众号',douyin:'抖音',linkedin:'LinkedIn',twitter:'Twitter/X',
+    xiaohongshu:'小红书',facebook:'Facebook'
+  };
+  
+  // Update status to writing + record platform in meta
+  showLoading(`正在为 ${platNames[platform] || platform} 准备写作...`);
+  await fetch(`/api/calendar/${pendingCalId}`, {
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({status:'writing', meta_json: JSON.stringify({platform: platform})})
+  });
+  
+  closePlatformModal();
+  hideLoading();
+  
+  // Open chat panel with platform-aware prompt
+  const inp = document.getElementById('chat-input');
+  if(inp){
+    inp.value = `为 ${platNames[platform] || platform} 平台写一篇关于「选题」的内容，用适合该平台的风格和格式`;
+    document.getElementById('chat-panel').classList.add('open');
+    inp.focus();
+  }
+  
+  loadCalendar(); // refresh
 }
 
 
@@ -1670,7 +1969,7 @@ function showCalDetail(id){
   `;
   document.getElementById('cal-detail-angle').textContent = item.angle || '暂无角度说明';
   document.getElementById('cal-detail-actions').innerHTML = `
-    <button class="btn btn-outline" onclick="updateCalStatus(${id},'writing')" style="font-size:11px">✍️ 开始写作</button>
+    <button class="btn btn-outline" onclick="showPlatformModal(${id},'${escAttr(item.title || item.topic || '')}')" style="font-size:11px">✍️ 开始写作</button>
     <button class="btn btn-outline" onclick="updateCalStatus(${id},'published')" style="font-size:11px">✅ 标记发布</button>
     <button class="btn btn-outline" onclick="updateCalStatus(${id},'planned')" style="font-size:11px">📝 回到计划</button>
     <button class="btn btn-outline" onclick="deleteCalItem(${id})" style="font-size:11px;color:#ef4444">🗑️</button>
