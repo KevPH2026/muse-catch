@@ -330,8 +330,6 @@ a{color:inherit;text-decoration:none}
     <div class="filters" id="filters">
       <button class="filter active" onclick="setFilter('all')">全部</button>
       <button class="filter" onclick="setFilter('web')">🌐 Web</button>
-      <button class="filter" onclick="setFilter('twitter')">🐦 Twitter</button>
-      <button class="filter" onclick="setFilter('wechat')">📱 公众号</button>
       <button class="filter" onclick="setFilter('tg')">🤖 Agent</button>
       <button class="filter" onclick="setFilter('idea')">💡 Idea</button>
       <button class="filter" onclick="setFilter('extension')">🔌 插件</button>
@@ -406,6 +404,10 @@ async function load(){
     renderEmotionDonut(s);
     renderWeekChart(s);
   }catch(e){console.error('stats error',e)}
+  // Load DNA profile
+  try{const r=await fetch('/api/profile');const p=await r.json();
+    if(p.dna) displayDNA(p.dna);
+  }catch(e){console.error('profile error',e)}
   render();
 }
 
@@ -630,6 +632,33 @@ async function deepDive(topic,angle,ids){
 }
 
 // =========== DNA ===========
+function displayDNA(dna){
+  if(!dna) return;
+  // Show badge
+  document.getElementById('dna-badge').style.display='';
+  document.getElementById('dna-persona').textContent=dna.persona||'';
+  const strengths = dna.strengths || [];
+  const scoreAvg = strengths.length ? Math.round(strengths.reduce((s,x)=>s+(typeof x==='object'?x.score||0:x||0),0)/strengths.length) : 0;
+  document.getElementById('dna-stats').textContent = `${strengths.length}维 · 综合${scoreAvg}分 · ${dna.topics?dna.topics.length:0}个核心话题`;
+  // Render detail in panel
+  const det=document.getElementById('dna-detail');
+  if(det){
+    const topics = (dna.topics||[]).map(t=>`<span class="tag" style="background:rgba(99,102,241,.12);color:var(--purple-light)">${t}</span>`).join(' ');
+    det.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><strong>语气:</strong> ${dna.tone||'—'}</div>
+        <div><strong>句式:</strong> ${dna.sentence_style||'—'}</div>
+        <div><strong>受众钩子:</strong> ${dna.audience_hook||'—'}</div>
+        <div><strong>突破建议:</strong> ${dna.growth_tip||'—'}</div>
+      </div>
+      <div style="margin-top:12px"><strong>核心话题:</strong> ${topics||'—'}</div>
+      ${dna.blind_spots&&dna.blind_spots.length?`<div style="margin-top:8px"><strong>盲区:</strong> ${dna.blind_spots.join('、')}</div>`:''}
+    `;
+  }
+  // Draw radar
+  if(strengths.length) drawRadar(strengths);
+}
+
 function toggleDnaPanel(){
   const p=document.getElementById('dna-panel');
   p.classList.toggle('show');
@@ -640,18 +669,15 @@ function toggleDnaPanel(){
 async function scanSessionsDNA(){
   const btn=document.getElementById('btn-scan-dna');
   btn.disabled=true;btn.textContent='⏳ 扫描中...';
-  showToast('🧬 正在扫描本地会话 + 灵感库...',0);
+  showToast('🧬 正在分析灵感库 + 生成DNA...',0);
   try{
     const r=await fetch('/api/dna/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
     const d=await r.json();
-    if(d.error){showToast('⚠️ '+d.error);btn.disabled=false;btn.textContent='🧬 高级Beta: 扫描会话';return}
-    // Display DNA detail
+    if(d.error){showToast('⚠️ '+d.error);btn.disabled=false;btn.textContent='🧬 生成DNA';return}
     displayDNA(d.dna);
-    // Draw radar if strengths exist
-    if(d.dna.strengths) drawRadar(d.dna.strengths);
-    showToast(`✅ 扫描完成！分析了 ${d.source_count} 条内容（含 ${d.session_msgs||0} 条对话）`);
-  }catch(e){showToast('❌ 扫描失败')}
-  btn.disabled=false;btn.textContent='🧬 高级Beta: 扫描会话';
+    showToast(`✅ 分析完成！基于 ${d.sample_count||0} 条内容生成DNA`);
+  }catch(e){showToast('❌ 分析失败')}
+  btn.disabled=false;btn.textContent='🧬 重新生成DNA';
 }
 
 function drawRadar(strengths){
@@ -718,6 +744,77 @@ function drawRadar(strengths){
     ctx.fillText(strengths[i].score,cx+Math.cos(a)*r*s*0.65,cy+Math.sin(a)*r*s*0.65+4);
     ctx.font='bold 11px Inter,Noto Sans SC,sans-serif';
   }
+}
+
+// =========== FULL DEMO ===========
+const DEMO_ITEMS=[
+  {source:'twitter',title:'AI is not a tool, it\'s an amplifier',content:'You give it context, it amplifies. Cognition cannot be outsourced, but it can be leveraged.',tags:['AI','认知'],emotion:'inspired'},
+  {source:'wechat',title:'灵感半衰期只有三分钟',content:'最危险的敌人不是遗忘，是你的大脑在灵感闪现时说"等下再记"。下个瞬间，它就不在了。',tags:['灵感','创作'],emotion:'excited'},
+  {source:'web',title:'垂直AI Agent正在吃掉SaaS',content:'传统SaaS依赖功能壁垒。AI时代，理解壁垒成为新护城河——谁更懂用户的垂直领域，谁赢。',tags:['AI Agent','SaaS'],emotion:'curious'}
+];
+
+async function runFullDemo(){
+  const btn=document.getElementById('btn-run-demo');
+  if(btn.dataset.running)return;
+  btn.dataset.running='1';btn.textContent='⏳ Demo运行中...';
+  showToast('🎬 全流程Demo启动 · 6个阶段自动演示',0);
+  
+  const delay=ms=>new Promise(r=>setTimeout(r,ms));
+  
+  try{
+    // Phase 1: Onboarding — skip existing, inject if needed
+    const p1=await fetch('/api/profile');
+    const prof=await p1.json();
+    if(!prof.exists||!prof.dna){
+      showToast('🧬 Phase 1/6: 设置创作者DNA...',0);
+      await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain:'AI/大模型',style:'干货分析',platforms:'X,公众号'})});
+      await fetch('/api/profile/dna',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({samples:['AI时代的护城河不是数据不是算法，是工作流嵌入深度。','灵感不转化就是噪音。选题不深入就是废话。','最好的产品经理不是定义需求的人，而是定义问题的人。']})});
+      await delay(1500);
+      await load();await checkOnboarding();
+      scrollTo(document.getElementById('dna-panel'),500);
+    }
+    
+    // Phase 2: Ingest demo inspirations + store IDs
+    showToast('📥 Phase 2/6: 灵感流入中...',0);
+    const ids=[];
+    for(const item of DEMO_ITEMS){
+      const r=await fetch('/api/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)});
+      const d=await r.json();
+      if(d.id)ids.push(d.id);
+      await delay(600);
+    }
+    await load();
+    
+    // Phase 3: Expand on first item
+    showToast('🔀 Phase 3/6: 灵感发散...',0);
+    await delay(500);
+    if(ids.length) await expandInspiration(ids[0]);
+    await delay(2500);
+    
+    // Phase 4: Quote/golden sentence
+    showToast('💎 Phase 4/6: 金句生成...',0);
+    await delay(500);
+    if(ids.length>0&&typeof generateQuoteCard==='function'){
+      try{await generateQuoteCard(ids[0]);}catch(e){}
+    }
+    await delay(2000);
+    
+    // Phase 5: Topics
+    showToast('💡 Phase 5/6: 选题生成...',0);
+    await delay(500);
+    await generateTopics('random');
+    await delay(2000);
+    
+    // Phase 6: DNA scan
+    showToast('🧬 Phase 6/6: DNA雷达扫描...',0);
+    await delay(500);
+    if(typeof scanSessionsDNA==='function'){
+      try{await scanSessionsDNA();}catch(e){}
+    }
+    
+    showToast('✅ Demo完成！6阶段全流程已演示',0);
+  }catch(e){showToast('⚠️ Demo中断: '+e.message)}
+  btn.dataset.running='';btn.textContent='🎬 Demo';
 }
 
 // =========== INIT ===========
