@@ -743,6 +743,10 @@ def generate_quote_card():
 def demo():
     return open(Path(__file__).parent / "demo.html").read()
 
+@app.route("/landing")
+def landing():
+    return open(Path(__file__).parent / "landing.html").read()
+
 @app.route("/onboard.js")
 def onboard_js():
     return send_file(Path(__file__).parent / "onboard.js")
