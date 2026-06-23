@@ -57,6 +57,18 @@ def init_db():
             analyzed_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT (datetime('now','localtime'))
         );
+        CREATE TABLE IF NOT EXISTS evolution_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source TEXT DEFAULT 'chat',
+            user_query TEXT,
+            ai_response TEXT,
+            feedback_type TEXT NOT NULL,
+            feedback_reason TEXT,
+            meta_json TEXT,
+            created_at TIMESTAMP DEFAULT (datetime('now','localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_ev_feedback ON evolution_records(feedback_type);
+        CREATE INDEX IF NOT EXISTS idx_ev_created ON evolution_records(created_at DESC);
     """)
     db.commit()
     db.close()
@@ -826,6 +838,45 @@ MUSE_CHAT_SYSTEM = """你是 Muse AI，K 的创作灵感管家。你可以通过
 - 用户说"选题"时，检查灵感库≥3条才生成，不够就说"灵感还太少，先捕几条"
 - 每次回复控制在2-4句话以内
 - 不要承诺做不到的事"""
+
+@app.route("/api/evolution/feedback", methods=["POST"])
+def save_evolution_feedback():
+    """Record user feedback on AI responses for self-evolution"""
+    data = request.get_json() or {}
+    query = (data.get("query") or "").strip()[:500]
+    response = (data.get("response") or "").strip()[:2000]
+    feedback = (data.get("feedback") or "").strip()
+    reason = (data.get("reason") or "").strip()[:1000]
+    source = (data.get("source") or "chat").strip()
+
+    if not feedback or feedback not in ("positive", "negative"):
+        return jsonify({"error": "feedback must be 'positive' or 'negative'"}), 400
+
+    db = get_db()
+    db.execute(
+        "INSERT INTO evolution_records (source, user_query, ai_response, feedback_type, feedback_reason) VALUES (?,?,?,?,?)",
+        (source, query, response, feedback, reason)
+    )
+    db.commit()
+
+    count = db.execute("SELECT COUNT(*) FROM evolution_records").fetchone()[0]
+    return jsonify({"ok": True, "total_records": count})
+
+@app.route("/api/evolution/records")
+def get_evolution_records():
+    """Return evolution records for display in DNA panel"""
+    db = get_db()
+    limit = request.args.get("limit", 50, type=int)
+    rows = db.execute(
+        "SELECT * FROM evolution_records ORDER BY created_at DESC LIMIT ?", (limit,)
+    ).fetchall()
+    pos = db.execute("SELECT COUNT(*) FROM evolution_records WHERE feedback_type='positive'").fetchone()[0]
+    neg = db.execute("SELECT COUNT(*) FROM evolution_records WHERE feedback_type='negative'").fetchone()[0]
+
+    return jsonify({
+        "records": [dict(r) for r in rows],
+        "stats": {"positive": pos, "negative": neg, "total": pos + neg}
+    })
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
