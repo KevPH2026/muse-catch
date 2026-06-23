@@ -1,9 +1,6 @@
 {
   "name": "muse-pitch-swiss-v2",
-  "routes": [
-    { "src": "/app", "dest": "/index.html" },
-    { "src": "/", "dest": "/landing.html" },
-    { "src": "/landing", "dest": "/landing.html" },
-    { "handle": "filesystem" }
+  "rewrites": [
+    { "source": "/landing", "destination": "/landing.html" }
   ]
 }

@@ -662,12 +662,12 @@ def topic_deep_dive():
 
 # ========== WEB DASHBOARD ==========
 @app.route("/")
-def landing_root():
-    return open(Path(__file__).parent / "landing.html").read()
-
-@app.route("/app")
 def dashboard():
     return open(Path(__file__).parent / "index.html").read()
+
+@app.route("/landing")
+def landing_root():
+    return open(Path(__file__).parent / "landing.html").read()
 
 # ========== NEW — 发散 / 分类 / 金句配图 ==========
 @app.route("/api/expand", methods=["POST"])
