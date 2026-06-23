@@ -747,6 +747,103 @@ def demo():
 def onboard_js():
     return send_file(Path(__file__).parent / "onboard.js")
 
+# ========== WEREAD SYNC (微信读书 API 一键同步) ==========
+@app.route("/api/weread/sync", methods=["POST"])
+def weread_sync():
+    """Sync WeRead highlights to Muse via official API.
+    Requires WEREAD_API_KEY (get from https://weread.qq.com/r/weread-skills)
+    """
+    data = request.get_json() or {}
+    api_key = data.get("api_key", "").strip()
+    limit = int(data.get("limit", 50))
+    
+    if not api_key:
+        return jsonify({"error": "需要微信读书 API Key。获取方式: https://weread.qq.com/r/weread-skills"}), 400
+    
+    captured = 0
+    errors = []
+    
+    try:
+        req = __import__("urllib.request")
+        
+        # Step 1: Get bookshelf (books with highlights)
+        shelf_url = f"https://i.weread.qq.com/shelf?apiKey={api_key}"
+        shelf_req = req.Request(shelf_url, headers={"User-Agent": "Muse-Catch/1.4"})
+        try:
+            with req.urlopen(shelf_req, timeout=15) as resp:
+                shelf_data = json.loads(resp.read())
+        except Exception as e:
+            return jsonify({"error": f"微信读书 API 读取书架失败 (检查 API Key): {str(e)}"}), 502
+        
+        books = shelf_data.get("books", [])
+        if not books:
+            return jsonify({"ok": True, "captured": 0, "message": "书架上没有带划线/笔记的书"})
+        
+        # Sort by last reading time, take most recent
+        books_sorted = sorted(books, key=lambda b: b.get("updateTime", 0), reverse=True)[:limit]
+        
+        db = get_db()
+        seen = set(r["url"] for r in db.execute("SELECT url FROM inspirations WHERE source='weread'").fetchall() if r["url"])
+        
+        for book in books_sorted:
+            book_id = book.get("bookId", "")
+            title = book.get("title", "未命名")
+            author = book.get("author", "")
+            if not book_id:
+                continue
+            
+            try:
+                # Get highlights for this book
+                hl_url = f"https://i.weread.qq.com/book/bookmarklist?bookId={book_id}&apiKey={api_key}"
+                hl_req = req.Request(hl_url, headers={"User-Agent": "Muse-Catch/1.4"})
+                with req.urlopen(hl_req, timeout=15) as resp:
+                    hl_data = json.loads(resp.read())
+                
+                highlights = hl_data.get("updated", [])
+                for hl in highlights:
+                    mark_text = (hl.get("markText", "") or "").strip()
+                    note_text = (hl.get("content", "") or "").strip()
+                    chapter = hl.get("chapterName", "") or hl.get("chapterUid", "")
+                    
+                    if not mark_text and not note_text:
+                        continue
+                    
+                    # Build unique URL per highlight
+                    hl_id = str(hl.get("bookmarkId", ""))
+                    muse_url = f"weread://{book_id}/highlight/{hl_id}"
+                    if muse_url in seen:
+                        continue
+                    
+                    full_text = f"📖 {mark_text}" if mark_text else ""
+                    if note_text:
+                        full_text += f"\n\n💡 {note_text}"
+                    
+                    db.execute("""
+                        INSERT INTO inspirations (source, content_type, raw_content, title, summary, keywords, emotion, tags, url)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        "weread", "text", str(full_text[:5000]),
+                        str(f"《{title}》{title[:60]}"),
+                        str(mark_text[:200]) if mark_text else str(note_text[:200]),
+                        str(author), "inspired", "微信读书,划线", muse_url
+                    ))
+                    seen.add(muse_url)
+                    captured += 1
+                
+            except Exception as e:
+                errors.append(f"《{title}》: {str(e)}")
+                continue
+        
+        db.commit()
+        return jsonify({
+            "ok": True,
+            "captured": captured,
+            "books_scanned": len(books_sorted),
+            "errors": errors[:5] if errors else []
+        })
+    except Exception as e:
+        return jsonify({"error": f"同步失败: {str(e)}"}), 500
+
 # ========== STARTUP ==========
 if __name__ == "__main__":
     init_db()
