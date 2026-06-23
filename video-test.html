@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Video Test</title>
+<style>body{margin:0;background:#111}video{width:100%;max-width:900px;display:block;margin:0 auto}</style>
+</head>
+<body>
+<video src="muse-demo.mp4" autoplay loop muted playsinline controls></video>
+<script>
+const v=document.querySelector('video');
+v.addEventListener('error',(e)=>document.body.innerHTML+='<p style=color:red>ERROR: '+v.error?.message+'</p>');
+v.addEventListener('loadeddata',()=>document.body.innerHTML+='<p style=color:lime>loadeddata OK</p>');
+v.addEventListener('play',()=>document.body.innerHTML+='<p style=color:lime>playing</p>');
+v.play().catch(e=>document.body.innerHTML+='<p style=color:orange>play rejected: '+e.message+'</p>');
+</script>
+</body>
+</html>

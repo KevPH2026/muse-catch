@@ -8,8 +8,10 @@ TokenRouter 注册：https://tokenrouter.com
 """
 import os
 import json
-import subprocess
 import re
+import urllib.request
+import urllib.error
+import ssl
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
@@ -104,7 +106,7 @@ def call_llm(prompt, task="ingest", system=None):
 
 
 def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
-    """调用 Agent 自身的 LLM（继承 Agent 的模型配置，不硬编码特定 provider）"""
+    """调用 Agent 自身的 LLM（继承 Agent 的模型配置）"""
     if not _AGENT_KEY:
         return None
     messages = []
@@ -118,30 +120,39 @@ def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
         "temperature": temp,
         "max_tokens": max_tokens
     }
+    headers = {"Authorization": f"Bearer {_AGENT_KEY}"}
     
-    # 尝试 OpenAI 兼容端点（覆盖主流 provider：DeepSeek/GLM/MiniMax/Kimi/OpenAI）
     endpoints = [
         f"{_AGENT_BASE}/v1/chat/completions",
         f"{_AGENT_BASE}/chat/completions",
     ]
     for ep in endpoints:
-        try:
-            r = subprocess.run([
-                "curl", "-s", "--max-time", "30",
-                ep,
-                "-H", f"Authorization: Bearer {_AGENT_KEY}",
-                "-H", "Content-Type: application/json",
-                "-d", json.dumps(body, ensure_ascii=False)
-            ], capture_output=True, text=True, timeout=35)
-            
-            if r.returncode == 0 and r.stdout.strip():
-                resp = json.loads(r.stdout)
-                content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
-                if content:
-                    return content
-        except Exception:
-            continue
+        resp = _http_post_json(ep, body, headers)
+        if resp:
+            content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if content:
+                return content
     return None
+
+
+def _http_post_json(url, body, headers=None, timeout=30):
+    """HTTP POST with JSON body. Returns parsed JSON or None."""
+    if headers is None:
+        headers = {}
+    headers["Content-Type"] = "application/json"
+    data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    ctx = ssl.create_default_context()
+    try:
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")[:300]
+        print(f"[LLM Router] HTTP {e.code}: {err_body}")
+        return None
+    except Exception as e:
+        print(f"[LLM Router] HTTP error: {e}")
+        return None
 
 
 def _call_tr(model, prompt, temp=0.5, max_tokens=1000, system=None):
@@ -159,26 +170,15 @@ def _call_tr(model, prompt, temp=0.5, max_tokens=1000, system=None):
         "temperature": temp,
         "max_tokens": max_tokens
     }
-    
-    try:
-        r = subprocess.run([
-            "curl", "-s", "--max-time", "30",
-            f"{TR_BASE}/chat/completions",
-            "-H", f"Authorization: Bearer {TR_KEY}",
-            "-H", "Content-Type: application/json",
-            "-d", json.dumps(body, ensure_ascii=False)
-        ], capture_output=True, text=True, timeout=35)
-        
-        if r.returncode == 0 and r.stdout.strip():
-            resp = json.loads(r.stdout)
-            return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
-    except Exception as e:
-        print(f"[LLM Router] TR error: {e}")
+    headers = {"Authorization": f"Bearer {TR_KEY}"}
+    resp = _http_post_json(f"{TR_BASE}/chat/completions", body, headers)
+    if resp:
+        return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
     return None
 
 
 def _call_ollama(model, prompt, temp=0.5, max_tokens=1000, system=None):
-    """调用本地 Ollama（隐私数据不走云端）"""
+    """调用本地 Ollama"""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -193,51 +193,30 @@ def _call_ollama(model, prompt, temp=0.5, max_tokens=1000, system=None):
             "num_predict": max_tokens
         }
     }
-    
-    try:
-        r = subprocess.run([
-            "curl", "-s", "--max-time", "60",
-            f"{OLLAMA_BASE}/api/chat",
-            "-H", "Content-Type: application/json",
-            "-d", json.dumps(body, ensure_ascii=False)
-        ], capture_output=True, text=True, timeout=65)
-        
-        if r.returncode == 0 and r.stdout.strip():
-            resp = json.loads(r.stdout)
-            return resp.get("message", {}).get("content", "")
-    except Exception as e:
-        print(f"[LLM Router] Ollama error: {e}")
+    resp = _http_post_json(f"{OLLAMA_BASE}/api/chat", body, timeout=60)
+    if resp:
+        return resp.get("message", {}).get("content", "")
     return None
 
 
 def call_tr_image(prompt, size="1024x1024"):
-    """调用 TokenRouter 图片生成（openai/gpt-5.4-image-2）"""
+    """调用 TokenRouter 图片生成"""
     if not TR_KEY:
         return None
-    try:
-        body = {
-            "model": "openai/gpt-5.4-image-2",
-            "prompt": prompt,
-            "n": 1,
-            "size": size,
-            "response_format": "url"
-        }
-        r = subprocess.run([
-            "curl", "-s", "--max-time", "60",
-            f"{TR_BASE}/images/generations",
-            "-H", f"Authorization: Bearer {TR_KEY}",
-            "-H", "Content-Type: application/json",
-            "-d", json.dumps(body, ensure_ascii=False)
-        ], capture_output=True, text=True, timeout=65)
-        
-        if r.returncode == 0 and r.stdout.strip():
-            resp = json.loads(r.stdout)
-            if "data" in resp and len(resp["data"]) > 0:
-                return resp["data"][0].get("url", "")
-            if "error" in resp:
-                print(f"[LLM Router] Image error: {resp['error'].get('message','?')[:100]}")
-    except Exception as e:
-        print(f"[LLM Router] Image error: {e}")
+    body = {
+        "model": "openai/gpt-5.4-image-2",
+        "prompt": prompt,
+        "n": 1,
+        "size": size,
+        "response_format": "url"
+    }
+    headers = {"Authorization": f"Bearer {TR_KEY}"}
+    resp = _http_post_json(f"{TR_BASE}/images/generations", body, headers, timeout=60)
+    if resp:
+        if "data" in resp and len(resp["data"]) > 0:
+            return resp["data"][0].get("url", "")
+        if "error" in resp:
+            print(f"[LLM Router] Image error: {resp['error'].get('message','?')[:100]}")
     return None
 
 

@@ -527,25 +527,60 @@ def generate_topics():
     
     if api_key:
         try:
-            dna_row = db.execute("SELECT dna_json FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
-            dna_context = ""
-            if dna_row and dna_row["dna_json"]:
-                try:
-                    dna = json.loads(dna_row["dna_json"])
-                    dna_context = f"""
-
-创作者DNA：
-- 画像：{dna.get('persona','未知')}
-- 擅长话题：{', '.join(dna.get('topics',[]))}
-- 语气：{dna.get('tone','未知')}
-- 盲区：{', '.join(dna.get('blind_spots',[]))}
-请基于DNA，推荐他最适合写的选题。"""
-                except: pass
+            # Load full creator profile for personalization
+            profile_row = db.execute("SELECT domain, style, platforms, dna_json FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+            creator_context = ""
+            if profile_row:
+                parts = []
+                if profile_row["domain"]:
+                    parts.append(f"- 关注领域：{profile_row['domain']}")
+                if profile_row["style"]:
+                    parts.append(f"- 创作风格：{profile_row['style']}")
+                if profile_row["platforms"]:
+                    parts.append(f"- 发布平台：{profile_row['platforms']}")
+                if profile_row["dna_json"]:
+                    try:
+                        dna = json.loads(profile_row["dna_json"])
+                        if dna.get("niche"):
+                            parts.append(f"- 赛道定位：{dna['niche']}")
+                        if dna.get("style"):
+                            parts.append(f"- 内容风格：{dna['style']}")
+                        if dna.get("topics"):
+                            parts.append(f"- 核心话题：{', '.join(dna['topics'])}")
+                        if dna.get("audience"):
+                            parts.append(f"- 目标受众：{dna['audience']}")
+                        if dna.get("differentiator"):
+                            parts.append(f"- 差异化特征：{dna['differentiator']}")
+                        if dna.get("deep_directions"):
+                            parts.append(f"- 可深挖方向：{', '.join(dna['deep_directions'])}")
+                    except: pass
+                if parts:
+                    creator_context = "\n".join(parts)
             
-            prompt = f"""你是内容策略师。{dna_context}
-基于这些灵感，生成3-5个可以立刻动笔的选题。只返回JSON数组：
-[{{"topic":"选题(≤60字)","angle":"切入角度(≤120字)","why":"理由(≤100字)","source_ids":"灵感ID逗号分隔"}}]
-灵感:
+            # Build DNA-informed system prompt
+            dna_hint = ""
+            if creator_context:
+                dna_hint = f"""
+
+创作者画像（选题必须贴合这些特征）：
+{creator_context}
+
+要求：
+- 选题要精准命中创作者的赛道和受众，不泛泛而谈
+- 切入角度要体现创作者独特的风格和差异化特征
+- 如果有发布平台信息，考虑平台调性（如Twitter要犀利短平快，公众号要有深度，小红书要有方法论+清单体）
+- 优先推荐与创作者"可深挖方向"对齐的选题
+- 每个选题要让读者看了觉得"这就是他才会写的角度"
+"""
+            
+            prompt = f"""你是顶级内容策略师。{dna_hint}
+基于以下灵感素材，生成3-5个这个创作者能立刻动笔的选题。
+要求：选题必须独特、有锐度、能体现创作者的个人视角，不要泛泛的大路货。
+
+只返回JSON数组：
+[{{"topic":"选题(≤60字)","angle":"切入角度(≤120字)","why":"为什么这个创作者适合写这个(≤100字)","source_ids":"灵感ID逗号分隔"}}]
+
+灵感素材:
 {context[:4000]}"""
             content = call_llm(prompt, task="topics")
             if content:
