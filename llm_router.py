@@ -3,7 +3,7 @@ Muse Catch — 分级 LLM 路由层
 - Agent 内置 LLM：隐私数据不出对话上下文（Onboarding DNA、个人画像分析）
 - TokenRouter 云端：公开功能（灵感分析、选题、金句配图）— 用户自行配置 API Key
 
-缺省模式：未配置 TR_API_KEY 时自动使用 Agent 自身的 LLM 能力。
+缺省模式：未配置 TR_API_KEY 时自动使用 Agent 自身的 LLM 能力（不绑特定模型）。
 TokenRouter 注册：https://tokenrouter.com
 """
 import os
@@ -39,10 +39,39 @@ ROUTE = {
 }
 
 
-# Agent 自身的 LLM 配置（从 Hermes Agent 继承）
-_AGENT_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-_AGENT_BASE = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-_AGENT_MODEL = "deepseek-chat"
+# Agent 自身的 LLM 配置（从 Agent 环境继承，不绑特定模型）
+def _read_agent_config():
+    """读取 Agent 当前的模型配置，返回 (api_key, base_url, model)。"""
+    key = None
+    base = "https://api.deepseek.com"
+    model = "deepseek-chat"
+    try:
+        # 1. 尝试从 Agent 的 config.yaml 获取当前模型
+        import yaml
+        cfg_path = Path(os.path.expanduser("~/.hermes/config.yaml"))
+        if cfg_path.exists():
+            cfg = yaml.safe_load(cfg_path.read_text())
+            m = cfg.get("model", {})
+            provider = m.get("provider", "").lower()
+            model = m.get("default", model)
+            base = m.get("base_url", base)
+    except Exception:
+        pass
+    
+    # 2. 查找 Agent 可用的 API Key（按通用命名规则尝试）
+    key_env_vars = [
+        "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+        "MINIMAX_API_KEY", "GLM_API_KEY", "ZHIPUAI_API_KEY",
+        "KIMI_API_KEY", "QIANWEN_API_KEY", "BAICHUAN_API_KEY"
+    ]
+    for var in key_env_vars:
+        val = os.environ.get(var, "")
+        if val:
+            key = val
+            break
+    return key, base, model
+
+_AGENT_KEY, _AGENT_BASE, _AGENT_MODEL = _read_agent_config()
 
 
 def call_llm(prompt, task="ingest", system=None):
@@ -75,7 +104,7 @@ def call_llm(prompt, task="ingest", system=None):
 
 
 def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
-    """调用 Agent 自身的 LLM（DeepSeek API — 继承 Hermes Agent 配置）"""
+    """调用 Agent 自身的 LLM（继承 Agent 的模型配置，不硬编码特定 provider）"""
     if not _AGENT_KEY:
         return None
     messages = []
@@ -90,20 +119,28 @@ def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
         "max_tokens": max_tokens
     }
     
-    try:
-        r = subprocess.run([
-            "curl", "-s", "--max-time", "30",
-            f"{_AGENT_BASE}/v1/chat/completions",
-            "-H", f"Authorization: Bearer {_AGENT_KEY}",
-            "-H", "Content-Type: application/json",
-            "-d", json.dumps(body, ensure_ascii=False)
-        ], capture_output=True, text=True, timeout=35)
-        
-        if r.returncode == 0 and r.stdout.strip():
-            resp = json.loads(r.stdout)
-            return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
-    except Exception as e:
-        print(f"[LLM Router] Agent model error: {e}")
+    # 尝试 OpenAI 兼容端点（覆盖主流 provider：DeepSeek/GLM/MiniMax/Kimi/OpenAI）
+    endpoints = [
+        f"{_AGENT_BASE}/v1/chat/completions",
+        f"{_AGENT_BASE}/chat/completions",
+    ]
+    for ep in endpoints:
+        try:
+            r = subprocess.run([
+                "curl", "-s", "--max-time", "30",
+                ep,
+                "-H", f"Authorization: Bearer {_AGENT_KEY}",
+                "-H", "Content-Type: application/json",
+                "-d", json.dumps(body, ensure_ascii=False)
+            ], capture_output=True, text=True, timeout=35)
+            
+            if r.returncode == 0 and r.stdout.strip():
+                resp = json.loads(r.stdout)
+                content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
+                if content:
+                    return content
+        except Exception:
+            continue
     return None
 
 

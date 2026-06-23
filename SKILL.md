@@ -17,16 +17,18 @@ category: product
 
 Muse 不绑单一模型。按任务智能选模型：
 
-| 任务 | 模型 | 原因 |
+| 任务 | 模型（有 TokenRouter Key）| 原因 |
 |------|------|------|
-| 🔒 DNA 分析 | **Agent 内置 LLM** | 隐私数据不出对话，零额外成本 |
-| 📥 灵感汲取 | **DeepSeek V4 Pro** (TokenRouter) | 高频低延迟，批量便宜 |
-| 🔀 发散扩展 | **DeepSeek V4 Pro** (TokenRouter) | 3 角度 x 200 字，快速 |
-| 📊 分类聚类 | **DeepSeek V4 Pro** (TokenRouter) | 结构提取，不需创造力 |
-| 🎯 选题生成 | **Claude Sonnet 4** (TokenRouter) | 洞察力 + 中文审美 |
-| 🔬 深度拆解 | **Claude Sonnet 4** (TokenRouter) | 结构化输出最优 |
-| 💎 金句生成 | **Claude Sonnet 4** (TokenRouter) | 中文语感 + 锐度 |
-| 🖼️ 金句配图 | **GPT Image 2** (TokenRouter) | 社交媒体卡片生成 |
+| 🔒 DNA 分析 | **Agent 自身 LLM** | 隐私数据不出对话，零额外成本 |
+| 📥 灵感汲取 | Agent 自身 LLM（或 DeepSeek V4 Pro）| 高频低延迟 |
+| 🔀 发散扩展 | Agent 自身 LLM（或 DeepSeek V4 Pro）| 3 角度 × 200 字 |
+| 📊 分类聚类 | Agent 自身 LLM（或 DeepSeek V4 Pro）| 结构提取 |
+| 🎯 选题生成 | Claude Sonnet 4（TokenRouter）| 洞察力 + 中文审美 |
+| 🔬 深度拆解 | Claude Sonnet 4（TokenRouter）| 结构化输出最优 |
+| 💎 金句生成 | Claude Sonnet 4（TokenRouter）| 中文语感 + 锐度 |
+| 🖼️ 金句配图 | GPT Image 2（TokenRouter）| 社交媒体卡片生成 |
+
+**缺省（无 TokenRouter Key）：** 所有任务走 Agent 自身 LLM，不绑特定模型。
 
 **隐私承诺：** Onboarding DNA 分析使用 Agent 自身模型（与 Agent 同款 LLM），灵感数据不出对话上下文。
 
@@ -151,14 +153,13 @@ cd ~/.hermes/workspace/muse && python3 bot.py &
 
 ## 🔧 环境配置
 
-**开箱即用。** Muse 不依赖任何外部 API Key 即可运行：
-- 📥 灵感捕获 + 关键词提取 → 始终可用（规则引擎兜底）
-- 🔀 AI 发散/分类/选题/金句 → 配置 API Key 后解锁
+**缺省：Agent 本地 LLM。** Muse 用你的 Agent 自带模型做分析，零外部 Key、零额外成本。
 
-**获取 API Key（二选一）：**
+要解锁更强模型（发散/选题/金句配图 / Claude / DeepSeek 等），配置以下任一：
 
 | 方式 | 说明 | 成本 |
 |------|------|------|
+| **Agent 本地**（缺省）| 你的 Agent 模型 → 灵感提炼、摘要、关键词 | 免费 |
 | **TokenRouter** | [tokenrouter.com](https://tokenrouter.com) 注册 → 100+模型统一网关 | 按量付费 |
 | **Ollama 本地** | `ollama pull qwen2.5:14b` → 数据不出机器 | 免费 |
 
@@ -174,12 +175,12 @@ cp .env.example .env
 TR_BASE_URL=https://api.tokenrouter.com/v1
 TR_API_KEY=
 
-# Local Ollama (optional — privacy-first fallback)  
+# Local Ollama (optional — 适用于无 Agent 环境)
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:14b
 ```
 
-**优先级：** TokenRouter（如有配置）→ Agent 自身 LLM（继承 Hermes 配置）→ Ollama 本地 → 规则兜底。不配任何 Key 也能跑。
+**优先级：** Agent 本地 LLM（缺省）→ TokenRouter（如配置）→ Ollama 本地 → 规则兜底。
 
 ## 🔌 API 参考
 
