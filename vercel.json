@@ -1,1 +1,7 @@
-{"name":"muse-pitch-swiss-v2"}
+{
+  "name": "muse-pitch-swiss-v2",
+  "rewrites": [
+    { "source": "/", "destination": "/landing.html" },
+    { "source": "/app", "destination": "/index.html" }
+  ]
+}
