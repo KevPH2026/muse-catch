@@ -151,18 +151,35 @@ cd ~/.hermes/workspace/muse && python3 bot.py &
 
 ## 🔧 环境配置
 
-`.env` 文件（gitignored，安装者自配）：
-```bash
-# TokenRouter 云端 API（灵感分析、选题生成等公共功能）
-TR_BASE_URL=https://api.tokenrouter.com/v1
-TR_API_KEY=sk-your-t…key
+**开箱即用。** Muse 不依赖任何外部 API Key 即可运行：
+- 📥 灵感捕获 + 关键词提取 → 始终可用（规则引擎兜底）
+- 🔀 AI 发散/分类/选题/金句 → 配置 API Key 后解锁
 
-# Agent 内置 LLM（DNA 分析，隐私数据）
-# Agent 内置 LLM — 无需额外部署
-# 由 Agent 运行时的模型自动提供
+**获取 API Key（二选一）：**
+
+| 方式 | 说明 | 成本 |
+|------|------|------|
+| **TokenRouter** | [tokenrouter.com](https://tokenrouter.com) 注册 → 100+模型统一网关 | 按量付费 |
+| **Ollama 本地** | `ollama pull qwen2.5:14b` → 数据不出机器 | 免费 |
+
+配置 `.env`（从 `.env.example` 复制）：
+```bash
+cp .env.example .env
+# 编辑 .env，填入你的 TR_API_KEY 或配置 Ollama
 ```
 
-详见 `.env.example`。
+`.env.example` 模板：
+```bash
+# TokenRouter API (optional — get key at https://tokenrouter.com)
+TR_BASE_URL=https://api.tokenrouter.com/v1
+TR_API_KEY=***
+
+# Local Ollama (optional — privacy-first fallback)  
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:14b
+```
+
+**优先级：** TokenRouter（如有配置）→ Ollama 本地 → 规则兜底。不配任何 Key 也能跑。
 
 ## 🔌 API 参考
 
@@ -236,11 +253,11 @@ curl http://localhost:5200/api/profile
 |---|---|
 | API 连不上 | `curl localhost:5200/api/stats` |
 | 端口被占 | `lsof -i :5200` → `kill <PID>` |
-| LLM 不工作 | `.env` 设 `TR_API_KEY`（云端）；DNA 分析自动走 Agent 内置模型（fallback 规则提取） |
+| LLM 不工作 | 检查 `.env` 是否配置 `TR_API_KEY`（TokenRouter）或 Ollama 是否运行。不配 Key 也能跑基础功能（规则提取） |
 | 插件捕获失败 | 确认 CORS 已启用（server.py 已内置） |
 | Bot 没反应 | `echo $MUSE_BOT_KEY` 确认已设 |
 | DNA 分析超时 | 确认 Agent 模型可用。DNA 分析走 Agent 内置 LLM，不依赖外部服务 |
-| TokenRouter 401 | 检查 `TR_API_KEY` 是否正确 |
+| TokenRouter 401 | 检查 `TR_API_KEY` 是否正确 · 到 [tokenrouter.com](https://tokenrouter.com) 获取自己的 Key |
 | 分类 500 | 可能是模型超时，重试即可 |
 
 ---

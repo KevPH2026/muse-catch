@@ -1,10 +1,10 @@
 """
 Muse Catch — 分级 LLM 路由层
 - Agent 内置 LLM：隐私数据不出对话上下文（Onboarding DNA、个人画像分析）
-- TokenRouter 云端：公开功能（灵感分析、选题、金句配图）
+- TokenRouter 云端：公开功能（灵感分析、选题、金句配图）— 用户自行配置 API Key
 
-所有模型通过 TokenRouter 统一网关调用。DNA 分析使用与 Agent 相同的模型，
-代表"Agent 自己的分析能力"——不是本地 Ollama。
+缺省模式：未配置 TR_API_KEY 时自动使用 Agent 本地模型（Ollama / 内置）。
+TokenRouter 注册：https://tokenrouter.com
 """
 import os
 import json
@@ -24,29 +24,37 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
 
 # 模型路由表
 ROUTE = {
-    "expand":      {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 1200},
-    "classify":    {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 1500},
-    "topics":      {"provider": "tr", "model": "anthropic/claude-sonnet-4", "temp": 0.8, "max_tokens": 1500},
-    "deep_dive":   {"provider": "tr", "model": "anthropic/claude-sonnet-4", "temp": 0.7, "max_tokens": 2000},
-    "quotes":      {"provider": "tr", "model": "anthropic/claude-sonnet-4", "temp": 0.9, "max_tokens": 800},
-    "dna":         {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 1200, "label": "Agent 内置 LLM"},
-    "ingest":      {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 400},
-    "onboarding":  {"provider": "tr", "model": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 800, "label": "Agent 内置 LLM"},
+    "expand":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 1200},
+    "classify":    {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 1500},
+    "topics":      {"provider": "auto", "model_tr": "anthropic/claude-sonnet-4", "model_local": None, "temp": 0.8, "max_tokens": 1500},
+    "deep_dive":   {"provider": "auto", "model_tr": "anthropic/claude-sonnet-4", "model_local": None, "temp": 0.7, "max_tokens": 2000},
+    "quotes":      {"provider": "auto", "model_tr": "anthropic/claude-sonnet-4", "model_local": None, "temp": 0.9, "max_tokens": 800},
+    "dna":         {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.5, "max_tokens": 1200, "label": "Agent 内置 LLM"},
+    "ingest":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 400},
+    "onboarding":  {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.5, "max_tokens": 800, "label": "Agent 内置 LLM"},
 }
 
 
 def call_llm(prompt, task="ingest", system=None):
-    """统一 LLM 调用入口 — 根据 task 自动选模型"""
+    """统一 LLM 调用入口。优先级：TR_API_KEY > Ollama 本地 > 错误提示"""
     cfg = ROUTE.get(task, ROUTE["ingest"])
-    provider = cfg["provider"]
-    model = cfg["model"]
     temp = cfg["temp"]
     max_tokens = cfg["max_tokens"]
     
-    if provider == "tr":
-        return _call_tr(model, prompt, temp, max_tokens, system)
-    elif provider == "ollama":
-        return _call_ollama(model, prompt, temp, max_tokens, system)
+    # 1. TokenRouter cloud (if user configured key)
+    if TR_KEY:
+        model = cfg.get("model_tr", "deepseek/deepseek-v4-pro")
+        result = _call_tr(model, prompt, temp, max_tokens, system)
+        if result:
+            return result
+    
+    # 2. Local Ollama fallback
+    local_model = cfg.get("model_local") or OLLAMA_MODEL
+    result = _call_ollama(local_model, prompt, temp, max_tokens, system)
+    if result:
+        return result
+    
+    print("[LLM Router] No LLM available. Set TR_API_KEY in .env or run Ollama locally.")
     return None
 
 
