@@ -153,6 +153,7 @@ a{color:inherit;text-decoration:none}
 .card:hover .card-actions{opacity:1}
 .card-act{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}
 .card-act:hover{border-color:var(--purple);color:var(--purple-light);background:rgba(99,102,241,.06)}
+.card-act-del:hover{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,.06)}
 
 /* ============ DEMO TOUR ============ */
 .demo-overlay{position:fixed;inset:0;background:rgba(5,5,15,.35);z-index:300;backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center}
@@ -643,7 +644,7 @@ a{color:inherit;text-decoration:none}
       <div class="dna-text"><strong id="dna-persona">...</strong><span id="dna-stats"></span></div>
       <div style="font-size:16px;color:var(--purple-light)">→</div>
     </div>
-    <div id="dna-panel">
+    <div id="dna-panel" class="show">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3 style="margin:0;font-size:20px">🧬 Creator DNA</h3>
         <div style="display:flex;gap:8px">
@@ -651,10 +652,10 @@ a{color:inherit;text-decoration:none}
           <button class="btn btn-ghost" onclick="resetOnboarding()">🔄 重新认识我</button>
         </div>
       </div>
-      <div id="dna-detail"></div>
+      <div id="dash-dna-detail"></div>
       <div style="position:relative;margin:16px auto;max-width:320px">
-        <canvas id="dna-radar" width="320" height="320" style="display:block;max-width:100%"></canvas>
-        <div id="dna-ghost" style="display:block;position:absolute;inset:0;pointer-events:none"></div>
+        <canvas id="dash-radar" width="320" height="320" style="display:block;max-width:100%"></canvas>
+        <div id="dash-ghost" style="display:block;position:absolute;inset:0;pointer-events:none"></div>
       </div>
     </div>
 
@@ -1187,10 +1188,42 @@ function render(){
         <div class="card-actions">
           <button class="card-act" onclick="event.stopPropagation();expandInspiration(${i.id})">🔀 发散</button>
           <button class="card-act" onclick="event.stopPropagation();generateQuoteCard(${i.id})">💎 金句</button>
+          <button class="card-act card-act-del" onclick="event.stopPropagation();deleteInspiration(${i.id})" title="删除">🗑</button>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// =========== DELETE ===========
+async function deleteInspiration(id){
+  if(!confirm('确定删除这条灵感吗？')) return;
+  try{
+    const r = await fetch(`/api/inspirations/${id}`, {method:'DELETE'});
+    if(r.ok) {
+      items = items.filter(i => i.id !== id);
+      selected.delete(id);
+      render();
+      // Reload stats after delete
+      try{const rs=await fetch('/api/stats');const s=await rs.json();
+        document.getElementById('stat-total').textContent=s.total||0;
+        document.getElementById('stat-week').textContent=s.this_week||0;
+        document.getElementById('stat-sources').textContent=s.sources?Object.keys(s.sources).length:0;
+        renderStats(s);renderSourceList(s);renderEmotionDonut(s);renderWeekChart(s);
+      }catch(e){}
+      showToast('🗑 已删除');
+    }
+  }catch(e){
+    // Demo fallback — remove from local array
+    items = items.filter(i => i.id !== id);
+    selected.delete(id);
+    // Update demo stats
+    document.getElementById('stat-total').textContent = items.length;
+    document.getElementById('stat-week').textContent = items.length;
+    document.getElementById('stat-sources').textContent = new Set(items.map(i=>i.source)).size;
+    render();
+    showToast('🗑 已删除');
+  }
 }
 
 // =========== SELECTION ===========
@@ -1253,7 +1286,22 @@ async function expandInspiration(id){
     document.getElementById('dive-structure').innerHTML='';
     document.getElementById('dive-quotes').innerHTML='';
     panel.classList.add('show');panel.scrollIntoView({behavior:'smooth'});
-  }catch(e){showToast('❌ 发散失败')}
+  }catch(e){
+    // Show simple expansion in demo mode
+    const item = items.find(i => i.id === id);
+    const panel=document.getElementById('dive-panel');
+    document.getElementById('dive-title').textContent='🔀 灵感发散';
+    document.getElementById('dive-meta').textContent='Demo Mode';
+    document.getElementById('dive-angles').innerHTML=item ? `
+      <li>🎯 <strong>深度解读</strong><br><span style="color:var(--dim);font-size:11px">${esc(item.summary||'').slice(0,200)}</span></li>
+      <li>🎯 <strong>关联话题</strong><br><span style="color:var(--dim);font-size:11px">${esc(item.tags||'')}</span></li>
+      <li>🎯 <strong>行动建议</strong><br><span style="color:var(--dim);font-size:11px">基于这条灵感，可以撰写一篇深度分析文章或Twitter串。</span></li>
+    ` : '<li>无数据</li>';
+    document.getElementById('dive-headlines').innerHTML='';
+    document.getElementById('dive-structure').innerHTML='';
+    document.getElementById('dive-quotes').innerHTML='';
+    panel.classList.add('show');panel.scrollIntoView({behavior:'smooth'});
+  }
 }
 
 // =========== QUOTE CARD ===========
@@ -1274,7 +1322,21 @@ async function generateQuoteCard(id){
       document.getElementById('dive-quotes').innerHTML+=d.cards.map(c=>`<li style="margin-top:8px">🖼️ <img src="${esc(c)}" style="max-width:100%;border-radius:8px;margin-top:4px" onerror="this.style.display='none'"></li>`).join('');
     }
     panel.classList.add('show');panel.scrollIntoView({behavior:'smooth'});
-  }catch(e){showToast('❌ 金句生成失败')}
+  }catch(e){
+    // Demo fallback — show simple quotes
+    const item = items.find(i => i.id === id);
+    const panel2=document.getElementById('dive-panel');
+    document.getElementById('dive-title').textContent='💎 金句配图';
+    document.getElementById('dive-meta').textContent='Demo Mode';
+    document.getElementById('dive-angles').innerHTML='';
+    document.getElementById('dive-headlines').innerHTML='';
+    document.getElementById('dive-structure').innerHTML='';
+    document.getElementById('dive-quotes').innerHTML=item ? `
+      <li>✨ <em>"${esc(item.title||'')}"</em></li>
+      <li>✨ <em>"${esc(item.summary||'').slice(0,80)}"</em></li>
+    ` : '<li>✨ 无数据</li>';
+    panel2.classList.add('show');panel2.scrollIntoView({behavior:'smooth'});
+  }
 }
 
 // =========== TOPICS ===========
@@ -1342,99 +1404,109 @@ function displayDNA(dna){
   const strengths = normalizeStrengths(dna.strengths);
   const scoreAvg = strengths.length ? Math.round(strengths.reduce((s,x)=>s+(typeof x==='object'?x.score||0:x||0),0)/strengths.length) : 0;
   document.getElementById('dna-stats').textContent = `${strengths.length}维 · 综合${scoreAvg}分 · ${dna.topics?dna.topics.length:0}个核心话题`;
-  // Render detail in panel
-  const det=document.getElementById('dna-detail');
-  if(det){
-    const topics = (dna.topics||[]).map(t=>`<span class="tag" style="background:rgba(99,102,241,.12);color:var(--purple-light)">${t}</span>`).join(' ');
-    det.innerHTML = `
+  
+  const topicsHtml = (dna.topics||[]).map(t=>`<span class="tag" style="background:rgba(99,102,241,.12);color:var(--purple-light)">${t}</span>`).join(' ');
+  const detailHtml = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div><strong>语气:</strong> ${dna.tone||'—'}</div>
         <div><strong>句式:</strong> ${dna.sentence_style||'—'}</div>
         <div><strong>受众钩子:</strong> ${dna.audience_hook||'—'}</div>
         <div><strong>突破建议:</strong> ${dna.growth_tip||'—'}</div>
       </div>
-      <div style="margin-top:12px"><strong>核心话题:</strong> ${topics||'—'}</div>
+      <div style="margin-top:12px"><strong>核心话题:</strong> ${topicsHtml||'—'}</div>
       ${dna.blind_spots&&dna.blind_spots.length?`<div style="margin-top:8px"><strong>盲区:</strong> ${dna.blind_spots.join('、')}</div>`:''}
     `;
+  
+  // Render to DNA page panel
+  const det=document.getElementById('dna-detail');
+  if(det) det.innerHTML = detailHtml;
+  
+  // Render to dashboard panel
+  const dashDet=document.getElementById('dash-dna-detail');
+  if(dashDet) dashDet.innerHTML = detailHtml;
+  
+  // Draw radar — show on both pages' canvases
+  if(strengths.length) {
+    drawRadar(strengths, 'dna-radar');
+    drawRadar(strengths, 'dash-radar');
   }
-  // Draw radar — always show if we have strengths
-  if(strengths.length) drawRadar(strengths);
-  // Hide default ghost if real data loaded
-  const ghost=document.getElementById('dna-ghost');
-  if(ghost)ghost.style.display='none';
+  // Hide ghost overlays
+  ['dna-ghost','dash-ghost'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
 }
 
 function showDefaultRadar(){
-  // Auto-open DNA panel so radar is visible
-  const panel=document.getElementById('dna-panel');
-  if(panel&&!panel.classList.contains('show'))panel.classList.add('show');
-  const canvas=document.getElementById('dna-radar');
-  if(!canvas)return;
-  canvas.style.display='block';
-  const ctx=canvas.getContext('2d');
-  const W=canvas.width,H=canvas.height;
-  const cx=W/2,cy=H/2,r=120;
-  const dims=['洞察力','表达力','行动力','连接力','创造力','技术力'];
-  const n=dims.length;
-  ctx.clearRect(0,0,W,H);
-  // Ghost grid
-  for(let i=1;i<=4;i++){
+  // Draw ghost radar on dashboard panel
+  ['dash-radar','dna-radar'].forEach(id=>{
+    const canvas=document.getElementById(id);
+    if(!canvas)return;
+    canvas.style.display='block';
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width,H=canvas.height;
+    const cx=W/2,cy=H/2,r=120;
+    const dims=['洞察力','表达力','行动力','连接力','创造力','技术力'];
+    const n=dims.length;
+    ctx.clearRect(0,0,W,H);
+    // Ghost grid
+    for(let i=1;i<=4;i++){
+      ctx.beginPath();
+      for(let j=0;j<n;j++){
+        const a=Math.PI*2*j/n-Math.PI/2;
+        const x=cx+Math.cos(a)*r*i/4,y=cy+Math.sin(a)*r*i/4;
+        j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle='rgba(99,102,241,'+(0.04+i*0.03)+')';
+      ctx.lineWidth=1;ctx.stroke();
+    }
+    // Ghost axes
+    for(let i=0;i<n;i++){
+      const a=Math.PI*2*i/n-Math.PI/2;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+      ctx.strokeStyle='rgba(136,136,176,0.12)';ctx.stroke();
+    }
+    // Labels
+    ctx.font='bold 11px Inter,Noto Sans SC,sans-serif';
+    ctx.fillStyle='rgba(232,232,240,0.35)';
+    ctx.textAlign='center';
+    for(let i=0;i<n;i++){
+      const a=Math.PI*2*i/n-Math.PI/2;
+      const lx=cx+Math.cos(a)*(r+28),ly=cy+Math.sin(a)*(r+28);
+      ctx.fillText(dims[i],lx,ly+4);
+    }
+    // Seed polygon
+    const seedScores=[0.28,0.32,0.25,0.30,0.35,0.22];
     ctx.beginPath();
-    for(let j=0;j<n;j++){
-      const a=Math.PI*2*j/n-Math.PI/2;
-      const x=cx+Math.cos(a)*r*i/4,y=cy+Math.sin(a)*r*i/4;
-      j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    for(let i=0;i<n;i++){
+      const a=Math.PI*2*i/n-Math.PI/2;
+      const x=cx+Math.cos(a)*r*seedScores[i],y=cy+Math.sin(a)*r*seedScores[i];
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     }
     ctx.closePath();
-    ctx.strokeStyle='rgba(99,102,241,'+(0.04+i*0.03)+')';
-    ctx.lineWidth=1;ctx.stroke();
-  }
-  // Ghost axes
-  for(let i=0;i<n;i++){
-    const a=Math.PI*2*i/n-Math.PI/2;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
-    ctx.strokeStyle='rgba(136,136,176,0.12)';ctx.stroke();
-  }
-  // Labels
-  ctx.font='bold 11px Inter,Noto Sans SC,sans-serif';
-  ctx.fillStyle='rgba(232,232,240,0.35)';
-  ctx.textAlign='center';
-  for(let i=0;i<n;i++){
-    const a=Math.PI*2*i/n-Math.PI/2;
-    const lx=cx+Math.cos(a)*(r+28),ly=cy+Math.sin(a)*(r+28);
-    ctx.fillText(dims[i],lx,ly+4);
-  }
-  // Seed polygon — subtle fill so it doesn't feel empty
-  const seedScores=[0.28,0.32,0.25,0.30,0.35,0.22];
-  ctx.beginPath();
-  for(let i=0;i<n;i++){
-    const a=Math.PI*2*i/n-Math.PI/2;
-    const x=cx+Math.cos(a)*r*seedScores[i],y=cy+Math.sin(a)*r*seedScores[i];
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  }
-  ctx.closePath();
-  // Gradient fill from purple to transparent
-  const grad=ctx.createRadialGradient(cx,cy,r*0.1,cx,cy,r*0.4);
-  grad.addColorStop(0,'rgba(99,102,241,0.25)');
-  grad.addColorStop(0.5,'rgba(168,85,247,0.12)');
-  grad.addColorStop(1,'rgba(99,102,241,0.02)');
-  ctx.fillStyle=grad;ctx.fill();
-  ctx.strokeStyle='rgba(168,85,247,0.2)';ctx.lineWidth=1.5;ctx.stroke();
-  // Tiny dots at vertices
-  for(let i=0;i<n;i++){
-    const a=Math.PI*2*i/n-Math.PI/2;
-    const x=cx+Math.cos(a)*r*seedScores[i],y=cy+Math.sin(a)*r*seedScores[i];
-    ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);
-    ctx.fillStyle='rgba(168,85,247,0.4)';ctx.fill();
-  }
-  // Center CTA
-  ctx.font='13px Inter,Noto Sans SC,sans-serif';
-  ctx.fillStyle='rgba(168,85,247,0.55)';
-  ctx.fillText('🧬 捕获灵感后',cx,cy-8);
-  ctx.fillText('自动生成DNA',cx,cy+16);
-  // Ghost overlay
-  const ghost=document.getElementById('dna-ghost');
-  if(ghost)ghost.style.display='block';
+    const grad=ctx.createRadialGradient(cx,cy,r*0.1,cx,cy,r*0.4);
+    grad.addColorStop(0,'rgba(99,102,241,0.25)');
+    grad.addColorStop(0.5,'rgba(168,85,247,0.12)');
+    grad.addColorStop(1,'rgba(99,102,241,0.02)');
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.strokeStyle='rgba(168,85,247,0.2)';ctx.lineWidth=1.5;ctx.stroke();
+    for(let i=0;i<n;i++){
+      const a=Math.PI*2*i/n-Math.PI/2;
+      const x=cx+Math.cos(a)*r*seedScores[i],y=cy+Math.sin(a)*r*seedScores[i];
+      ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);
+      ctx.fillStyle='rgba(168,85,247,0.4)';ctx.fill();
+    }
+    ctx.font='13px Inter,Noto Sans SC,sans-serif';
+    ctx.fillStyle='rgba(168,85,247,0.55)';
+    ctx.fillText('🧬 捕获灵感后',cx,cy-8);
+    ctx.fillText('自动生成DNA',cx,cy+16);
+  });
+  // Show ghost overlays
+  ['dash-ghost','dna-ghost'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) { el.style.display='block'; }
+  });
 }
 
 function toggleDnaPanel(){
@@ -1474,8 +1546,8 @@ async function scanSessionsDNA(){
   btn.disabled=false;btn.textContent='🧬 重新生成DNA';
 }
 
-function drawRadar(strengths){
-  const canvas=document.getElementById('dna-radar');
+function drawRadar(strengths, canvasId='dna-radar'){
+  const canvas=document.getElementById(canvasId);
   if(!canvas)return;
   canvas.style.display='block';
   const ctx=canvas.getContext('2d');
@@ -1926,22 +1998,27 @@ async function loadInstalledSkills(){
 }
 
 async function doInstall(skillId){
-  const r = await fetch(`/api/skills/install/${skillId}`, {method:'POST'});
-  const d = await r.json();
-  if(d.ok){
-    installedIds.push(skillId);
-    renderSkillCards();
-    loadInstalledSkills();
-  }else{
-    alert(d.error || 'Install failed');
+  try{
+    const r = await fetch(`/api/skills/install/${skillId}`, {method:'POST'});
+    const d = await r.json();
+    if(!d.ok) { alert(d.error || '安装失败'); return; }
+  }catch(e){
+    // Demo fallback — install locally
   }
+  installedIds.push(skillId);
+  renderSkillCards();
+  loadInstalledSkills();
 }
 
 async function doUninstall(skillId, isCustom, customId){
-  if(isCustom && customId){
-    await fetch(`/api/skills/custom/${customId}`, {method:'DELETE'});
-  }else if(skillId){
-    await fetch(`/api/skills/install/${skillId}`, {method:'DELETE'});
+  try{
+    if(isCustom && customId){
+      await fetch(`/api/skills/custom/${customId}`, {method:'DELETE'});
+    }else if(skillId){
+      await fetch(`/api/skills/install/${skillId}`, {method:'DELETE'});
+    }
+  }catch(e){
+    // Demo fallback — uninstall locally
   }
   installedIds = installedIds.filter(id => id !== skillId);
   renderSkillCards();

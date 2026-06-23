@@ -329,6 +329,14 @@ def update_inspiration(insp_id):
     
     return jsonify({"ok": True, "id": insp_id})
 
+@app.route("/api/inspirations/<int:insp_id>", methods=["DELETE"])
+def delete_inspiration(insp_id):
+    """Delete an inspiration by id"""
+    db = get_db()
+    db.execute("DELETE FROM inspirations WHERE id = ?", (insp_id,))
+    db.commit()
+    return jsonify({"ok": True, "deleted": insp_id})
+
 # ========== CREATOR DNA PROFILE (v1 — onboarding + DNA extraction) ==========
 @app.route("/api/profile", methods=["GET"])
 def get_profile():
