@@ -71,17 +71,29 @@ function renderDna(p){
   if(!p.dna)return;
   document.getElementById('dna-badge').style.display='flex';
   document.getElementById('dna-persona').textContent=p.dna.persona||'创作者DNA画像';
-  document.getElementById('dna-stats').textContent=(p.dna.topics||[]).map(t=>'#'+t).join(' ');
+  document.getElementById('dna-stats').textContent=(p.dna.themes||p.dna.topics||[]).map(t=>'#'+t).join(' ');
+  
+  // Handle both old (strings) and new (objects) strengths format
+  const strengths=p.dna.strengths||[];
+  const strengthHtml=strengths.length&&typeof strengths[0]==='object'
+    ? strengths.map(s=>`<div style="display:flex;justify-content:space-between;margin:2px 0"><span>✅ ${esc(s.name)}</span><span style="color:var(--purple-light);font-weight:700">${s.score}</span></div>`).join('')
+    : strengths.map(s=>'✅ '+esc(s)).join('<br>');
+  
   document.getElementById('dna-detail').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:12px;line-height:1.8">
       <div><strong style="color:var(--purple-light)">🎭 画像</strong><br>${esc(p.dna.persona||'-')}</div>
-      <div><strong style="color:var(--purple-light)">🗣️ 语气</strong><br>${esc(p.dna.tone||'-')} · ${esc(p.dna.sentence_style||'')}</div>
+      <div><strong style="color:var(--purple-light)">🗣️ 语气</strong><br>${esc(p.dna.tone||(p.dna.tone_tags||[]).join(' · '))} ${esc(p.dna.sentence_style||'')}</div>
       <div><strong style="color:var(--purple-light)">🏗️ 结构偏好</strong><br>${esc(p.dna.structure||'-')}</div>
       <div><strong style="color:var(--purple-light)">🎣 受众钩子</strong><br>${esc(p.dna.audience_hook||'-')}</div>
-      <div><strong style="color:var(--purple-light)">💪 优势</strong><br>${(p.dna.strengths||[]).map(s=>'✅ '+esc(s)).join('<br>')}</div>
-      <div><strong style="color:var(--purple-light)">🔍 盲区</strong><br>${(p.dna.blind_spots||[]).map(s=>'⚠️ '+esc(s)).join('<br>')}</div>
+      <div><strong style="color:var(--purple-light)">💪 优势</strong><br>${strengthHtml||'-'}</div>
+      <div><strong style="color:var(--purple-light)">🔍 盲区</strong><br>${(p.dna.blind_spots||[]).map(s=>'⚠️ '+esc(s)).join('<br>')||'-'}</div>
       <div style="grid-column:1/-1"><strong style="color:var(--purple-light)">💡 突破建议</strong><br>${esc(p.dna.growth_tip||'-')}</div>
     </div>`;
+  
+  // Draw radar if new format strengths
+  if(strengths.length&&typeof strengths[0]==='object'&&typeof drawRadar==='function'){
+    setTimeout(()=>drawRadar(strengths),200);
+  }
   document.getElementById('dna-panel').classList.add('show');
 }
 
