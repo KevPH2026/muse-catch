@@ -1,6 +1,1 @@
-{
-  "name": "muse-pitch-swiss-v2",
-  "rewrites": [
-    { "source": "/landing", "destination": "/landing.html" }
-  ]
-}
+{"name":"muse","buildCommand":"","outputDirectory":"."}
