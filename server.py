@@ -86,6 +86,36 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_cal_date ON content_calendar(scheduled_date);
         CREATE INDEX IF NOT EXISTS idx_cal_status ON content_calendar(status);
+        CREATE TABLE IF NOT EXISTS skill_market (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT,
+            category TEXT DEFAULT 'tools',
+            url TEXT,
+            icon TEXT DEFAULT '🛠️',
+            author TEXT DEFAULT 'Muse',
+            is_official INTEGER DEFAULT 0,
+            tags TEXT DEFAULT '',
+            installs INTEGER DEFAULT 0,
+            meta_json TEXT DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT (datetime('now','localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_skill_official ON skill_market(is_official);
+        CREATE INDEX IF NOT EXISTS idx_skill_category ON skill_market(category);
+        CREATE TABLE IF NOT EXISTS user_skills (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            skill_id INTEGER REFERENCES skill_market(id),
+            name TEXT NOT NULL,
+            description TEXT,
+            url TEXT,
+            icon TEXT DEFAULT '🛠️',
+            category TEXT DEFAULT 'tools',
+            tags TEXT DEFAULT '',
+            is_custom INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'installed',
+            installed_at TIMESTAMP DEFAULT (datetime('now','localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_us_skill ON user_skills(skill_id);
     """)
     db.commit()
     db.close()
@@ -1043,6 +1073,129 @@ def manage_calendar(item_id):
     
     row = db.execute("SELECT * FROM content_calendar WHERE id = ?", (item_id,)).fetchone()
     return jsonify({"ok": True, "item": dict(row) if row else None})
+
+# ========== SKILL MARKETPLACE — OPC App Store ==========
+def _seed_skills(db):
+    """Pre-seed official skills if table is empty"""
+    count = db.execute("SELECT COUNT(*) FROM skill_market").fetchone()[0]
+    if count > 0:
+        return
+    skills = [
+        ("DNA Creator Analysis", "深度创作DNA画像分析——识别你的创作风格、话题偏好、语气特征，让AI真正懂你", "analytics", "https://dna.superk.ai", "🧬", "Muse Team", 1, "dna,analytics,personality,creator", 0, '{"app_type":"web","featured":true}'),
+        ("MiniLaunch", "一键把任何HTML/CSS/JS项目部署上线——支持Vercel、GitHub Pages，零配置", "deploy", "https://github.com/KevPH2026/minilaunch", "🚀", "KevPH", 1, "deploy,launch,hosting,vercel,github", 0, '{"app_type":"github","featured":true}'),
+        ("AI Content Writer", "基于你的DNA画像，自动生成符合你风格的长文/推文/邮件——不是通用AI，是你的AI", "content", "", "✍️", "Muse Team", 1, "writing,content,ai,creator", 0, '{"app_type":"builtin","featured":false}'),
+        ("Inspiration Capture", "浏览器插件一键捕获灵感——网页/推文/图片秒存到你的灵感池", "capture", "", "🔖", "Muse Team", 1, "capture,browser,extension,bookmark", 0, '{"app_type":"extension","featured":false}'),
+        ("Social Scheduler", "多平台内容排期发布——写一次，自动适配Twitter/LinkedIn/公众号格式", "social", "", "📱", "Muse Team", 1, "social,schedule,twitter,linkedin", 0, '{"app_type":"builtin","featured":false}'),
+        ("AI Quote Card Generator", "金句自动生成精美卡片——9种风格模版，一键分享到社交平台", "design", "", "🎨", "Muse Team", 1, "design,quote,card,social", 0, '{"app_type":"builtin","featured":false}'),
+        ("Notion Sync", "灵感池 ↔ Notion 双向同步——你的知识库永不丢失", "sync", "", "🔄", "Muse Team", 1, "sync,notion,knowledge,backup", 0, '{"app_type":"integration","featured":false}'),
+        ("Analytics Dashboard", "创作者数据看板——粉丝增长、内容表现、最佳发布时间", "analytics", "", "📊", "Muse Team", 1, "analytics,dashboard,metrics,growth", 0, '{"app_type":"builtin","featured":false}'),
+    ]
+    for s in skills:
+        db.execute(
+            "INSERT INTO skill_market (name, description, category, url, icon, author, is_official, tags, installs, meta_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            s
+        )
+    db.commit()
+
+@app.route("/api/skills", methods=["GET"])
+def list_skills():
+    """List marketplace skills, optionally filtered by category"""
+    db = get_db()
+    _seed_skills(db)
+    category = request.args.get("category", "")
+    search = request.args.get("search", "")
+    
+    if category:
+        rows = db.execute("SELECT * FROM skill_market WHERE category = ? ORDER BY is_official DESC, installs DESC", (category,)).fetchall()
+    elif search:
+        q = f"%{search}%"
+        rows = db.execute("SELECT * FROM skill_market WHERE name LIKE ? OR description LIKE ? OR tags LIKE ? ORDER BY is_official DESC, installs DESC", (q, q, q)).fetchall()
+    else:
+        rows = db.execute("SELECT * FROM skill_market ORDER BY is_official DESC, installs DESC").fetchall()
+    
+    # Get installed skill IDs
+    installed = db.execute("SELECT skill_id FROM user_skills WHERE status='installed'").fetchall()
+    installed_ids = [r["skill_id"] for r in installed]
+    
+    categories = db.execute("SELECT DISTINCT category FROM skill_market").fetchall()
+    
+    return jsonify({
+        "ok": True,
+        "skills": [dict(r) for r in rows],
+        "installed_ids": installed_ids,
+        "categories": [r["category"] for r in categories],
+        "total": len(rows)
+    })
+
+@app.route("/api/skills", methods=["POST"])
+def upload_skill():
+    """User uploads a custom skill"""
+    db = get_db()
+    data = request.get_json() or {}
+    name = (data.get("name") or "").strip()
+    url = (data.get("url") or "").strip()
+    if not name:
+        return jsonify({"ok": False, "error": "Skill name is required"})
+    if len(name) > 80:
+        return jsonify({"ok": False, "error": "Name too long (max 80 chars)"})
+    
+    db.execute(
+        "INSERT INTO user_skills (skill_id, name, description, url, icon, category, tags, is_custom, status) VALUES (?,?,?,?,?,?,?,?,?)",
+        (None, name, data.get("description", ""), url, data.get("icon", "📦"),
+         data.get("category", "tools"), data.get("tags", ""), 1, "installed")
+    )
+    db.commit()
+    rid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    row = db.execute("SELECT * FROM user_skills WHERE id = ?", (rid,)).fetchone()
+    return jsonify({"ok": True, "skill": dict(row) if row else None})
+
+@app.route("/api/skills/install/<int:skill_id>", methods=["POST"])
+def install_skill(skill_id):
+    """Install a marketplace skill"""
+    db = get_db()
+    skill = db.execute("SELECT * FROM skill_market WHERE id = ?", (skill_id,)).fetchone()
+    if not skill:
+        return jsonify({"ok": False, "error": "Skill not found"})
+    
+    existing = db.execute("SELECT id FROM user_skills WHERE skill_id = ? AND status = 'installed'", (skill_id,)).fetchone()
+    if existing:
+        return jsonify({"ok": False, "error": "Already installed"})
+    
+    db.execute(
+        "INSERT INTO user_skills (skill_id, name, description, url, icon, category, tags, is_custom, status) VALUES (?,?,?,?,?,?,?,?,?)",
+        (skill_id, skill["name"], skill["description"], skill["url"],
+         skill["icon"], skill["category"], skill["tags"], 0, "installed")
+    )
+    db.execute("UPDATE skill_market SET installs = installs + 1 WHERE id = ?", (skill_id,))
+    db.commit()
+    return jsonify({"ok": True, "installed": skill_id})
+
+@app.route("/api/skills/install/<int:skill_id>", methods=["DELETE"])
+def uninstall_skill(skill_id):
+    """Uninstall a skill"""
+    db = get_db()
+    # For marketplace skills, mark as uninstalled; for custom skills, delete
+    db.execute("DELETE FROM user_skills WHERE skill_id = ?", (skill_id,))
+    # Also handle custom skills (no skill_id)
+    db.commit()
+    return jsonify({"ok": True, "uninstalled": skill_id})
+
+@app.route("/api/skills/custom/<int:skill_id>", methods=["DELETE"])
+def delete_custom_skill(skill_id):
+    """Delete a custom uploaded skill"""
+    db = get_db()
+    db.execute("DELETE FROM user_skills WHERE id = ? AND is_custom = 1", (skill_id,))
+    db.commit()
+    return jsonify({"ok": True, "deleted": skill_id})
+
+@app.route("/api/skills/installed", methods=["GET"])
+def get_installed():
+    """Get user's installed skills (marketplace + custom)"""
+    db = get_db()
+    rows = db.execute(
+        "SELECT us.*, sm.author, sm.url as market_url FROM user_skills us LEFT JOIN skill_market sm ON us.skill_id = sm.id WHERE us.status = 'installed' ORDER BY us.installed_at DESC"
+    ).fetchall()
+    return jsonify({"ok": True, "installed": [dict(r) for r in rows], "total": len(rows)})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
