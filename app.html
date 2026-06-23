@@ -975,28 +975,114 @@ function fmt(d){if(!d)return'';const dt=new Date(d),now=new Date();const diff=no
 function showToast(msg,duration=2000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),duration)}
 function scrollToTop(){document.getElementById('page-scroll-top').scrollIntoView({behavior:'smooth'})}
 
+// =========== DEMO DATA (fallback when no backend) ===========
+const DEMO_STATS = {
+  total: 10, this_week: 10,
+  sources: { web:6, twitter:3, youtube:1 },
+  emotions: { excited:4, inspired:3, curious:2, neutral:1 }
+};
+const DEMO_DNA = {
+  persona: "AI+跨境领域深度思考者，擅长技术趋势拆解与实操方法论",
+  topics: ["AI商业化", "跨境电商自动化", "内容创作", "独立开发者", "开源模型"],
+  tone: "直接、有观点、不讨好",
+  sentence_style: "短句+bullet point，结论先行",
+  structure: "观点→论证→行动建议",
+  strengths: [
+    {name:"技术趋势洞察",score:88},
+    {name:"实操方法论",score:82},
+    {name:"跨界连接能力",score:75},
+    {name:"内容表达力",score:70}
+  ],
+  blind_spots: ["有时候过于技术导向忽略了商业落地", "可以更多案例支撑观点"],
+  audience_hook: "帮你在AI浪潮中做对选择、不踩坑",
+  growth_tip: "多做案例拆解和实操教程，让读者\"看完就能用\""
+};
+const DEMO_INSPIRATIONS = [
+  {id:1,source:"web",content_type:"article",
+   title:"MCP协议将杀死80%的SaaS界面",
+   summary:"Anthropic开放MCP协议，未来Agent可直接调用工具而无需人为操作UI，SaaS行业面临重构",
+   keywords:["MCP","Agent","SaaS","SaaS"],emotion:"excited",tags:"AI基础设施,商业模式",
+   url:"https://www.anthropic.com/mcp",created_at:"2026-06-22T10:00:00"},
+  {id:2,source:"twitter",content_type:"thread",
+   title:"AI内容创业3个月实录：涨粉1.2万收入$4,700的5条教训",
+   summary:"真实案例：如何用AI辅助内容创作实现3个月涨粉1.2万、收入$4,700，附5条实践教训",
+   keywords:["AI","内容创业","涨粉","收入"],emotion:"inspired",tags:"AI变现,内容创作,案例",
+   url:"https://twitter.com/creator/status/demo1",created_at:"2026-06-22T09:00:00"},
+  {id:3,source:"web",content_type:"text",
+   title:"AI写作的真相：增量创作而非一键生成",
+   summary:"深入剖析AI辅助写作的正确姿势——增量创作法：人机协作的5步工作流",
+   keywords:["写作","AI协作","工作流"],emotion:"curious",tags:"内容创作,AI方法论",
+   url:"",created_at:"2026-06-22T08:00:00"},
+  {id:4,source:"twitter",content_type:"post",
+   title:"2026年最大红利：帮助别人不被AI替代",
+   summary:"一条引发深思的观点：2026的真正机会在于帮助他人驾驭AI而非AI本身",
+   keywords:["AI","红利","机会"],emotion:"neutral",tags:"趋势分析,AI",
+   url:"https://twitter.com/thought/status/demo2",created_at:"2026-06-21T22:00:00"},
+  {id:5,source:"youtube",content_type:"video",
+   title:"AI自动化跨境电商全链路实操 | 选品→投放 效率提升10倍",
+   summary:"YouTube实操教程：如何用AI自动化跨境电商从选品到客服的完整流程，压缩选品时间90%",
+   keywords:["跨境电商","自动化","选品","Listing"],emotion:"excited",tags:"跨境电商,效率提升,教程",
+   url:"https://youtube.com/watch?v=demo3",created_at:"2026-06-21T18:00:00"},
+  {id:6,source:"web",content_type:"article",
+   title:"GPT-5发布：1M上下文+原生工具调用，会思考的系统",
+   summary:"OpenAI发布GPT-5系列，主打深度推理能力，3大核心升级：1M上下文窗口、多模态推理、自动工具调用链",
+   keywords:["GPT-5","OpenAI","推理","工具调用"],emotion:"excited",tags:"AI大事件,模型发布",
+   url:"https://openai.com/blog/gpt-5",created_at:"2026-06-21T14:00:00"},
+  {id:7,source:"web",content_type:"text",
+   title:"独立开发者最被低估的能力：产品sense和营销",
+   summary:"一针见血：独立开发者的核心能力不是写代码，而是找准市场需求并有效推广",
+   keywords:["独立开发","产品","营销","思维"],emotion:"curious",tags:"独立开发者,产品思维",
+   url:"",created_at:"2026-06-21T10:00:00"},
+  {id:8,source:"twitter",content_type:"thread",
+   title:"实测：DeepSeek V4在中文推理上击败GPT-5（30道逻辑题对比）",
+   summary:"独立开发者实测：DeepSeek V4与GPT-5的30道中文逻辑题对比",
+   keywords:["DeepSeek","GPT-5","中文推理","开源"],emotion:"inspired",tags:"模型对比,DeepSeek,开源",
+   url:"https://twitter.com/tester/status/demo4",created_at:"2026-06-20T20:00:00"},
+  {id:9,source:"web",content_type:"article",
+   title:"Agent Native Architecture：AI时代基础设施重构范式",
+   summary:"深度分析Agent Native Architecture与微服务的本质区别——以AI为中心重新设计系统架构",
+   keywords:["Agent","架构","基础设施","范式"],emotion:"excited",tags:"技术前沿,Agent,架构设计",
+   url:"https://agent-native.dev/architecture",created_at:"2026-06-20T16:00:00"},
+  {id:10,source:"web",content_type:"text",
+   title:"个人品牌终极秘密：从展示到帮助的认知转变",
+   summary:"改变内容策略的核心洞察：个人品牌不是自我展示而是帮助他人",
+   keywords:["个人品牌","内容策略","认知"],emotion:"inspired",tags:"个人品牌,认知升级,创作",
+   url:"",created_at:"2026-06-20T12:00:00"}
+];
+
+const DEMO_MARKET_ITEMS = [
+  {id:1,name:"小P同学",description:"AI战略伙伴Skill，你的第二大脑与认知催化剂",category:"skills",url:"",icon:"🤖",author:"Muse",is_official:1,tags:"AI,战略,创作,Agent",installs:1280,score:4.9,meta_json:'{"featured":true}'},
+  {id:2,name:"Inspiration Capture",description:"一键捕获网页灵感，自动提取标题、摘要、关键词和情感倾向",category:"skills",url:"",icon:"🎣",author:"Muse",is_official:1,tags:"采集,浏览器,自动化",installs:890,score:4.8,meta_json:'{}'},
+  {id:3,name:"DNA Creator Analysis",description:"基于你的内容自动生成创作者DNA画像：话题雷达、语气特征、优势劣势",category:"skills",url:"https://dna.superk.ai",icon:"🧬",author:"Muse",is_official:1,tags:"分析,DNA,AI创作",installs:756,score:4.8,meta_json:'{}'},
+  {id:4,name:"With · Human 4.0",description:"云端记忆+感知层 Agent——记住你的一切，在需要时准确召回",category:"agents",url:"https://with.superk.ai",icon:"🧠",author:"With Team",is_official:1,tags:"记忆,Agent,感知,云端",installs:432,score:4.9,meta_json:'{"featured":true,"pricing":"免费/月 基础版"}'},
+  {id:5,name:"MiniMax-M3",description:"高速推理模型，性价比之王——适合大批量内容生成和实时对话",category:"models",url:"https://minimax.io",icon:"⚡",author:"MiniMax",is_official:1,tags:"模型,推理,高速,便宜",installs:2190,score:4.7,meta_json:'{"pricing":"¥0.05/百万tokens","featured":true}'},
+  {id:6,name:"DeepSeek V4 Pro",description:"最新DeepSeek旗舰模型，深度推理能力，64K上下文",category:"models",url:"https://deepseek.com",icon:"🔥",author:"DeepSeek",is_official:1,tags:"模型,推理,深度,旗舰",installs:1870,score:4.8,meta_json:'{"pricing":"¥0.28/百万tokens"}'},
+  {id:7,name:"TokenRouter",description:"统一API路由，自动选择最优模型——一个Key调用所有大模型",category:"relay",url:"https://tokenrouter.com",icon:"🔄",author:"TokenRouter",is_official:1,tags:"API,路由,中转,统一",installs:645,score:4.5,meta_json:'{"pricing":"免费入门 / $9/月","featured":true}'},
+  {id:8,name:"Mr.K 1v1 咨询",description:"15年外贸+3年AI实操经验：跨境电商、AI自动化、内容策略、个人品牌",category:"consulting",url:"https://superk.ai",icon:"👤",author:"Mr.K",is_official:1,tags:"咨询,跨境电商,AI,策略",installs:28,score:5.0,meta_json:'{"pricing":"¥1,200/小时","featured":true}'},
+  {id:9,name:"Agent策略诊断",description:"诊断你的AI Agent架构、评估效率瓶颈、给出优化路线图",category:"consulting",url:"",icon:"🔍",author:"Muse",is_official:1,tags:"策略,诊断,优化",installs:16,score:4.3,meta_json:'{"pricing":"¥800/次"}'},
+  {id:10,name:"独立创作者Token基金",description:"每月100万Token额度，支持独立开发者用AI做内容创作",category:"sponsorship",url:"",icon:"💰",author:"Muse",is_official:1,tags:"赞助,Token,免费",installs:89,score:4.9,meta_json:'{"featured":true,"pricing":"申请制 · 免费"}'},
+];
+
 // =========== DATA LOAD ===========
 async function load(){
-  try{const r=await fetch('/api/inspirations');items=await r.json()}catch(e){items=[]}
+  let useDemo = false;
+  try{const r=await fetch('/api/inspirations');items=await r.json()}catch(e){items=DEMO_INSPIRATIONS;useDemo=true}
   try{const r=await fetch('/api/stats');const s=await r.json();
     document.getElementById('stat-total').textContent=s.total||0;
     document.getElementById('stat-week').textContent=s.this_week||0;
     document.getElementById('stat-sources').textContent=s.sources?Object.keys(s.sources).length:0;
-    renderStats(s);
-    renderSourceList(s);
-    renderEmotionDonut(s);
-    renderWeekChart(s);
-  }catch(e){console.error('stats error',e)}
-  // Load DNA profile
+    renderStats(s);renderSourceList(s);renderEmotionDonut(s);renderWeekChart(s);
+  }catch(e){
+    const s=DEMO_STATS;
+    document.getElementById('stat-total').textContent=s.total;
+    document.getElementById('stat-week').textContent=s.this_week;
+    document.getElementById('stat-sources').textContent=Object.keys(s.sources).length;
+    renderStats(s);renderSourceList(s);renderEmotionDonut(s);renderWeekChart(s);
+  }
   try{const r=await fetch('/api/profile');const p=await r.json();
-    if(p.dna) { displayDNA(p.dna); }
-    else {
-      // Show ghost radar with seed fill while scanning
-      showDefaultRadar();
-      // Try auto-generate DNA from session data OR inspirations
-      autoGenerateDNA();
-    }
-  }catch(e){console.error('profile error',e)}
+    if(p.dna){displayDNA(p.dna)}
+    else{showDefaultRadar();autoGenerateDNA();}
+  }catch(e){displayDNA(DEMO_DNA)}
   render();
 }
 
@@ -1723,8 +1809,18 @@ function switchMarketCat(cat, el){
 }
 
 async function loadSkills(){
-  const r = await fetch('/api/skills');
-  const d = await r.json();
+  let d;
+  try{
+    const r = await fetch('/api/skills');
+    d = await r.json();
+  }catch(e){
+    // Demo fallback
+    d = {
+      skills: DEMO_MARKET_ITEMS,
+      installed_ids: [1,4,5],
+      categories: ['skills','agents','models','relay','consulting','sponsorship']
+    };
+  }
   allSkills = d.skills || [];
   installedIds = d.installed_ids || [];
   filterSkills();
@@ -1796,8 +1892,14 @@ function renderSkillCards(){
 }
 
 async function loadInstalledSkills(){
-  const r = await fetch('/api/skills/installed');
-  const d = await r.json();
+  let d;
+  try{
+    const r = await fetch('/api/skills/installed');
+    d = await r.json();
+  }catch(e){
+    // Demo fallback: show our featured items as "installed"
+    d = { installed: DEMO_MARKET_ITEMS.filter(i => installedIds.includes(i.id)) };
+  }
   const items = d.installed || [];
   const section = document.getElementById('installed-section');
   const grid = document.getElementById('installed-grid');
@@ -1886,8 +1988,27 @@ async function uploadSkill(){
 let calYear, calMonth, calData = [];
 
 async function loadCalendar(){
-  const r = await fetch('/api/calendar');
-  const d = await r.json();
+  let d;
+  try{
+    const r = await fetch('/api/calendar');
+    d = await r.json();
+  }catch(e){
+    // Demo fallback
+    const base = new Date();
+    base.setDate(base.getDate() + 2);
+    const fmt = (dt) => dt.toISOString().split('T')[0];
+    const addDays = (dt, n) => { const d2 = new Date(dt); d2.setDate(d2.getDate()+n); return d2; };
+    d = {
+      total: 4,
+      items: [
+        {id:1,title:"DeepSeek V4 vs GPT-5 实测对比",content_type:"article",platform:"twitter",topic:"DeepSeek V4",angle:"对比评测",dna_dimension:"技术趋势洞察",scheduled_date:fmt(base),status:"planned"},
+        {id:2,title:"AI自动化跨境电商全链路教程",content_type:"video",platform:"youtube",topic:"AI自动化",angle:"实操教程",dna_dimension:"实操方法论",scheduled_date:fmt(addDays(base,3)),status:"planned"},
+        {id:3,title:"Agent Native Architecture深度解读",content_type:"post",platform:"linkedin",topic:"Agent架构",angle:"趋势分析",dna_dimension:"技术趋势洞察",scheduled_date:fmt(addDays(base,5)),status:"planned"},
+        {id:4,title:"独立开发者如何做AI产品营销",content_type:"thread",platform:"twitter",topic:"独立开发+营销",angle:"经验分享",dna_dimension:"跨界连接能力",scheduled_date:fmt(addDays(base,7)),status:"planned"},
+      ],
+      stats: { planned:4, writing:0, published:0 }
+    };
+  }
   calData = d.items || [];
   const stats = document.getElementById('cal-stats');
   const s = d.stats || {};
