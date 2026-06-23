@@ -763,6 +763,10 @@ def onboard_js():
 def demo_js():
     return send_file(Path(__file__).parent / "demo.js")
 
+@app.route("/muse-demo.mp4")
+def muse_demo_mp4():
+    return send_file(Path(__file__).parent / "muse-demo.mp4", mimetype="video/mp4")
+
 # ========== WEREAD SYNC (微信读书 API 一键同步) ==========
 @app.route("/api/weread/sync", methods=["POST"])
 def weread_sync():
