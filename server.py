@@ -20,6 +20,7 @@ def add_cors(response):
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 DB = Path(os.environ.get("MUSE_DB_PATH", "/tmp/muse.db" if os.environ.get("VERCEL") else os.path.join(os.path.dirname(__file__), "muse.db")))
+_db_initialized = False
 TZ = timezone(timedelta(hours=8))
 
 # ========== DATABASE ==========
@@ -27,10 +28,16 @@ def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(str(DB))
         g.db.row_factory = sqlite3.Row
+        # Auto-initialize on first connection (Vercel cold start)
+        init_db_on_connect(g.db)
     return g.db
 
-def init_db():
-    db = sqlite3.connect(str(DB))
+def init_db_on_connect(db):
+    """Lazy init: create tables & seed demo if DB is empty (first request on Vercel cold start)"""
+    global _db_initialized
+    if _db_initialized:
+        return
+    _db_initialized = True
     db.executescript("""
         CREATE TABLE IF NOT EXISTS inspirations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,6 +144,10 @@ def init_db():
         db.execute("ALTER TABLE creator_profile ADD COLUMN updated_at TIMESTAMP")
     except:
         pass
+    db.commit()
+    # Try seed demo content
+    try: _seed_demo(db)
+    except: pass
     db.commit()
     db.close()
 
@@ -1604,8 +1615,140 @@ def weread_sync():
     except Exception as e:
         return jsonify({"error": f"同步失败: {str(e)}"}), 500
 
+# ========== DEMO SEEDING ==========
+def _seed_demo(db):
+    """Pre-seed demo content for Vercel demo — only when DB is freshly created"""
+    count = db.execute("SELECT COUNT(*) FROM inspirations").fetchone()[0]
+    if count > 0:
+        return  # Already has data
+    
+    # Seed market first so installed skills can reference them
+    _seed_skills(db)
+    
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    print("🌱 Seeding demo data...")
+    
+    # ── Demo Inspirations ──
+    demos = [
+        ("web", "article", '''"模型即产品"的时代正在到来。Anthropic发布的MCP协议让Agent可以直接操作外部工具，这不仅是技术突破，更是商业模式的范式转移。未来3年，80%的SaaS功能会被Agent调用替代。"''', 
+         "MCP协议将杀死80%的SaaS界面", "Anthropic开放MCP协议，未来Agent可直接调用工具而无需人为操作UI，SaaS行业面临重构",
+         "MCP,Agent,SaaS,SaaS", "excited", "AI基础设施,商业模式", "https://www.anthropic.com/mcp"),
+        
+        ("twitter", "thread", '''"用AI做了3个月内容，涨粉1.2万，收入$4,700。总结5条血泪教训：1.不要追求完美 2.一致性>爆款 3.把AI当助手不是替代 4.找到利基再放大 5.永远为读者服务，不是为算法"''',
+         "AI内容创业3个月实录：涨粉1.2万收入$4,700的5条教训",
+         "真实案例：如何用AI辅助内容创作实现3个月涨粉1.2万、收入$4,700，附5条实践教训",
+         "AI,内容创业,涨粉,收入", "inspired", "AI变现,内容创作,案例", "https://twitter.com/creator/status/demo1"),
+        
+        ("web", "text", '''☕️ AI写作的真相：不是"一键生成"而是"增量创作"。最好的用法是：你写框架 → AI填充 → 你润色 → AI检查 → 你发布。每一步都在加速，但没有一步在替代你的思考。''',
+         "AI写作的真相：增量创作而非一键生成", 
+         "深入剖析AI辅助写作的正确姿势——增量创作法：人机协作的5步工作流",
+         "写作,AI协作,工作流", "curious", "内容创作,AI方法论", ""),
+        
+        ("twitter", "post", "看到一条神评论：「2026年最大的红利不是AI，是用AI帮助别人不要被AI替代的人。」你品，你细品。",
+         "2026年最大红利：帮助别人不被AI替代", "一条引发深思的观点：2026的真正机会在于帮助他人驾驭AI而非AI本身",
+         "AI,红利,机会", "neutral", "趋势分析,AI", "https://twitter.com/thought/status/demo2"),
+        
+        ("youtube", "video", '''标题：《我用AI自动化了整个跨境电商流程》\n核心观点：选品→Listing→投放→客服 全链路AI自动化实操\n关键数据：用AI把选品时间从3天压缩到2小时，Listing生成从半天到15分钟\n结论：不是AI取代你，是用AI的人取代不用AI的人''',
+         "AI自动化跨境电商全链路实操 | 选品→投放 效率提升10倍",
+         "YouTube实操教程：如何用AI自动化跨境电商从选品到客服的完整流程，压缩选品时间90%",
+         "跨境电商,自动化,选品,Listing", "excited", "跨境电商,效率提升,教程", "https://youtube.com/watch?v=demo3"),
+        
+        ("web", "article", '''OpenAI发布了新的GPT-5系列模型，主打"深度推理"能力。Sam Altman在发布会上说："我们不是在做一个越来越快的聊天机器人，我们在做一个会思考的系统。"关键变化：原生支持1M上下文窗口、多模态推理、自动工具调用链。''',
+         "GPT-5发布：1M上下文+原生工具调用，会思考的系统",
+         "OpenAI发布GPT-5系列，主打深度推理能力，3大核心升级：1M上下文窗口、多模态推理、自动工具调用链",
+         "GPT-5,OpenAI,推理,工具调用", "excited", "AI大事件,模型发布", "https://openai.com/blog/gpt-5"),
+        
+        ("web", "text", '''"独立开发者最被低估的能力不是编程，是产品sense和营销。" 一个能写好代码的人多，一个能找准需求+把产品卖出去的人少。你花80%时间写代码，应该花50%时间做推广。''',
+         "独立开发者最被低估的能力：产品sense和营销",
+         "一针见血：独立开发者的核心能力不是写代码，而是找准市场需求并有效推广，建议时间分配对调",
+         "独立开发,产品,营销,思维", "curious", "独立开发者,产品思维,教训", ""),
+        
+        ("twitter", "thread", '''"我做了一个实验：用完全一样的prompt跑了DeepSeek V4和GPT-5，结果DeepSeek V4在中文复杂推理上赢了。不是玄学，是真的测了30道逻辑题。开源模型的时代真的来了。"''',
+         "实测：DeepSeek V4在中文推理上击败GPT-5（30道逻辑题对比）",
+         "独立开发者实测：DeepSeek V4与GPT-5的30道中文逻辑题对比，开源模型在中文推理场景已具备竞争优势",
+         "DeepSeek,GPT-5,中文推理,开源", "inspired", "模型对比,DeepSeek,开源", "https://twitter.com/tester/status/demo4"),
+        
+        ("web", "article", '''Agent Native Architecture不是AI时代的"微服务"，而是基础设施层被AI重构后的新范式。关键洞察：不是把AI嵌入现有系统，而是以AI能力为中心重新设计系统架构。数据库要支持vector查询、API要支持streaming、权限要支持agent-to-agent。''',
+         "Agent Native Architecture：AI时代基础设施重构范式",
+         "深度分析Agent Native Architecture与微服务的本质区别——以AI为中心重新设计系统架构的三层改造",
+         "Agent,架构,基础设施,范式", "excited", "技术前沿,Agent,架构设计", "https://agent-native.dev/architecture"),
+        
+        ("web", "text", '''"做个人品牌的终极秘密：不是告诉别人你有多厉害，而是帮别人解决问题然后他们自己发现你很厉害。" — 这个洞察改变了我的内容策略。从"展示"转向"帮助"。''',
+         "个人品牌终极秘密：从展示到帮助的认知转变",
+         "改变内容策略的核心洞察：个人品牌不是自我展示而是帮助他人，让他人在解决问题中自然发现你的价值",
+         "个人品牌,内容策略,认知", "inspired", "个人品牌,认知升级,创作", ""),
+    ]
+    
+    for source, content_type, raw, title, summary, keywords, emotion, tags, url in demos:
+        db.execute("""
+            INSERT INTO inspirations (source, content_type, raw_content, title, summary, keywords, emotion, tags, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (source, content_type, raw, title, summary, keywords, emotion, tags, url))
+    
+    # ── Demo DNA Profile ──
+    dna = {
+        "persona": "AI+跨境领域深度思考者，擅长技术趋势拆解与实操方法论",
+        "topics": ["AI商业化", "跨境电商自动化", "内容创作", "独立开发者", "开源模型"],
+        "tone": "直接、有观点、不讨好",
+        "sentence_style": "短句+bullet point，结论先行",
+        "structure": "观点→论证→行动建议",
+        "strengths": [
+            {"name": "技术趋势洞察", "score": 88},
+            {"name": "实操方法论", "score": 82},
+            {"name": "跨界连接能力", "score": 75},
+            {"name": "内容表达力", "score": 70}
+        ],
+        "blind_spots": ["有时候过于技术导向忽略了商业落地", "可以更多案例支撑观点"],
+        "audience_hook": "帮你在AI浪潮中做对选择、不踩坑",
+        "growth_tip": "多做案例拆解和实操教程，让读者\"看完就能用\""
+    }
+    db.execute("""
+        INSERT INTO creator_profile (domain, style, platforms, profile_links, dna_json, analyzed_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, ("AI与跨境", "技术+实操", "twitter,youtube", "https://twitter.com/creator",
+          json.dumps(dna, ensure_ascii=False), now))
+    
+    # ── Demo Calendar ──
+    from datetime import timedelta
+    cal_base = datetime.now(timezone.utc) + timedelta(days=2)
+    cal_items = [
+        ("DeepSeek V4 vs GPT-5 实测对比", "article", "twitter",
+         "DeepSeek V4", "对比评测", "技术趋势洞察",
+         cal_base.strftime("%Y-%m-%d"), "planned"),
+        ("AI自动化跨境电商全链路教程", "video", "youtube",
+         "AI自动化", "实操教程", "实操方法论",
+         (cal_base + timedelta(days=3)).strftime("%Y-%m-%d"), "planned"),
+        ("Agent Native Architecture深度解读", "post", "linkedin",
+         "Agent架构", "趋势分析", "技术趋势洞察",
+         (cal_base + timedelta(days=5)).strftime("%Y-%m-%d"), "planned"),
+        ("独立开发者如何做AI产品营销", "thread", "twitter",
+         "独立开发+营销", "经验分享", "跨界连接能力",
+         (cal_base + timedelta(days=7)).strftime("%Y-%m-%d"), "planned"),
+    ]
+    for title, ct, platform, topic, angle, dim, sched_date, status in cal_items:
+        db.execute("""
+            INSERT INTO content_calendar (title, content_type, platform, topic, angle, dna_dimension, scheduled_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (title, ct, platform, topic, angle, dim, sched_date, status))
+    
+    # ── Demo Installed Skills ──
+    # Install a few market items for the demo user
+    for skill_id in [1, 4, 5, 9]:  # 小P同学, With Human 4.0, MiniMax-M3, TokenRouter
+        row = db.execute("SELECT name, description, url, icon, category, tags FROM skill_market WHERE id=?", (skill_id,)).fetchone()
+        if row:
+            db.execute("""
+                INSERT INTO user_skills (skill_id, name, description, url, icon, category, tags, is_custom, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'installed')
+            """, (skill_id, row["name"], row["description"], row["url"], row["icon"], row["category"], row["tags"]))
+    
+    db.commit()
+    print("🌱 Demo seed complete — 10 inspirations, DNA profile, 4 calendar items, 4 installed skills")
+
 # ========== STARTUP ==========
 if __name__ == "__main__":
-    init_db()
+    # Local: ensure DB exists and demo seeds on first run
+    with app.app_context():
+        db = get_db()
+        init_db_on_connect(db)
     print("🎨 Muse API running on http://localhost:5200")
     app.run(host="0.0.0.0", port=5200, debug=False)
