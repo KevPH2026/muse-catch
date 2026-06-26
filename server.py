@@ -181,6 +181,82 @@ def _get_user_model_config(db):
         pass  # malformed config row — fall back to no custom model
     return None
 
+def _upsert_creator_dna(db, dna):
+    """Persist a freshly-analyzed DNA dict onto the latest creator_profile row
+    (creating one if none exists). Duplicated by analyze_dna and scan_sessions_dna."""
+    now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+    payload = json.dumps(dna, ensure_ascii=False)
+    existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+    if existing:
+        db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
+                   (payload, now_str, existing["id"]))
+    else:
+        db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
+                   (payload, now_str))
+    db.commit()
+
+def _get_model_config(db, column):
+    """Read a stored model config JSON column ('model_config' or 'image_model_config')
+    from the latest creator_profile row, masked for display. Shared by the two
+    near-identical GET /api/(image-)model-config routes."""
+    try:
+        row = db.execute(f"SELECT {column} AS cfg FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+        if row and row["cfg"] and row["cfg"] != "{}":
+            cfg = json.loads(row["cfg"])
+            masked = dict(cfg)
+            if masked.get("key"):
+                masked["key"] = masked["key"][:8] + "***"
+            return masked
+    except Exception:
+        pass
+    return {}
+
+def _save_model_config(db, column, data):
+    """Persist a model config dict into the given column of creator_profile."""
+    try:
+        existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+        payload = json.dumps(data, ensure_ascii=False)
+        if existing:
+            db.execute(f"UPDATE creator_profile SET {column} = ? WHERE id = ?", (payload, existing["id"]))
+        else:
+            db.execute(f"INSERT INTO creator_profile ({column}) VALUES (?)", (payload,))
+        db.commit()
+        return True
+    except Exception:
+        return False
+
+def _build_profile_ctx(profile_row):
+    """Render a creator_profile row (+ its dna_json) into a list of Chinese
+    context bullet strings. Duplicated by generate_topics and the chat route.
+    Returns [] when the row is None or has no usable fields."""
+    if not profile_row:
+        return []
+    parts = []
+    if profile_row["domain"]:
+        parts.append(f"- 关注领域：{profile_row['domain']}")
+    if profile_row["style"]:
+        parts.append(f"- 创作风格：{profile_row['style']}")
+    if profile_row["platforms"]:
+        parts.append(f"- 发布平台：{profile_row['platforms']}")
+    if profile_row["dna_json"]:
+        try:
+            dna = json.loads(profile_row["dna_json"])
+            if dna.get("niche"):
+                parts.append(f"- 赛道定位：{dna['niche']}")
+            if dna.get("style"):
+                parts.append(f"- 内容风格：{dna['style']}")
+            if dna.get("topics"):
+                parts.append(f"- 核心话题：{', '.join(dna['topics'])}")
+            if dna.get("audience"):
+                parts.append(f"- 目标受众：{dna['audience']}")
+            if dna.get("differentiator"):
+                parts.append(f"- 差异化特征：{dna['differentiator']}")
+            if dna.get("deep_directions"):
+                parts.append(f"- 可深挖方向：{', '.join(dna['deep_directions'])}")
+        except Exception:
+            pass
+    return parts
+
 def llm_extract(raw_text, source="web"):
     """Extract title, summary, keywords — TokenRouter cloud
 
@@ -462,14 +538,7 @@ def analyze_dna():
                 "raw_preview": content[:300]
             }), 500
         now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
-        existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
-        if existing:
-            db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
-                       (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
-        else:
-            db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
-                       (json.dumps(dna, ensure_ascii=False), now_str))
-        db.commit()
+        _upsert_creator_dna(db, dna)
         return jsonify({"ok": True, "dna": dna, "sample_count": len(texts), "method": "agent_llm"})
     except Exception as e:
         return jsonify({"error": f"DNA分析失败: {str(e)}"}), 500
@@ -595,16 +664,8 @@ def scan_sessions_dna():
             ]
         
         # Save to DB
-        now_str = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
-        existing = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
-        if existing:
-            db.execute("UPDATE creator_profile SET dna_json = ?, analyzed_at = ? WHERE id = ?",
-                       (json.dumps(dna, ensure_ascii=False), now_str, existing["id"]))
-        else:
-            db.execute("INSERT INTO creator_profile (dna_json, analyzed_at) VALUES (?, ?)",
-                       (json.dumps(dna, ensure_ascii=False), now_str))
-        db.commit()
-        
+        _upsert_creator_dna(db, dna)
+
         return jsonify({
             "ok": True,
             "dna": dna,
@@ -659,32 +720,9 @@ def generate_topics():
             # Load full creator profile for personalization
             profile_row = db.execute("SELECT domain, style, platforms, dna_json FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
             creator_context = ""
-            if profile_row:
-                parts = []
-                if profile_row["domain"]:
-                    parts.append(f"- 关注领域：{profile_row['domain']}")
-                if profile_row["style"]:
-                    parts.append(f"- 创作风格：{profile_row['style']}")
-                if profile_row["platforms"]:
-                    parts.append(f"- 发布平台：{profile_row['platforms']}")
-                if profile_row["dna_json"]:
-                    try:
-                        dna = json.loads(profile_row["dna_json"])
-                        if dna.get("niche"):
-                            parts.append(f"- 赛道定位：{dna['niche']}")
-                        if dna.get("style"):
-                            parts.append(f"- 内容风格：{dna['style']}")
-                        if dna.get("topics"):
-                            parts.append(f"- 核心话题：{', '.join(dna['topics'])}")
-                        if dna.get("audience"):
-                            parts.append(f"- 目标受众：{dna['audience']}")
-                        if dna.get("differentiator"):
-                            parts.append(f"- 差异化特征：{dna['differentiator']}")
-                        if dna.get("deep_directions"):
-                            parts.append(f"- 可深挖方向：{', '.join(dna['deep_directions'])}")
-                    except Exception: pass
-                if parts:
-                    creator_context = "\n".join(parts)
+            parts = _build_profile_ctx(profile_row)
+            if parts:
+                creator_context = "\n".join(parts)
             
             # Build DNA-informed system prompt
             dna_hint = ""
@@ -1296,95 +1334,62 @@ def get_installed():
     return jsonify({"ok": True, "installed": [dict(r) for r in rows], "total": len(rows)})
 
 # ========== MODEL CONFIG ==========
+def _build_model_config_response(db, column):
+    """Shared body of the GET /api/(image-)model-config routes. Returns the
+    stored config with an API-key mask, matching the original masking style."""
+    resp = {"ok": True, "configured": False, "name": "", "provider": "", "endpoint": "", "model": "", "masked_key": ""}
+    try:
+        row = db.execute(f"SELECT {column} AS cfg FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
+        if row and row["cfg"] and row["cfg"] != "{}":
+            mc = json.loads(row["cfg"])
+            configured = bool(mc.get("model") and mc.get("endpoint"))
+            if configured and mc.get("key"):
+                masked = mc["key"][:4] + "****" + mc["key"][-4:] if len(mc["key"]) > 8 else "****"
+            else:
+                masked = ""
+            resp.update(configured=configured, name=mc.get("name", ""), provider=mc.get("provider", ""),
+                        endpoint=mc.get("endpoint", ""), model=mc.get("model", ""), masked_key=masked)
+    except Exception:
+        pass
+    return resp
+
+def _persist_model_config(db, column, data):
+    """Shared body of the POST /api/(image-)model-config routes. Returns
+    (ok: bool, error_or_model: str)."""
+    mc = {
+        "name": (data.get("name") or "").strip(),
+        "provider": (data.get("provider") or "openai").strip(),
+        "endpoint": (data.get("endpoint") or "").strip(),
+        "model": (data.get("model") or "").strip(),
+        "key": (data.get("key") or "").strip()
+    }
+    if not mc["model"]:
+        return False, "Model name is required"
+    if not _save_model_config(db, column, mc):
+        return False, "save failed"
+    return True, mc["model"]
+
 @app.route("/api/model-config", methods=["GET"])
 def get_model_config():
     """Get user's custom model configuration"""
-    db = get_db()
-    row = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
-    mc = json.loads(row["model_config"]) if row and "model_config" in row.keys() and row["model_config"] else {}
-    configured = bool(mc.get("model") and mc.get("endpoint"))
-    if configured and mc.get("key"):
-        masked = mc["key"][:4] + "****" + mc["key"][-4:] if len(mc["key"]) > 8 else "****"
-    else:
-        masked = ""
-    return jsonify({
-        "ok": True,
-        "configured": configured,
-        "name": mc.get("name", ""),
-        "provider": mc.get("provider", ""),
-        "endpoint": mc.get("endpoint", ""),
-        "model": mc.get("model", ""),
-        "masked_key": masked
-    })
+    return jsonify(_build_model_config_response(get_db(), "model_config"))
 
 @app.route("/api/model-config", methods=["POST"])
 def save_model_config():
     """Save user's custom model configuration"""
-    db = get_db()
-    data = request.get_json() or {}
-    mc = {
-        "name": (data.get("name") or "").strip(),
-        "provider": (data.get("provider") or "openai").strip(),
-        "endpoint": (data.get("endpoint") or "").strip(),
-        "model": (data.get("model") or "").strip(),
-        "key": (data.get("key") or "").strip()
-    }
-    if not mc["model"]:
-        return jsonify({"ok": False, "error": "Model name is required"})
-    
-    row = db.execute("SELECT id, model_config FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
-    if row:
-        db.execute("UPDATE creator_profile SET model_config = ?, updated_at = datetime('now','localtime') WHERE id = ?",
-                   (json.dumps(mc, ensure_ascii=False), row["id"]))
-    else:
-        db.execute("INSERT INTO creator_profile (model_config) VALUES (?)", (json.dumps(mc, ensure_ascii=False),))
-    db.commit()
-    return jsonify({"ok": True, "saved": mc["model"]})
+    ok, info = _persist_model_config(get_db(), "model_config", request.get_json() or {})
+    return jsonify({"ok": ok, "saved" if ok else "error": info})
 
 @app.route("/api/image-model-config", methods=["GET"])
 def get_image_model_config():
     """Get user's custom image model configuration"""
-    db = get_db()
-    row = db.execute("SELECT * FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
-    mc = json.loads(row["image_model_config"]) if row and "image_model_config" in row.keys() and row["image_model_config"] else {}
-    configured = bool(mc.get("model") and mc.get("endpoint"))
-    if configured and mc.get("key"):
-        masked = mc["key"][:4] + "****" + mc["key"][-4:] if len(mc["key"]) > 8 else "****"
-    else:
-        masked = ""
-    return jsonify({
-        "ok": True,
-        "configured": configured,
-        "name": mc.get("name", ""),
-        "provider": mc.get("provider", ""),
-        "endpoint": mc.get("endpoint", ""),
-        "model": mc.get("model", ""),
-        "masked_key": masked
-    })
+    return jsonify(_build_model_config_response(get_db(), "image_model_config"))
 
 @app.route("/api/image-model-config", methods=["POST"])
 def save_image_model_config():
     """Save user's custom image model configuration"""
-    db = get_db()
-    data = request.get_json() or {}
-    mc = {
-        "name": (data.get("name") or "").strip(),
-        "provider": (data.get("provider") or "openai").strip(),
-        "endpoint": (data.get("endpoint") or "").strip(),
-        "model": (data.get("model") or "").strip(),
-        "key": (data.get("key") or "").strip()
-    }
-    if not mc["model"]:
-        return jsonify({"ok": False, "error": "Model name is required"})
-    
-    row = db.execute("SELECT id FROM creator_profile ORDER BY created_at DESC LIMIT 1").fetchone()
-    if row:
-        db.execute("UPDATE creator_profile SET image_model_config = ?, updated_at = datetime('now','localtime') WHERE id = ?",
-                   (json.dumps(mc, ensure_ascii=False), row["id"]))
-    else:
-        db.execute("INSERT INTO creator_profile (image_model_config) VALUES (?)", (json.dumps(mc, ensure_ascii=False),))
-    db.commit()
-    return jsonify({"ok": True, "saved": mc["model"]})
+    ok, info = _persist_model_config(get_db(), "image_model_config", request.get_json() or {})
+    return jsonify({"ok": ok, "saved" if ok else "error": info})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
@@ -1408,20 +1413,9 @@ def chat():
     stats = db.execute(stats_query).fetchone()
     
     # 2. Profile (if exists)
-    profile_parts = []
     profile_row = db.execute("SELECT domain, style, platforms, dna_json FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
-    has_profile = False
-    if profile_row:
-        has_profile = True
-        if profile_row["domain"]: profile_parts.append(f"领域：{profile_row['domain']}")
-        if profile_row["style"]: profile_parts.append(f"风格：{profile_row['style']}")
-        if profile_row["platforms"]: profile_parts.append(f"平台：{profile_row['platforms']}")
-        if profile_row["dna_json"]:
-            try:
-                dna = json.loads(profile_row["dna_json"])
-                if dna.get("niche"): profile_parts.append(f"赛道：{dna['niche']}")
-                if dna.get("topics"): profile_parts.append(f"核心话题：{', '.join(dna['topics'])}")
-            except Exception: pass
+    has_profile = bool(profile_row)
+    profile_parts = _build_profile_ctx(profile_row)
     
     # 3. Recent inspirations
     recent = db.execute("SELECT id, title, summary, tags, source FROM inspirations ORDER BY created_at DESC LIMIT 5").fetchall()
