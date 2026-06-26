@@ -11,14 +11,43 @@ from flask import Flask, request, jsonify, g, send_file
 from llm_router import call_llm, call_tr_image, extract_json
 
 app = Flask(__name__)
+# Secret key for session signing. Read from env; fall back to a random per-start
+# value so the app never runs with Flask's insecure default in production.
+app.config["SECRET_KEY"] = os.environ.get("MUSE_SECRET_KEY") or os.urandom(32)
 
-# CORS — allow browser extension access
+# CORS — the dashboard and the Chrome extension both talk to this API.
+# Instead of a wide-open "*", we reflect the request Origin only when it is a
+# known-safe origin: the app's own deployment hosts, localhost (dev), and any
+# chrome-extension:// origin (extension IDs are per-install and unpredictable,
+# but all of them are same-scheme and browser-isolated).
+_ALLOWED_ORIGIN_SUFFIXES = tuple(h.strip().rstrip("/") for h in os.environ.get(
+    "MUSE_ALLOWED_ORIGINS", "localhost,127.0.0.1,muse-catch.vercel.app"
+).split(",") if h.strip())
+
+def _cors_origin_for(request_origin):
+    if not request_origin:
+        return None
+    if request_origin.startswith("chrome-extension://"):
+        return request_origin
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(request_origin).hostname or ""
+    except Exception:
+        return None
+    if any(host == s or host.endswith("." + s) for s in _ALLOWED_ORIGIN_SUFFIXES):
+        return request_origin
+    return None
+
 @app.after_request
 def add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PATCH, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    origin = _cors_origin_for(request.headers.get("Origin", ""))
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PATCH, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
+
 DB = Path(os.environ.get("MUSE_DB_PATH", "/tmp/muse.db" if os.environ.get("VERCEL") else os.path.join(os.path.dirname(__file__), "muse.db")))
 _db_initialized = False
 TZ = timezone(timedelta(hours=8))
@@ -26,8 +55,12 @@ TZ = timezone(timedelta(hours=8))
 # ========== DATABASE ==========
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(str(DB))
+        g.db = sqlite3.connect(str(DB), timeout=5.0)  # wait up to 5s on lock
         g.db.row_factory = sqlite3.Row
+        # WAL mode + busy timeout dramatically reduce "database is locked"
+        # errors under concurrent writes (extension + dashboard + bot).
+        g.db.execute("PRAGMA journal_mode=WAL")
+        g.db.execute("PRAGMA busy_timeout=5000")
         # Auto-initialize on first connection (Vercel cold start)
         init_db_on_connect(g.db)
     return g.db
@@ -148,7 +181,10 @@ def init_db_on_connect(db):
     except Exception as e:
         print(f"[muse] demo seed skipped: {e}", flush=True)
     db.commit()
-    db.close()
+    # NOTE: do not close the connection here. init_db_on_connect operates on a
+    # caller-owned connection (passed in by get_db(), which stores it on g for
+    # the request lifetime). Closing it here left g.db pointing at a dead
+    # handle, causing "Cannot operate on a closed database" on every route.
 
 # Note: DB initialization is lazy — get_db() runs init_db_on_connect() on the
 # first real request (per process), which is exactly what Vercel cold starts
