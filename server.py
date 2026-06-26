@@ -151,11 +151,18 @@ def init_db_on_connect(db):
     db.commit()
     db.close()
 
-# Run init on import (needed for Vercel cold starts)
+# Run init on import (needed for Vercel cold starts).
+# Historically this called an undefined init_db() and failed silently inside a
+# bare except; get_db() already lazy-inits on first real connection, so this is
+# only a best-effort warm-up. Any failure is non-fatal.
 try:
-    init_db()
-except Exception:
-    pass
+    with app.app_context():
+        _warmup_db = sqlite3.connect(str(DB))
+        _warmup_db.row_factory = sqlite3.Row
+        init_db_on_connect(_warmup_db)
+        _warmup_db.close()
+except Exception as e:
+    print(f"[muse] warm-up init skipped: {e}", flush=True)
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -176,12 +183,24 @@ def _get_user_model_config(db):
     return None
 
 def llm_extract(raw_text, source="web"):
-    """Extract title, summary, keywords — TokenRouter cloud"""
+    """Extract title, summary, keywords — TokenRouter cloud
+
+    Reads the user's custom model config internally (was previously referencing
+    an undefined `db`, raising NameError on every call and silently falling
+    through to the rule-based fallback)."""
     prompt = f"""Analyze this content snippet. Return ONLY valid JSON:
 {{"title":"max 80 chars", "summary":"max 200 chars", "keywords":"3-5 comma-separated", "emotion":"excited|curious|concerned|inspired|neutral", "tags":"2-3 category keywords"}}
 
 Content: {raw_text[:1500]}"""
-    content = call_llm(prompt, task="ingest", user_config=_get_user_model_config(db))
+    user_config = None
+    try:
+        # get_db() requires an active request context; fall back to no config
+        # (cloud/agent/ollama providers) when called outside one.
+        db = get_db()
+        user_config = _get_user_model_config(db)
+    except Exception:
+        pass
+    content = call_llm(prompt, task="ingest", user_config=user_config)
     if content:
         result = extract_json(content)
         if result:
