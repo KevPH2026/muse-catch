@@ -990,6 +990,10 @@ def demo():
 def onboard_js():
     return send_file(Path(__file__).parent / "onboard.js")
 
+@app.route("/i18n.js")
+def i18n_js():
+    return send_file(Path(__file__).parent / "i18n.js")
+
 @app.route("/demo.js")
 def demo_js():
     return send_file(Path(__file__).parent / "demo.js")

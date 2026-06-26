@@ -96,4 +96,9 @@
     _register: _register, _loaded: _loaded,
     STORAGE_KEY: STORAGE_KEY, SUPPORTED: SUPPORTED, DEFAULT_LANG: DEFAULT_LANG
   };
+  // Convenience global alias so call sites can write t('key') instead of
+  // i18n.t('key'). A function-local `const t` (e.g. inside showToast) will
+  // shadow this alias per normal JS scoping rules, which is the desired
+  // behaviour — those locals refer to a toast element, not a translation.
+  global.t = t;
 })(window);
