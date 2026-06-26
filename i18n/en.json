@@ -35,7 +35,7 @@
   "time.minutes_ago": "{n}m ago",
   "time.hours_ago": "{n}h ago",
 
-  "hero.title": "Inspiration perishes. Act on it now.",
+  "hero.title": "Inspiration perishes. <span class=\"grad\">Act on it now.</span>",
   "hero.badge": "The first proactive inspiration-capture & creation engine for knowledge workers · 100% open source",
   "hero.subtitle": "The era of passive bookmarking is over. Muse proactively catches every spark from your browsing, chatting, and thinking — turning them into structured, searchable inspiration you'll never lose.",
   "hero.cta_demo": "🎬 Try the full flow",

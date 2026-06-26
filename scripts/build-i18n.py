@@ -19,9 +19,12 @@ ROOT = Path(__file__).resolve().parent.parent
 LANGS = ["zh-CN", "en", "zh-TW", "ja"]
 TARGETS = ["app.html", "index.html"]
 
-# Matches the auto-generated inline block (header comment through the </script>).
+# Matches the inline locale-data block (the header comment line plus the
+# window.__MUSE_I18N__ = {...}; assignment through its closing </script>).
+# The leading comment line is either the real "Auto-generated" marker or the
+# initial "PLACEHOLDER", so either form is rewritten in place.
 BLOCK_RE = re.compile(
-    r"<script>\s*\n// Auto-generated inline locale data.*?\n"
+    r"<script>\s*\n// (?:Auto-generated inline locale data.*?|PLACEHOLDER — .*?)\n"
     r"window\.__MUSE_I18N__ = \{.*?\};\s*\n</script>",
     re.DOTALL,
 )

@@ -35,7 +35,7 @@
   "time.minutes_ago": "{n}分钟前",
   "time.hours_ago": "{n}小时前",
 
-  "hero.title": "灵感本易逝 · 行动应当时",
+  "hero.title": "灵感本易逝 · <span class=\"grad\">行动应当时</span>",
   "hero.badge": "全球首个面向知识工作者的主动灵感采集与创作引擎 · 100% 开源",
   "hero.subtitle": "被动收藏的时代结束了。Muse 主动捕捉你浏览、聊天、思考时的每一个火花，转化为结构化、可检索、永不丢失的灵感。",
   "hero.cta_demo": "🎬 体验完整流程",

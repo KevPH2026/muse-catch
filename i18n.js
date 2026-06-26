@@ -58,6 +58,11 @@
     scope.querySelectorAll("[data-i18n]").forEach(function (el) {
       el.textContent = t(el.getAttribute("data-i18n"));
     });
+    scope.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      // Like data-i18n but sets innerHTML — use only for trusted, static
+      // strings that contain markup (e.g. a <span> highlight inside a title).
+      el.innerHTML = t(el.getAttribute("data-i18n-html"));
+    });
     scope.querySelectorAll("[data-i18n-ph]").forEach(function (el) {
       el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph")));
     });
