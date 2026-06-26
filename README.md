@@ -4,7 +4,7 @@
 >
 > Muse catches every spark — from browsing, chatting, or thinking — and turns it into structured, searchable inspiration you'll never lose.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 
 ---
@@ -256,7 +256,7 @@ Built by [**Mr.K**](https://superk.ai) — AI + Cross-Border Commerce strategist
 
 ## 📄 License
 
-MIT — use it, fork it, build on it.
+AGPL-3.0 — use it, fork it, build on it. Network use counts as distribution.
 
 ---
 
