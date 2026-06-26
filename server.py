@@ -128,26 +128,25 @@ def init_db_on_connect(db):
         );
         CREATE INDEX IF NOT EXISTS idx_us_skill ON user_skills(skill_id);
     """)
-    # Migration: add model_config to existing databases
-    try:
-        db.execute("ALTER TABLE creator_profile ADD COLUMN model_config TEXT DEFAULT '{}'")
-    except:
-        pass
-    try:
-        db.execute("ALTER TABLE creator_profile ADD COLUMN image_model_config TEXT DEFAULT '{}'")
-    except:
-        pass
-    # OPC Market: add score column
-    try: db.execute("ALTER TABLE skill_market ADD COLUMN score REAL DEFAULT 0")
-    except: pass
-    try:
-        db.execute("ALTER TABLE creator_profile ADD COLUMN updated_at TIMESTAMP")
-    except:
-        pass
+    # Migration: add model_config to existing databases.
+    # ALTER TABLE fails with OperationalError once the column already exists,
+    # which is the expected case on warm DBs — narrow the catch accordingly.
+    for _ddl in (
+        "ALTER TABLE creator_profile ADD COLUMN model_config TEXT DEFAULT '{}'",
+        "ALTER TABLE creator_profile ADD COLUMN image_model_config TEXT DEFAULT '{}'",
+        "ALTER TABLE skill_market ADD COLUMN score REAL DEFAULT 0",
+        "ALTER TABLE creator_profile ADD COLUMN updated_at TIMESTAMP",
+    ):
+        try:
+            db.execute(_ddl)
+        except sqlite3.OperationalError:
+            pass  # column already present
     db.commit()
     # Try seed demo content
-    try: _seed_demo(db)
-    except: pass
+    try:
+        _seed_demo(db)
+    except Exception as e:
+        print(f"[muse] demo seed skipped: {e}", flush=True)
     db.commit()
     db.close()
 
@@ -178,8 +177,8 @@ def _get_user_model_config(db):
             mc = json.loads(row["model_config"])
             if mc.get("model") and mc.get("endpoint") and mc.get("key"):
                 return mc
-    except:
-        pass
+    except Exception:
+        pass  # malformed config row — fall back to no custom model
     return None
 
 def llm_extract(raw_text, source="web"):
@@ -293,7 +292,8 @@ def ingest():
         })
     except Exception as e:
         import traceback
-        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+        traceback.print_exc()  # log full trace server-side only
+        return jsonify({"error": "internal server error"}), 500
 
 @app.route("/api/inspirations")
 def list_inspirations():
@@ -367,7 +367,7 @@ def get_profile():
     dna = None
     if row["dna_json"]:
         try: dna = json.loads(row["dna_json"])
-        except: pass
+        except Exception: pass  # tolerate legacy/corrupt dna_json
     return jsonify({
         "exists": True,
         "id": row["id"],
@@ -454,8 +454,8 @@ def analyze_dna():
             if arr_match:
                 try:
                     dna = json.loads(arr_match.group())
-                except:
-                    pass
+                except Exception:
+                    pass  # regex matched but not valid JSON — keep scanning
         if not dna:
             return jsonify({
                 "error": "Agent LLM 返回了内容但无法解析为JSON。",
@@ -682,7 +682,7 @@ def generate_topics():
                             parts.append(f"- 差异化特征：{dna['differentiator']}")
                         if dna.get("deep_directions"):
                             parts.append(f"- 可深挖方向：{', '.join(dna['deep_directions'])}")
-                    except: pass
+                    except Exception: pass
                 if parts:
                     creator_context = "\n".join(parts)
             
@@ -722,7 +722,7 @@ def generate_topics():
                     try:
                         topics = json.loads(arr_match.group())
                         return jsonify({"topics": topics, "source_count": len(rows), "method": "tr_claude", "mode": mode})
-                    except: pass
+                    except Exception: pass
         except Exception as e:
             print(f"Topic LLM fallback: {e}")
     
@@ -769,7 +769,7 @@ def topic_deep_dive():
                 db = get_db()
                 rows = db.execute(f"SELECT title, summary FROM inspirations WHERE id IN ({placeholders}) LIMIT 5", ids).fetchall()
                 source_context = "\n".join([f"- {r['title']}: {r['summary'][:100]}" for r in rows])
-        except: pass
+        except Exception: pass
     
     api_key = os.environ.get("TR_API_KEY", "")
     
@@ -860,7 +860,7 @@ def expand_inspiration():
         arr_match = re.search(r'\[.*\]', result, re.DOTALL)
         if arr_match:
             try: return jsonify({"expansions": json.loads(arr_match.group()), "method": "tr_deepseek"})
-            except: pass
+            except Exception: pass
     return jsonify({"error": "发散失败"}), 500
 
 @app.route("/api/classify", methods=["POST"])
@@ -1421,7 +1421,7 @@ def chat():
                 dna = json.loads(profile_row["dna_json"])
                 if dna.get("niche"): profile_parts.append(f"赛道：{dna['niche']}")
                 if dna.get("topics"): profile_parts.append(f"核心话题：{', '.join(dna['topics'])}")
-            except: pass
+            except Exception: pass
     
     # 3. Recent inspirations
     recent = db.execute("SELECT id, title, summary, tags, source FROM inspirations ORDER BY created_at DESC LIMIT 5").fetchall()
