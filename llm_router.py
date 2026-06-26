@@ -24,9 +24,27 @@ if _load_agent.exists():
 
 TZ = timezone(timedelta(hours=8))
 TR_BASE = os.environ.get("TR_BASE_URL", "https://api.tokenrouter.com/v1")
-TR_KEY = os.environ.get("TR_API_KEY", "")
+# TR_KEY is mutable at runtime so the dashboard can configure it without a
+# process restart. Read it through get_tr_key()/set_tr_key() everywhere.
+_TR_KEY = os.environ.get("TR_API_KEY", "")
 OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
+
+
+def get_tr_key():
+    """Current TokenRouter API key (may have been updated at runtime)."""
+    return _TR_KEY
+
+
+def set_tr_key(key):
+    """Update the TokenRouter API key at runtime — takes effect on the next
+    call_llm() without restarting the process. Pass '' to clear."""
+    global _TR_KEY
+    _TR_KEY = (key or "").strip()
+
+
+# Backwards-compat alias for any caller still reading the module attribute.
+TR_KEY = _TR_KEY
 
 # 模型路由表
 ROUTE = {
@@ -93,7 +111,7 @@ def call_llm(prompt, task="ingest", system=None, temp=None, max_tokens=None, use
             return result
     
     # 1. TokenRouter cloud (if user configured key)
-    if TR_KEY:
+    if get_tr_key():
         model = cfg.get("model_tr", "deepseek/deepseek-v4-pro")
         result = _call_tr(model, prompt, _temp, _max_tokens, system)
         if result:
@@ -200,20 +218,21 @@ def _http_post_json(url, body, headers=None, timeout=30):
 
 def _call_tr(model, prompt, temp=0.5, max_tokens=1000, system=None):
     """调用 TokenRouter 云端 API"""
-    if not TR_KEY:
+    key = get_tr_key()
+    if not key:
         return None
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
-    
+
     body = {
         "model": model,
         "messages": messages,
         "temperature": temp,
         "max_tokens": max_tokens
     }
-    headers = {"Authorization": f"Bearer {TR_KEY}"}
+    headers = {"Authorization": f"Bearer {key}"}
     resp = _http_post_json(f"{TR_BASE}/chat/completions", body, headers)
     if resp:
         return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
@@ -244,7 +263,8 @@ def _call_ollama(model, prompt, temp=0.5, max_tokens=1000, system=None):
 
 def call_tr_image(prompt, size="1024x1024"):
     """调用 TokenRouter 图片生成"""
-    if not TR_KEY:
+    key = get_tr_key()
+    if not key:
         return None
     body = {
         "model": "openai/gpt-5.4-image-2",
@@ -253,7 +273,7 @@ def call_tr_image(prompt, size="1024x1024"):
         "size": size,
         "response_format": "url"
     }
-    headers = {"Authorization": f"Bearer {TR_KEY}"}
+    headers = {"Authorization": f"Bearer {key}"}
     resp = _http_post_json(f"{TR_BASE}/images/generations", body, headers, timeout=60)
     if resp:
         if "data" in resp and len(resp["data"]) > 0:

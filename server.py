@@ -8,7 +8,7 @@ import json, sqlite3, os, re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from flask import Flask, request, jsonify, g, send_file
-from llm_router import call_llm, call_tr_image, extract_json
+from llm_router import call_llm, call_tr_image, extract_json, get_tr_key, set_tr_key
 
 app = Flask(__name__)
 # Secret key for session signing. Read from env; fall back to a random per-start
@@ -1423,6 +1423,76 @@ def save_image_model_config():
     """Save user's custom image model configuration"""
     ok, info = _persist_model_config(get_db(), "image_model_config", request.get_json() or {})
     return jsonify({"ok": ok, "saved" if ok else "error": info})
+
+# ========== TOKENROUTER KEY (runtime-configurable cloud key) ==========
+def _ensure_tr_key_column(db):
+    """Add the tr_key column to creator_profile if missing (one-time migration)."""
+    try:
+        db.execute("ALTER TABLE creator_profile ADD COLUMN tr_key TEXT DEFAULT ''")
+        db.commit()
+    except sqlite3.OperationalError:
+        pass  # column already exists
+
+def _load_tr_key_from_db():
+    """On startup, hydrate the runtime TR key from the DB if one was saved.
+    Runs at import time so a key configured in a previous session is live
+    without re-entering it."""
+    try:
+        _db = sqlite3.connect(str(DB), timeout=5.0)
+        _db.row_factory = sqlite3.Row
+        _ensure_tr_key_column(_db)
+        row = _db.execute("SELECT tr_key FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+        _db.close()
+        if row and row["tr_key"]:
+            set_tr_key(row["tr_key"])
+    except Exception as e:
+        print(f"[muse] tr-key hydrate skipped: {e}", flush=True)
+
+_load_tr_key_from_db()
+
+@app.route("/api/tr-key", methods=["GET"])
+def get_tr_key_route():
+    """Return whether a TokenRouter key is configured, with a masked preview.
+    Never returns the full key."""
+    key = get_tr_key()
+    masked = ""
+    if key:
+        masked = key[:6] + "****" + key[-4:] if len(key) > 12 else "****"
+    return jsonify({"ok": True, "configured": bool(key), "masked_key": masked})
+
+@app.route("/api/tr-key", methods=["POST", "DELETE"])
+def save_tr_key_route():
+    """Save (POST) or clear (DELETE) the TokenRouter key. Takes effect
+    immediately — no process restart needed."""
+    db = get_db()
+    _ensure_tr_key_column(db)
+    if request.method == "DELETE":
+        set_tr_key("")
+        try:
+            row = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+            if row:
+                db.execute("UPDATE creator_profile SET tr_key = '' WHERE id = ?", (row["id"],))
+            db.commit()
+        except Exception:
+            pass
+        return jsonify({"ok": True, "configured": False, "masked_key": ""})
+    # POST: persist + apply at runtime
+    data = request.get_json() or {}
+    key = (data.get("key") or "").strip()
+    if not key:
+        return jsonify({"ok": False, "error": "key is required"}), 400
+    set_tr_key(key)  # live immediately
+    try:
+        row = db.execute("SELECT id FROM creator_profile ORDER BY id DESC LIMIT 1").fetchone()
+        if row:
+            db.execute("UPDATE creator_profile SET tr_key = ? WHERE id = ?", (key, row["id"]))
+        else:
+            db.execute("INSERT INTO creator_profile (tr_key) VALUES (?)", (key,))
+        db.commit()
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"save failed: {e}"}), 500
+    masked = key[:6] + "****" + key[-4:] if len(key) > 12 else "****"
+    return jsonify({"ok": True, "configured": True, "masked_key": masked})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
