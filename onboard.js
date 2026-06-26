@@ -21,10 +21,10 @@ function showOnboarding(step){
 function renderObStep(s){
   const box=document.getElementById('onboard-box');
   const steps=[
-    {title:'嗨！让我了解一下你 👋',sub:'告诉我你的创作方向，我会基于你的DNA帮你选题',body:`<div class="ob-tags" id="ob-domains">${OB_DOMAINS.map(d=>`<div class="ob-tag" onclick="toggleObTag(this,'domain')">${d}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--dim)">可多选</span><button class="ob-btn" onclick="nextObStep(2)">继续 →</button></div>`},
-    {title:'你的创作风格是？',sub:'你通常怎么写内容？',body:`<div class="ob-tags" id="ob-styles">${OB_STYLES.map(st=>`<div class="ob-tag" onclick="toggleObTag(this,'style')">${st}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--dim)">可多选</span><div><button class="ob-btn ob-btn-ghost" onclick="nextObStep(1)">← 上一步</button><button class="ob-btn" onclick="nextObStep(3)">继续 →</button></div></div>`},
-    {title:'你在哪些平台创作？',sub:'主力发布平台（可多选）',body:`<div class="ob-tags" id="ob-platforms">${OB_PLATFORMS.map(p=>`<div class="ob-tag" onclick="toggleObTag(this,'platform')">${p}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--dim)">可多选</span><div><button class="ob-btn ob-btn-ghost" onclick="nextObStep(2)">← 上一步</button><button class="ob-btn" onclick="nextObStep(4)">继续 →</button></div></div>`},
-    {title:'让我看看你的内容 🔍',sub:'丢一个你已有平台的链接，我会用AI分析你的创作DNA',body:`<input class="ob-input" id="ob-link" placeholder="粘贴你的抖音/X/小红书链接..." value="${obData.link}"><div style="margin:8px 0;font-size:11px;color:var(--dim)">或者直接分析你已有的灵感库 → <a href="#" onclick="analyzeDnaNow();return false" style="color:var(--purple-light)">立即分析</a></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><div><button class="ob-btn ob-btn-ghost" onclick="nextObStep(3)">← 上一步</button><button class="ob-btn ob-btn-ghost" onclick="skipOb()">稍后再说</button></div><button class="ob-btn" onclick="startDnaAnalysis()">🧬 分析我的DNA</button></div>`},
+    {title:t('onboard.hello'),sub:'告诉我你的创作方向，我会基于你的DNA帮你选题',body:`<div class="ob-tags" id="ob-domains">${OB_DOMAINS.map(d=>`<div class="ob-tag" onclick="toggleObTag(this,'domain')">${d}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--dim)">${t('onboard.multi')}</span><button class="ob-btn" onclick="nextObStep(2)">${t('common.continue')}</button></div>`},
+    {title:t('onboard.style_q'),sub:'你通常怎么写内容？',body:`<div class="ob-tags" id="ob-styles">${OB_STYLES.map(st=>`<div class="ob-tag" onclick="toggleObTag(this,'style')">${st}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--dim)">${t('onboard.multi')}</span><div><button class="ob-btn ob-btn-ghost" onclick="nextObStep(1)">${t('common.back')}</button><button class="ob-btn" onclick="nextObStep(3)">${t('common.continue')}</button></div></div>`},
+    {title:'你在哪些平台创作？',sub:'主力发布平台（可多选）',body:`<div class="ob-tags" id="ob-platforms">${OB_PLATFORMS.map(p=>`<div class="ob-tag" onclick="toggleObTag(this,'platform')">${p}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--dim)">${t('onboard.multi')}</span><div><button class="ob-btn ob-btn-ghost" onclick="nextObStep(2)">${t('common.back')}</button><button class="ob-btn" onclick="nextObStep(4)">${t('common.continue')}</button></div></div>`},
+    {title:'让我看看你的内容 🔍',sub:'丢一个你已有平台的链接，我会用AI分析你的创作DNA',body:`<input class="ob-input" id="ob-link" placeholder="粘贴你的抖音/X/小红书链接..." value="${obData.link}"><div style="margin:8px 0;font-size:11px;color:var(--dim)">或者直接分析你已有的灵感库 → <a href="#" onclick="analyzeDnaNow();return false" style="color:var(--purple-light)">立即分析</a></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><div><button class="ob-btn ob-btn-ghost" onclick="nextObStep(3)">${t('common.back')}</button><button class="ob-btn ob-btn-ghost" onclick="skipOb()">${t('onboard.later')}</button></div><button class="ob-btn" onclick="startDnaAnalysis()">${t('onboard.analyze')}</button></div>`},
     {title:'正在了解你... 🧠',sub:'AI 正在读你的内容，提炼创作DNA',body:`<div class="ob-loading"><div class="spinner"></div><div class="status-text active" id="ob-status">正在分析内容关键词...</div><div class="status-text" id="ob-status2" style="margin-top:4px">提取你的语气和表达习惯</div><div class="status-text" id="ob-status3" style="margin-top:2px">识别你的内容舒适区和盲区</div></div>`}
   ];
   box.innerHTML=`<h2>${steps[s-1].title}</h2><div class="ob-sub">${steps[s-1].sub}</div><div class="ob-step active">${steps[s-1].body}</div>`;
@@ -62,8 +62,8 @@ async function startDnaAnalysis(){
   try{
     const r=await fetch('/api/profile/dna',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(link?{url:link}:{})});
     const d=await r.json();
-    if(d.ok&&d.dna){document.getElementById('onboard-overlay').classList.add('hide');renderDna({dna:d.dna,exists:true});showToast('🧬 我已经了解你了！')}
-    else{document.getElementById('onboard-overlay').classList.add('hide');showToast('⚠️ DNA分析失败')}
+    if(d.ok&&d.dna){document.getElementById('onboard-overlay').classList.add('hide');renderDna({dna:d.dna,exists:true});showToast(t('onboard.understood'))}
+    else{document.getElementById('onboard-overlay').classList.add('hide');showToast(t('onboard.dna_failed'))}
   }catch(e){document.getElementById('onboard-overlay').classList.add('hide')}
 }
 
@@ -74,7 +74,7 @@ function renderDna(p){
   // Use same stats format as displayDNA
   const normStrengths = typeof normalizeStrengths==='function' ? normalizeStrengths(p.dna.strengths) : (p.dna.strengths||[]);
   const scoreAvg = normStrengths.length ? Math.round(normStrengths.reduce((s,x)=>s+(typeof x==='object'?x.score||0:x||0),0)/normStrengths.length) : 0;
-  document.getElementById('dna-stats').textContent = `${normStrengths.length}维 · 综合${scoreAvg}分 · ${(p.dna.topics||[]).length}个核心话题`;
+  document.getElementById('dna-stats').textContent = t('dna.dimensions',{n:normStrengths.length,score:scoreAvg,m:(p.dna.topics||[]).length});
   
   // Handle both old (strings) and new (objects) strengths format
   const strengths=normStrengths;  // Use normalized strengths for consistency
@@ -84,13 +84,13 @@ function renderDna(p){
   
   document.getElementById('dna-detail').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:12px;line-height:1.8">
-      <div><strong style="color:var(--purple-light)">🎭 画像</strong><br>${esc(p.dna.persona||'-')}</div>
-      <div><strong style="color:var(--purple-light)">🗣️ 语气</strong><br>${esc(p.dna.tone||(p.dna.tone_tags||[]).join(' · '))} ${esc(p.dna.sentence_style||'')}</div>
-      <div><strong style="color:var(--purple-light)">🏗️ 结构偏好</strong><br>${esc(p.dna.structure||'-')}</div>
-      <div><strong style="color:var(--purple-light)">🎣 受众钩子</strong><br>${esc(p.dna.audience_hook||'-')}</div>
-      <div><strong style="color:var(--purple-light)">💪 优势</strong><br>${strengthHtml||'-'}</div>
-      <div><strong style="color:var(--purple-light)">🔍 盲区</strong><br>${(p.dna.blind_spots||[]).map(s=>'⚠️ '+esc(s)).join('<br>')||'-'}</div>
-      <div style="grid-column:1/-1"><strong style="color:var(--purple-light)">💡 突破建议</strong><br>${esc(p.dna.growth_tip||'-')}</div>
+      <div><strong style="color:var(--purple-light)">${t('onboard.dna_persona')}</strong><br>${esc(p.dna.persona||'-')}</div>
+      <div><strong style="color:var(--purple-light)">${t('onboard.dna_tone')}</strong><br>${esc(p.dna.tone||(p.dna.tone_tags||[]).join(' · '))} ${esc(p.dna.sentence_style||'')}</div>
+      <div><strong style="color:var(--purple-light)">${t('onboard.dna_structure')}</strong><br>${esc(p.dna.structure||'-')}</div>
+      <div><strong style="color:var(--purple-light)">${t('onboard.dna_audience')}</strong><br>${esc(p.dna.audience_hook||'-')}</div>
+      <div><strong style="color:var(--purple-light)">${t('onboard.dna_strengths')}</strong><br>${strengthHtml||'-'}</div>
+      <div><strong style="color:var(--purple-light)">${t('onboard.dna_blindspots')}</strong><br>${(p.dna.blind_spots||[]).map(s=>'⚠️ '+esc(s)).join('<br>')||'-'}</div>
+      <div style="grid-column:1/-1"><strong style="color:var(--purple-light)">${t('onboard.dna_tip')}</strong><br>${esc(p.dna.growth_tip||'-')}</div>
     </div>`;
   
   // Draw radar with normalized strengths
