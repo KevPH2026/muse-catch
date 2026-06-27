@@ -1,7 +1,7 @@
 // Muse · Catch — Content Script v3
 // Twitter/X 点赞/收藏自动捕获 + 微信公众号阅读自动捕获 + 手动捕获
 
-const API = 'http://localhost:5200/api/ingest';
+const DEFAULT_API = 'http://localhost:5200/api/ingest';
 const CAPTURED_URLS = new Set(); // URL dedup for session
 
 // ============ 通用 — Toast 视觉反馈 ============
@@ -55,7 +55,13 @@ function getMeta() {
 // ============ 通用 — 发送到 Muse ============
 async function sendToMuse(payload) {
   try {
-    const r = await fetch(API, {
+    // Read the user-configured API URL from storage (same key popup/background
+    // use) so a custom endpoint set in Settings applies here too. Falls back to
+    // DEFAULT_API when unset. Previously this was a hardcoded const, which meant
+    // the Twitter/WeChat/WeRead auto-capture ignored the configured URL.
+    const stored = await chrome.storage.local.get('apiUrl');
+    const apiUrl = stored.apiUrl || DEFAULT_API;
+    const r = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
