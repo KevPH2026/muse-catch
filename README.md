@@ -254,6 +254,16 @@ Built by [**Mr.K**](https://superk.ai) — AI + Cross-Border Commerce strategist
 
 ---
 
+## 🔒 Security & privacy
+
+Muse · Catch is public software under [AGPL-3.0](./LICENSE). If you run a modified version as a network service, make the corresponding source available to its users. The canonical source is [KevPH2026/muse-catch](https://github.com/KevPH2026/muse-catch).
+
+- Read [PRIVACY.md](./PRIVACY.md) before installing the browser extension or configuring a remote ingest endpoint.
+- Report vulnerabilities through [SECURITY.md](./SECURITY.md); never disclose keys, tokens, personal data, or exploits in a public issue.
+- Keep signing keys, local databases, environment files, and generated extension packages out of Git.
+
+---
+
 ## 📄 License
 
 AGPL-3.0 — use it, fork it, build on it. Network use counts as distribution.
