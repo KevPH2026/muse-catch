@@ -1,5 +1,23 @@
+# Local application data and Python caches
 muse.db
+data.db
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-*
 __pycache__/
 *.pyc
+
+# Local configuration and deployment state
 .env
+.env.local
+.env.*
+!.env.example
 .vercel
+output/
+
+# Never commit private signing material or generated extension packages
+*.pem
+*.key
+extension.crx
+extension.zip
