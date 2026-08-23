@@ -147,5 +147,14 @@
   "tg.get_code": "Get pairing code",
   "tg.code_hint": "Send this to your Muse Bot on Telegram:",
   "tg.linked": "✅ Telegram linked",
-  "tg.not_linked": "Not linked"
+  "tg.not_linked": "Not linked",
+  "nav.faq": "FAQ",
+  "hero.headline": "Turn fleeting sparks into<br>an endless stream of ideas",
+  "hero.sub_v2": "Every spark from browsing, tweets and chats: capture in one click, let AI distill it — compounding into your Creator DNA.",
+  "hero.cta_free": "Start free →",
+  "hero.cta_watch": "Watch 45s demo",
+  "trust.beta": "🎁 Free during beta",
+  "trust.data": "🔒 Your data, 100% yours",
+  "faq.title": "FAQ",
+  "final.title": "Inspiration won't wait."
 }

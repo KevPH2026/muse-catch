@@ -147,5 +147,14 @@
   "tg.get_code": "ペアリングコードを取得",
   "tg.code_hint": "Telegram の Muse Bot に送信：",
   "tg.linked": "✅ Telegram 連携済み",
-  "tg.not_linked": "未連携"
+  "tg.not_linked": "未連携",
+  "nav.faq": "FAQ",
+  "hero.headline": "瞬く間のインスピレーションを、<br>尽きないネタの泉に",
+  "hero.sub_v2": "閲覧・ツイート・チャットのあらゆるひらめきをワンクリックでキャプチャ。AIがタイトル・要約・キーワードに整理し、クリエイターDNAへ蓄積します。",
+  "hero.cta_free": "無料で始める →",
+  "hero.cta_watch": "45秒のデモを見る",
+  "trust.beta": "🎁 ベータ中は無料",
+  "trust.data": "🔒 データは100%あなたのもの",
+  "faq.title": "よくある質問",
+  "final.title": "インスピレーションは待ってくれない。"
 }

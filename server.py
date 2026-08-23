@@ -1367,6 +1367,14 @@ def muse_demo_mp4():
     resp.headers["Cache-Control"] = "public, max-age=86400"
     return resp
 
+@app.route("/images/<path:filename>")
+def serve_image(filename):
+    """Screenshots used by the landing page (immutable, cache hard)."""
+    from flask import send_from_directory
+    resp = send_from_directory(Path(__file__).parent / "images", filename)
+    resp.headers["Cache-Control"] = "public, max-age=604800"
+    return resp
+
 @app.route("/extension.zip")
 def extension_zip():
     """Chrome/Edge extension package — zipped on the fly from extension/ so the

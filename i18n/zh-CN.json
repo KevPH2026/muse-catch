@@ -147,5 +147,14 @@
   "tg.get_code": "获取配对码",
   "tg.code_hint": "在 Telegram 中向你的 Muse Bot 发送：",
   "tg.linked": "✅ 已绑定 Telegram",
-  "tg.not_linked": "未绑定"
+  "tg.not_linked": "未绑定",
+  "nav.faq": "FAQ",
+  "hero.headline": "把转瞬即逝的灵感，<br>变成写不完的选题",
+  "hero.sub_v2": "网页、推特、聊天里的每一个火花：一键捕获，AI 自动提炼成标题、摘要、关键词，沉淀为你的创作者 DNA。",
+  "hero.cta_free": "免费开始 →",
+  "hero.cta_watch": "看 45 秒演示",
+  "trust.beta": "🎁 Beta 期间免费",
+  "trust.data": "🔒 数据 100% 归你",
+  "faq.title": "常见问题",
+  "final.title": "灵感不会等你。"
 }

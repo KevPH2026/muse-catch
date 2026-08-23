@@ -147,5 +147,14 @@
   "tg.get_code": "取得配對碼",
   "tg.code_hint": "在 Telegram 中向你的 Muse Bot 傳送：",
   "tg.linked": "✅ 已綁定 Telegram",
-  "tg.not_linked": "未綁定"
+  "tg.not_linked": "未綁定",
+  "nav.faq": "FAQ",
+  "hero.headline": "把轉瞬即逝的靈感，<br>變成寫不完的選題",
+  "hero.sub_v2": "網頁、推文、聊天裡的每一個火花：一鍵擷取，AI 自動提煉成標題、摘要、關鍵詞，沉澱為你的創作者 DNA。",
+  "hero.cta_free": "免費開始 →",
+  "hero.cta_watch": "看 45 秒演示",
+  "trust.beta": "🎁 Beta 期間免費",
+  "trust.data": "🔒 數據 100% 歸你",
+  "faq.title": "常見問題",
+  "final.title": "靈感不會等你。"
 }
