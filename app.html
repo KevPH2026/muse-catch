@@ -1353,7 +1353,7 @@ async function generateTopics(mode){
     const r=await fetch(url);const d=await r.json();
     if(d.error){showToast('⚠️ '+d.error);return}
     panel.classList.add('show');panel.scrollIntoView({behavior:'smooth'});
-    document.getElementById('tp-meta').textContent=`基于 ${d.source_count||0} 条灵感 · ${d.method==='llm'?'AI 深度分析':'关键词聚类'} · ${d.mode==='selected'?'手选':'随机'}`;
+    document.getElementById('tp-meta').textContent=`基于 ${d.source_count||0} 条灵感 · ${d.method==='rule'?'关键词聚类':'AI 深度分析'} · ${d.mode==='selected'?'手选':'随机'}`;
     document.getElementById('tp-list').innerHTML=d.topics.map((t,i)=>`
       <div class="topic-card" onclick="deepDive('${esc(t.topic)}','${esc(t.angle)}','${t.source_ids||''}')">
         <div class="tc-num">${String(i+1).padStart(2,'0')}</div>
