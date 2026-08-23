@@ -778,11 +778,27 @@ def stats():
     sources = db.execute("SELECT source, COUNT(*) as cnt FROM inspirations WHERE user_id = ? GROUP BY source", (uid,)).fetchall()
     emotions = db.execute("SELECT emotion, COUNT(*) as cnt FROM inspirations WHERE user_id = ? GROUP BY emotion ORDER BY cnt DESC", (uid,)).fetchall()
     recent = db.execute("SELECT COUNT(*) FROM inspirations WHERE user_id = ? AND created_at > datetime('now','-7 days','localtime')", (uid,)).fetchone()[0]
+    prev_week = db.execute("SELECT COUNT(*) FROM inspirations WHERE user_id = ? AND created_at > datetime('now','-14 days','localtime') AND created_at <= datetime('now','-7 days','localtime')", (uid,)).fetchone()[0]
+    # 30-day daily counts for sparkline
+    daily_rows = db.execute(
+        "SELECT date(created_at, 'localtime') AS d, COUNT(*) AS cnt FROM inspirations "
+        "WHERE user_id = ? AND created_at > datetime('now','-30 days','localtime') GROUP BY d ORDER BY d",
+        (uid,)
+    ).fetchall()
+    by_day = {r["d"]: r["cnt"] for r in daily_rows}
+    daily = []
+    import datetime as _dt
+    today = _dt.date.today()
+    for i in range(29, -1, -1):
+        d = (today - _dt.timedelta(days=i)).isoformat()
+        daily.append({"date": d, "count": by_day.get(d, 0)})
     return jsonify({
         "total": total,
         "this_week": recent,
+        "prev_week": prev_week,
         "sources": {r["source"]: r["cnt"] for r in sources},
-        "emotions": {r["emotion"]: r["cnt"] for r in emotions}
+        "emotions": {r["emotion"]: r["cnt"] for r in emotions},
+        "daily": daily,
     })
 
 @app.route("/api/ingest/<int:insp_id>", methods=["PATCH"])

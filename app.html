@@ -115,48 +115,28 @@ a{color:inherit;text-decoration:none}
 
 /* ============ CARDS ============ */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px}
-.card:hover{border-color:rgba(99,102,241,.35);transform:translateY(-2px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
-.card.selected{border-color:var(--purple);background:rgba(99,102,241,.06);box-shadow:0 0 24px rgba(99,102,241,.1)}
-.card .cb{position:absolute;top:16px;right:16px;width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .2s;font-size:11px;color:transparent}
-.card.selected .cb{background:var(--purple);border-color:var(--purple);color:#fff}
-/* Emotion color strip */
-.card .emotion-strip{position:absolute;top:0;left:0;right:0;height:3px;opacity:.8}
-.excited .emotion-strip{background:linear-gradient(90deg,#f59e0b,#ef4444)}
-.curious .emotion-strip{background:linear-gradient(90deg,#6366f1,#818cf8)}
-.inspired .emotion-strip{background:linear-gradient(90deg,#10b981,#22d3ee)}
-.concerned .emotion-strip{background:linear-gradient(90deg,#f59e0b,#d97706)}
-.neutral .emotion-strip{background:linear-gradient(90deg,#6b7280,#9ca3af)}
+/* ===== 灵感卡片 (B1 重设计) ===== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.card:hover{border-color:rgba(124,108,255,.4);transform:translateY(-1px);background:var(--surface2)}
+.card.selected{border-color:var(--accent);background:rgba(124,108,255,.08)}
+.card .cb{position:absolute;top:14px;right:14px;width:20px;height:20px;border:1.5px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .15s;font-size:10px;color:transparent;background:rgba(0,0,0,.2)}
+.card.selected .cb{background:var(--accent);border-color:var(--accent);color:#fff}
 .card-top{display:flex;align-items:center;gap:8px;padding-right:30px}
-.source-chip{font-size:9px;padding:4px 12px;border-radius:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-.source-chip.web{background:rgba(99,102,241,.18);color:var(--purple-light)}
-.source-chip.tg{background:rgba(34,211,238,.15);color:var(--cyan)}
-.source-chip.idea{background:rgba(168,85,247,.15);color:var(--pink)}
-.source-chip.api{background:rgba(34,211,238,.12);color:var(--cyan)}
-.source-chip.manual{background:rgba(255,255,255,.06);color:var(--dim)}
-.source-chip.extension{background:rgba(16,185,129,.15);color:var(--green)}
-.source-chip.twitter{background:rgba(29,161,242,.15);color:#1d9bf0}
-.source-chip.wechat{background:rgba(16,185,129,.15);color:var(--green)}
-.source-chip.weread{background:rgba(245,158,11,.15);color:var(--amber)}
-.source-chip.xiaoyuzhou{background:rgba(99,102,241,.12);color:var(--purple-light)}
-.source-chip.zhihu{background:rgba(0,102,255,.12);color:#06f}
-.source-chip.linkedin{background:rgba(10,102,194,.12);color:#0a66c2}
-.source-chip.douyin{background:rgba(239,68,68,.12);color:var(--red)}
-.source-chip.xiaohongshu{background:rgba(255,36,66,.12);color:#ff2442}
-.card-time-chip{font-size:9px;color:var(--dim);margin-left:auto}
-.card-title{font-size:16px;font-weight:700;line-height:1.4}
-.card-summary{font-size:12px;color:var(--dim);line-height:1.6}
-.card-keywords{display:flex;gap:6px;flex-wrap:wrap}
-.card-keywords .kw{padding:4px 10px;border-radius:8px;font-size:10px;font-weight:500}
-.card-keywords .kw:nth-child(1){background:rgba(99,102,241,.12);color:var(--purple-light)}
-.card-keywords .kw:nth-child(2){background:rgba(168,85,247,.12);color:var(--pink)}
-.card-keywords .kw:nth-child(3){background:rgba(16,185,129,.12);color:var(--green)}
-.card-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--dim);border-top:1px solid rgba(255,255,255,.04);padding-top:12px;margin-top:4px}
-.card-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
-.card:hover .card-actions{opacity:1}
-.card-act{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}
-.card-act:hover{border-color:var(--purple);color:var(--purple-light);background:rgba(99,102,241,.06)}
-.card-act-del:hover{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,.06)}
+.card-title{font-size:15px;font-weight:700;line-height:1.45}
+.card-summary{font-size:12.5px;color:var(--dim);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-footer{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--dimmer);border-top:1px solid var(--border);padding-top:10px;margin-top:2px;gap:8px}
+.card-footer > span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-act-more{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;font-family:inherit;line-height:1;padding:0;transition:all .15s;flex-shrink:0}
+.card-act-more:hover{border-color:var(--accent);color:var(--text);background:rgba(124,108,255,.1)}
+.card-menu{position:absolute;bottom:38px;right:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;min-width:120px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:10;display:none}
+.card-menu.open{display:block}
+.card-menu a{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:12px;color:var(--dim);cursor:pointer;text-decoration:none}
+.card-menu a:hover{background:rgba(124,108,255,.1);color:var(--text)}
+.card-menu a.danger{color:#ff7e7e}
+.card-menu a.danger:hover{background:rgba(255,80,80,.1)}
+/* Source chip styles kept */
+.source-chip{font-size:9px;padding:4px 10px;border-radius:6px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(255,255,255,.06);color:var(--dim)}
+.card-time-chip{font-size:10px;color:var(--dim);margin-left:auto}
 
 /* ============ DEMO TOUR ============ */
 .demo-overlay{position:fixed;inset:0;background:rgba(5,5,15,.35);z-index:300;backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center}
@@ -605,6 +585,38 @@ body.on-dna #dna-badge{display:none}
   .stats-bar{grid-template-columns:repeat(2,1fr)}
   .user-menu{left:auto;right:12px;bottom:calc(100% - 8px)}
 }
+
+/* ===== B2 统计卡重设计 ===== */
+.stat-trend{font-size:11px;color:var(--dim);margin-top:4px;display:flex;align-items:center;gap:4px}
+.stat-trend.up{color:#22c55e}
+.stat-trend.down{color:#ef4444}
+.stat-spark{height:32px;margin-top:8px;background:linear-gradient(180deg,rgba(124,108,255,.18),transparent);border-radius:6px;overflow:hidden}
+.stat-spark svg .spark-line{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.stat-spark svg .spark-fill{fill:url(#sparkGrad);opacity:.6}
+.stat-source-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.stat-source-pills .src-pill{font-size:10px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.05);color:var(--dim);display:inline-flex;align-items:center;gap:4px}
+.stat-source-pills .src-pill b{color:var(--text);font-weight:600}
+
+/* ===== B3 OPC Market 卡片瘦身 ===== */
+.skill-card .badge-category{font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(124,108,255,.12);color:var(--accent);font-weight:600;letter-spacing:.02em}
+.skill-card .skill-meta{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
+.skill-card .skill-author{font-size:11px;color:var(--dimmer)}
+.skill-card .skill-desc{font-size:12.5px;color:var(--dim);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px}
+.skill-card .skill-actions{display:flex;justify-content:flex-end;align-items:center;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
+.skill-card .skill-actions .btn{padding:6px 14px;font-size:12px;border-radius:8px}
+.skill-card .skill-btn-uninstall{font-size:12px;color:var(--dim)}
+.skill-card .mk-score{font-size:12px;color:#f59e0b;font-weight:700;flex-shrink:0}
+.skill-card .mk-pricing{font-size:11px;color:var(--dim);margin-top:4px}
+.skill-card .skill-tags{display:none}
+
+/* ===== B4 Ship 周/月切换 ===== */
+.cal-actions .view-toggle{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.cal-actions .vt-btn{padding:6px 14px;background:transparent;border:none;color:var(--dim);font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}
+.cal-actions .vt-btn.active{background:var(--accent);color:#fff}
+.cal-actions .vt-btn:hover:not(.active){color:var(--text)}
+.cal-grid.week-view{grid-auto-rows:minmax(180px,1fr)}
+.cal-grid.week-view .cal-day{min-height:160px}
+.cal-grid.week-view .day-num{font-size:13px}
 </style>
 <div id="auth-overlay" class="hidden">
   <div class="auth-card">
@@ -762,35 +774,32 @@ body.on-dna #dna-badge{display:none}
 
     <!-- ===== STATS BAR ===== -->
     <div class="stats-bar" id="stats-bar">
-      <!-- Total with heatmap -->
       <div class="stat-card">
         <div class="stat-header"><span class="stat-label">累计</span><span class="stat-icon">📊</span></div>
         <div class="stat-big" id="stat-total">0</div>
         <div class="stat-sub">已捕获灵感</div>
-        <div class="heatmap-grid" id="week-heatmap"></div>
+        <div class="stat-trend" id="stat-trend-total">—</div>
       </div>
 
-      <!-- This week with bars -->
       <div class="stat-card">
         <div class="stat-header"><span class="stat-label">本周</span><span class="stat-icon">📈</span></div>
         <div class="stat-big" id="stat-week">0</div>
-        <div class="stat-sub">本周新增</div>
-        <div class="mini-bars" id="week-chart"></div>
+        <div class="stat-sub">vs 上周</div>
+        <div class="stat-trend" id="stat-trend-week">—</div>
+        <div class="stat-spark" id="stat-spark"><svg viewBox="0 0 200 32" preserveAspectRatio="none" style="width:100%;height:32px"></svg></div>
       </div>
 
-      <!-- Sources with dots -->
       <div class="stat-card">
         <div class="stat-header"><span class="stat-label">来源</span><span class="stat-icon">🔗</span></div>
         <div class="stat-big" id="stat-sources">0</div>
         <div class="stat-sub">活跃渠道</div>
-        <div class="source-list-stat" id="source-list"></div>
+        <div class="stat-source-pills" id="source-list"></div>
       </div>
 
-      <!-- Emotions donut -->
       <div class="stat-card">
         <div class="stat-header"><span class="stat-label">情绪</span><span class="stat-icon">🎭</span></div>
         <div class="donut-wrap">
-          <svg id="emotion-donut" width="68" height="68" viewBox="0 0 68 68"></svg>
+          <svg id="emotion-donut" width="56" height="56" viewBox="0 0 56 56"></svg>
           <div class="donut-legend" id="emotion-legend"></div>
         </div>
       </div>
@@ -947,10 +956,13 @@ body.on-dna #dna-badge{display:none}
     <!-- ===== SETTINGS PAGE ===== -->
     <div id="settings-page">
       <div class="skills-header">
-        <h2>⚙️ Settings</h2>
-        <p>配置你的 AI 模型和其他偏好</p>
+        <h2>⚙️ 设置</h2>
+        <p>配置你的 AI 模型、API Token 和集成</p>
       </div>
 
+      <div class="settings-group">
+        <div class="settings-group-title">AI 模型</div>
+        <div class="settings-group-desc">让 AI 用你提供的模型和密钥运行（BYOK 不限量）</div>
       <!-- TokenRouter Cloud Key (one key powers all built-in AI) -->
       <div class="settings-section">
         <h3>☁️ TokenRouter 云端密钥</h3>
@@ -1018,6 +1030,11 @@ body.on-dna #dna-badge{display:none}
         <div class="settings-status none" id="si-status">未配置 — 使用默认模型</div>
       </div>
 
+      </div><!-- /settings-group AI 模型 -->
+
+      <div class="settings-group">
+        <div class="settings-group-title">我的 Token</div>
+        <div class="settings-group-desc">用于浏览器插件、Agent 和脚本调用你的 Muse 数据</div>
       <!-- API Tokens (extension / DSH agents / scripts) -->
       <div class="settings-section">
         <h3 data-i18n="tokens.title">🔑 API Token</h3>
@@ -1036,6 +1053,11 @@ body.on-dna #dna-badge{display:none}
         <div id="tk-list"></div>
       </div>
 
+      </div><!-- /settings-group 我的 Token -->
+
+      <div class="settings-group">
+        <div class="settings-group-title">集成</div>
+        <div class="settings-group-desc">连接第三方服务，让灵感来源更广</div>
       <!-- Telegram linking -->
       <div class="settings-section">
         <h3 data-i18n="tg.title">📨 Telegram 绑定</h3>
@@ -1050,6 +1072,8 @@ body.on-dna #dna-badge{display:none}
           <div style="font-size:11px;color:var(--dim);margin-top:4px">⏱ 10 分钟内有效</div>
         </div>
       </div>
+
+      </div><!-- /settings-group 集成 -->
 
     </div>
 
@@ -1122,10 +1146,14 @@ body.on-dna #dna-badge{display:none}
           <p>把自己当产品运营——基于你的DNA和灵感池，自动生成内容排期</p>
         </div>
         <div class="cal-actions">
-          <div class="month-nav">
-            <button onclick="calPrevMonth()">◀</button>
-            <span id="cal-month-label"></span>
-            <button onclick="calNextMonth()">▶</button>
+          <div class="view-toggle">
+            <button class="vt-btn active" data-view="week" onclick="setCalView('week')">周视图</button>
+            <button class="vt-btn" data-view="month" onclick="setCalView('month')">月视图</button>
+          </div>
+          <div class="month-nav" id="cal-nav">
+            <button onclick="calPrev()">◀</button>
+            <span id="cal-period-label"></span>
+            <button onclick="calNext()">▶</button>
           </div>
           <button class="btn btn-primary" onclick="generateCalendar()" id="btn-gen-cal" style="font-size:12px">🤖 AI 生成排期</button>
           <select id="cal-weeks" style="width:60px">
@@ -1190,13 +1218,13 @@ async function load(){
     document.getElementById('stat-total').textContent=s.total||0;
     document.getElementById('stat-week').textContent=s.this_week||0;
     document.getElementById('stat-sources').textContent=s.sources?Object.keys(s.sources).length:0;
-    renderStats(s);renderSourceList(s);renderEmotionDonut(s);renderWeekChart(s);
+    renderStats(s);renderTrend(s);renderSpark(s);renderSourcePills(s);renderEmotionDonut(s);
   }catch(e){
     const s={total:0,this_week:0,sources:{},emotions:{}};
     document.getElementById('stat-total').textContent=0;
     document.getElementById('stat-week').textContent=0;
     document.getElementById('stat-sources').textContent=0;
-    renderStats(s);renderSourceList(s);renderEmotionDonut(s);renderWeekChart(s);
+    renderStats(s);renderTrend(s);renderSpark(s);renderSourcePills(s);renderEmotionDonut(s);
   }
   try{const r=await fetch('/api/profile');const p=await r.json();
     if(p.dna){displayDNA(p.dna)}
@@ -1207,31 +1235,72 @@ async function load(){
 
 // =========== STATS VISUALIZATIONS ===========
 function renderStats(s){
-  // Week heatmap (7 cols × N rows, last 4 weeks)
-  const hm=document.getElementById('week-heatmap');
-  if(!hm)return;
-  const days=['一','二','三','四','五','六','日'];
-  const today=new Date().getDay();
-  let html='';
-  for(let i=6;i>=0;i--){
-    html+='<div class="heat-col">';
-    html+=`<div class="heat-col-label">${days[(today-i+7)%7]}</div>`;
-    for(let w=0;w<4;w++){
-      const count=(s.daily_counts&&s.daily_counts[i])||0;
-      const intensity=Math.min(count/5,1);
-      const alpha=intensity>.7?1:intensity>.4?.5:intensity>0?.2:.05;
-      html+=`<div class="heat-cell" style="background:rgba(99,102,241,${alpha})"></div>`;
-    }
-    html+='</div>';
-  }
-  hm.innerHTML=html;
+  // Numbers are set directly by the caller; this function is reserved
+  // for any future visual polish on the cards themselves.
+  return;
 }
 
-function renderSourceList(s){
+function renderSourcePills(s){
   const el=document.getElementById('source-list');
-  if(!el||!s.sources)return;
-  const colors={web:'#818cf8',tg:'#22d3ee',idea:'#a855f7',api:'#22d3ee',manual:'#6b7280',extension:'#10b981'};
-  el.innerHTML=Object.entries(s.sources).slice(0,4).map(([k,v])=>`<div class="source-item"><span class="sdot" style="background:${colors[k]||'#888'}"></span>${SOURCE_NAMES[k]||k}<span class="scount">${v}</span></div>`).join('');
+  if(!el)return;
+  const srcs = s.sources ? Object.entries(s.sources).sort((a,b)=>b[1]-a[1]).slice(0,3) : [];
+  if(!srcs.length){ el.innerHTML = '<span style="font-size:11px;color:var(--dimmer)">暂无</span>'; return; }
+  el.innerHTML = srcs.map(([k,v])=>`<span class="src-pill">${esc(sourceLabel(k))} <b>${v}</b></span>`).join('');
+}
+
+function renderTrend(s){
+  const w = s.this_week||0;
+  const pw = s.prev_week||0;
+  const t = document.getElementById('stat-trend-total');
+  if(t){
+    if(pw > 0){
+      const diff = w - pw;
+      const arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '→');
+      const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : '');
+      t.className = 'stat-trend ' + cls;
+      t.textContent = `本周 ${w} 条 ${arrow} ${Math.abs(diff)}`;
+    } else {
+      t.textContent = `本周新增 ${w} 条`;
+      t.className = 'stat-trend';
+    }
+  }
+  const w_el = document.getElementById('stat-trend-week');
+  if(w_el){
+    if(pw > 0){
+      const diff = w - pw;
+      const pct = Math.round((diff / pw) * 100);
+      const arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '→');
+      const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : '');
+      w_el.className = 'stat-trend ' + cls;
+      w_el.textContent = `${arrow} ${Math.abs(diff)} 条 (${pct}%)`;
+    } else if(w > 0){
+      w_el.textContent = `↑ 本周新增 ${w}`;
+      w_el.className = 'stat-trend up';
+    } else {
+      w_el.textContent = `— 暂无`;
+      w_el.className = 'stat-trend';
+    }
+  }
+}
+
+function renderSpark(s){
+  const el = document.getElementById('stat-spark');
+  if(!el) return;
+  const svg = el.querySelector('svg');
+  if(!svg) return;
+  const series = (s.daily || []).map(d => d.count);
+  if(series.length < 2){ svg.innerHTML = ''; return; }
+  const W = 200, H = 32, pad = 2;
+  const max = Math.max(...series, 1);
+  const stepX = (W - pad*2) / (series.length - 1);
+  const pts = series.map((v,i) => [pad + i*stepX, H - pad - (v/max) * (H - pad*2)]);
+  const path = pts.map((p,i) => (i?'L':'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const fillPath = path + ` L${pts[pts.length-1][0]},${H} L${pts[0][0]},${H} Z`;
+  svg.innerHTML = `
+    <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7c6cff" stop-opacity=".55"/><stop offset="100%" stop-color="#7c6cff" stop-opacity="0"/></linearGradient></defs>
+    <path class="spark-fill" d="${fillPath}"/>
+    <path class="spark-line" d="${path}"/>
+  `;
 }
 
 function renderEmotionDonut(s){
@@ -1263,22 +1332,7 @@ function renderEmotionDonut(s){
   }).join('');
 }
 
-function renderWeekChart(s){
-  const el=document.getElementById('week-chart');
-  if(!el||!s.daily_counts)return;
-  const max=Math.max(...Object.values(s.daily_counts),1);
-  const colors=['#6366f1','#818cf8','#a855f7','#6366f1','#818cf8','#a855f7','#6366f1'];
-  const days=['一','二','三','四','五','六','日'];
-  let html='';
-  Object.entries(s.daily_counts).forEach(([,v],i)=>{
-    const h=Math.max((v/max)*48,3);
-    html+=`<div style="display:flex;flex-direction:column;align-items:center;flex:1">`;
-    html+=`<div class="mini-bar" style="height:${h}px;background:${colors[i]};opacity:.8;width:100%"></div>`;
-    html+=`<div class="mini-bar-label">${days[i]}</div>`;
-    html+=`</div>`;
-  });
-  el.innerHTML=html;
-}
+function renderWeekChart(s){/* deprecated — see renderSpark */}
 
 // =========== RENDER CARDS ===========
 function render(){
@@ -1288,29 +1342,41 @@ function render(){
   if(!filtered.length){g.innerHTML='';e.style.display='block';return}
   e.style.display='none';
   g.innerHTML=filtered.map(i=>{
-    const cls=EMOTION_CLASS[i.emotion]||'neutral';
     const isSel=selected.has(i.id);
-    return `<div class="card ${cls}${isSel?' selected':''}" id="card-${i.id}" onclick="toggleSelect(${i.id},this)">
-      <div class="emotion-strip"></div>
+    const emoEmoji=EMOJI[i.emotion]||'📌';
+    return `<div class="card${isSel?' selected':''}" id="card-${i.id}" onclick="toggleSelect(${i.id},this,event)">
       <div class="cb">${isSel?'✓':''}</div>
       <div class="card-top">
-        <span class="source-chip ${i.source||'manual'}">${SOURCE_NAMES[i.source]||i.source||'manual'}</span>
-        <span style="font-size:18px">${EMOJI[i.emotion]||'📌'}</span>
+        <span class="source-chip">${esc(sourceLabel(i.source))}</span>
+        <span style="font-size:14px;margin-left:auto" title="${esc(i.emotion||'neutral')}">${emoEmoji}</span>
         <span class="card-time-chip">${fmt(i.created_at)}</span>
       </div>
       <div class="card-title">${esc(i.title||'未命名')}</div>
-      <div class="card-summary">${esc(i.summary||'').slice(0,140)}</div>
-      <div class="card-keywords">${(i.keywords||[]).slice(0,3).map(k=>`<span class="kw">${esc(k)}</span>`).join('')}</div>
+      <div class="card-summary">${esc(i.summary||'')}</div>
       <div class="card-footer">
-        <span>📎 ${i.source?SOURCE_NAMES[i.source]||i.source:'unknown'}</span>
-        <div class="card-actions">
-          <button class="card-act" onclick="event.stopPropagation();expandInspiration(${i.id})">🔀 发散</button>
-          <button class="card-act" onclick="event.stopPropagation();generateQuoteCard(${i.id})">💎 金句</button>
-          <button class="card-act card-act-del" onclick="event.stopPropagation();deleteInspiration(${i.id})" title="删除">🗑</button>
+        <span style="display:flex;align-items:center;gap:6px">📎 ${esc(sourceLabel(i.source))}</span>
+        <button class="card-act-more" onclick="event.stopPropagation();toggleCardMenu(${i.id},this)" title="更多操作">⋯</button>
+        <div class="card-menu" id="card-menu-${i.id}">
+          <a onclick="event.stopPropagation();expandInspiration(${i.id});closeCardMenu()"><span>🔀</span>发散选题</a>
+          <a onclick="event.stopPropagation();generateQuoteCard(${i.id});closeCardMenu()"><span>💎</span>生成金句</a>
+          <a class="danger" onclick="event.stopPropagation();deleteInspiration(${i.id});closeCardMenu()"><span>🗑</span>删除</a>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleCardMenu(id){
+  if(event) event.stopPropagation();
+  const m = document.getElementById('card-menu-'+id);
+  if(!m) return;
+  document.querySelectorAll('.card-menu.open').forEach(el => { if(el !== m) el.classList.remove('open'); });
+  m.classList.toggle('open');
+}
+function closeCardMenu(){
+  document.querySelectorAll('.card-menu.open').forEach(el => el.classList.remove('open'));
+}
+document.addEventListener('click', closeCardMenu);
 }
 
 // =========== DELETE ===========
@@ -1327,7 +1393,7 @@ async function deleteInspiration(id){
         document.getElementById('stat-total').textContent=s.total||0;
         document.getElementById('stat-week').textContent=s.this_week||0;
         document.getElementById('stat-sources').textContent=s.sources?Object.keys(s.sources).length:0;
-        renderStats(s);renderSourceList(s);renderEmotionDonut(s);renderWeekChart(s);
+        renderStats(s);renderTrend(s);renderSpark(s);renderSourcePills(s);renderEmotionDonut(s);
       }catch(e){}
       showToast(t('toast.deleted'));
     }
@@ -2071,32 +2137,28 @@ function renderSkillCards(){
     const meta = s.meta_json ? (() => { try{return JSON.parse(s.meta_json)}catch(e){return{}} })() : {};
     const isFeatured = meta.featured;
     const score = s.score || 0;
-    const stars = score >= 4.7 ? '⭐⭐⭐⭐⭐' : score >= 4.3 ? '⭐⭐⭐⭐' : score >= 3.8 ? '⭐⭐⭐' : score >= 3.0 ? '⭐⭐' : score > 0 ? '⭐' : '';
+    const stars = score > 0 ? '★' + score.toFixed(1) : '';
+    // 截断描述 2 行
+    const desc = (s.description || '').slice(0, 90);
     return `
       <div class="skill-card ${isFeatured ? 'featured' : ''}">
         <div class="skill-top">
           <div class="skill-icon">${s.icon || '📦'}</div>
           <div class="skill-info">
-            <div class="skill-name">
-              ${escHtml(s.name)}
-              <div class="mk-badges">
-                ${s.is_official ? '<span class="badge-official">官方</span>' : ''}
-                ${isFeatured ? '<span class="badge-featured">🔥 推荐</span>' : ''}
-                <span class="badge-category">${catLabels[s.category] || s.category}</span>
-              </div>
+            <div class="skill-name">${escHtml(s.name)}</div>
+            <div class="skill-meta">
+              <span class="badge-category">${catLabels[s.category] || s.category}</span>
+              <span class="skill-author">by ${escHtml(s.author || 'Community')}</span>
             </div>
-            <div class="skill-author">by ${escHtml(s.author || 'Community')}</div>
           </div>
-          ${stars ? `<div class="mk-score"><span class="mk-star">${stars}</span><span class="mk-num">${score.toFixed(1)}</span></div>` : ''}
+          ${stars ? `<div class="mk-score">${stars}</div>` : ''}
         </div>
-        <div class="skill-desc">${escHtml(s.description || '')}</div>
-        ${meta.pricing ? `<div class="mk-pricing">💲 ${meta.pricing}</div>` : ''}
-        <div class="skill-tags">${(s.tags || '').split(',').filter(Boolean).map(t => `<span class="skill-tag">${t.trim()}</span>`).join('')}</div>
+        <div class="skill-desc">${escHtml(desc)}${(s.description||'').length>90?'…':''}</div>
+        ${meta.pricing ? `<div class="mk-pricing">💲 ${escHtml(meta.pricing)}</div>` : ''}
         <div class="skill-actions">
-          ${s.url ? `<a href="${escAttr(s.url)}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none">🔗 访问</a>` : '<span style="font-size:11px;color:var(--dim)">内置</span>'}
           ${installed 
-            ? `<button class="btn btn-outline" onclick="doUninstall(${s.id})" style="font-size:11px;color:#ef4444">卸载</button>`
-            : `<button class="btn btn-primary btn-sm" onclick="doInstall(${s.id})" style="font-size:11px">${s.category === 'consulting' ? '预约' : s.category === 'sponsorship' ? '申请' : '安装'}</button>`
+            ? `<button class="btn btn-outline skill-btn-uninstall" onclick="doUninstall(${s.id})">已安装 · 卸载</button>`
+            : `<button class="btn btn-primary skill-btn-install" onclick="doInstall(${s.id})">${s.category === 'consulting' ? '预约' : s.category === 'sponsorship' ? '申请' : '安装'}</button>`
           }
         </div>
       </div>`;
@@ -2202,46 +2264,60 @@ async function uploadSkill(){
 
 // ---- Content Calendar (Ship Yourself) ----
 let calYear, calMonth, calData = [];
+let calView = 'week'; // 'week' | 'month' (default week)
+let calAnchor = null; // week anchor (Date) for week view
 
-async function loadCalendar(){
-  let d;
-  try{
-    const r = await fetch('/api/calendar');
-    d = await r.json();
-  }catch(e){
-    d = { total: 0, items: [], stats: {} };
+function setCalView(v){
+  calView = v;
+  document.querySelectorAll('.vt-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  const grid = document.getElementById('cal-grid');
+  if(grid) grid.classList.toggle('week-view', v === 'week');
+  renderCalendarGrid();
+}
+
+function calPrev(){
+  if(calView === 'week'){
+    calAnchor = new Date(calAnchor.getTime() - 7*86400000);
+  } else {
+    calMonth--;
+    if(calMonth < 1){ calMonth = 12; calYear--; }
   }
-  calData = d.items || [];
-  const stats = document.getElementById('cal-stats');
-  const s = d.stats || {};
-  if(stats){
-    stats.innerHTML = `
-      <span>📋 总计 ${d.total} 条</span>
-      <span class="cal-status planned">📝 ${s.planned || 0} 待发布</span>
-      <span class="cal-status writing">✍️ ${s.writing || 0} 写作中</span>
-      <span class="cal-status published">✅ ${s.published || 0} 已发布</span>
-    `;
+  renderCalendarGrid();
+}
+function calNext(){
+  if(calView === 'week'){
+    calAnchor = new Date(calAnchor.getTime() + 7*86400000);
+  } else {
+    calMonth++;
+    if(calMonth > 12){ calMonth = 1; calYear++; }
   }
   renderCalendarGrid();
 }
 
+function _startOfWeek(d){
+  const dt = new Date(d);
+  const day = dt.getDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day; // align to Monday
+  dt.setDate(dt.getDate() + diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function _fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function _dayItems(byDate, dateStr){
+  return byDate[dateStr] || [];
+}
+
 function renderCalendarGrid(){
   const grid = document.getElementById('cal-grid');
-  const label = document.getElementById('cal-month-label');
+  const label = document.getElementById('cal-period-label');
   if(!grid) return;
 
   const now = new Date();
   if(!calYear) calYear = now.getFullYear();
   if(!calMonth) calMonth = now.getMonth() + 1; // 1-based
+  if(!calAnchor) calAnchor = _startOfWeek(now);
 
-  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  if(label) label.textContent = calYear + '年 ' + months[calMonth-1];
-
-  const days = ['日','一','二','三','四','五','六'];
-  // First day of month (0=Sun)
-  const firstDay = new Date(calYear, calMonth-1, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
-  const today = now.toISOString().slice(0,10);
+  const days = ['一','二','三','四','五','六','日'];
 
   // Group calendar data by date
   const byDate = {};
@@ -2250,24 +2326,61 @@ function renderCalendarGrid(){
     byDate[item.scheduled_date].push(item);
   });
 
-  let html = days.map(d => `<div class="day-header">${d}</div>`).join('');
-
-  // Empty cells before first day
-  for(let i = 0; i < firstDay; i++) {
-    html += '<div class="cal-day empty"></div>';
+  let html;
+  if(calView === 'week'){
+    const start = new Date(calAnchor);
+    const end = new Date(start.getTime() + 6*86400000);
+    if(label) label.textContent = `${start.getMonth()+1}/${start.getDate()} — ${end.getMonth()+1}/${end.getDate()}, ${end.getFullYear()}`;
+    const todayStr = _fmtDate(now);
+    html = days.map(d => `<div class="day-header">周${d}</div>`).join('');
+    for(let i=0;i<7;i++){
+      const dayDate = new Date(start.getTime() + i*86400000);
+      const dateStr = _fmtDate(dayDate);
+      const items = _dayItems(byDate, dateStr);
+      const dayClass = 'cal-day' + (dateStr === todayStr ? ' today' : '');
+      let itemsHtml = '';
+      if(items.length){
+        itemsHtml = items.slice(0,3).map(it => {
+          const typeIcon = {thread:'🧵',article:'📄',post:'📝',video:'🎬'}[it.content_type] || '📄';
+          return `<div class="day-item" title="${escHtml(it.title)}" onclick="event.stopPropagation();showCalDetail(${it.id})">${typeIcon} ${escHtml(it.title)}</div>`;
+        }).join('');
+        if(items.length > 3) itemsHtml += `<div class="day-item more">+${items.length-3} more</div>`;
+      }
+      html += `<div class="${dayClass}" onclick="showDayDetail('${dateStr}')">
+        <div class="day-num">${dayDate.getDate()}</div>
+        ${itemsHtml}
+      </div>`;
+    }
+  } else {
+    const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    if(label) label.textContent = calYear + '年 ' + months[calMonth-1];
+    const todayStr = _fmtDate(now);
+    const firstDay = new Date(calYear, calMonth-1, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+    html = ['日', ...days.slice(0,6)].map(d => `<div class="day-header">${d}</div>`).join('');
+    for(let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+    for(let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const items = byDate[dateStr] || [];
+      const dayClass = 'cal-day' + (dateStr === todayStr ? ' today' : '');
+      let itemsHtml = '';
+      if(items.length){
+        itemsHtml = items.slice(0,2).map(it => {
+          const typeIcon = {thread:'🧵',article:'📄',post:'📝',video:'🎬'}[it.content_type] || '📄';
+          return `<div class="day-item" title="${escHtml(it.title)}" onclick="event.stopPropagation();showCalDetail(${it.id})">${typeIcon} ${escHtml(it.title)}</div>`;
+        }).join('');
+        if(items.length > 2) itemsHtml += `<div class="day-item more">+${items.length-2} more</div>`;
+      }
+      html += `<div class="${dayClass}" onclick="showDayDetail('${dateStr}')">
+        <div class="day-num">${day}</div>
+        ${itemsHtml}
+      </div>`;
+    }
   }
+  grid.className = 'cal-grid ' + (calView==='week' ? 'week-view' : '');
+  grid.innerHTML = html;
+}
 
-  for(let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const items = byDate[dateStr] || [];
-    const isToday = dateStr === today;
-    let dayClass = 'cal-day';
-    if(isToday) dayClass += ' today';
-
-    let itemsHtml = '';
-    if(items.length <= 2) {
-      itemsHtml = items.map(it => {
-        const typeIcon = {thread:'🧵',article:'📄',post:'📝',video:'🎬'}[it.content_type] || '📄';
         return `<div class="day-item" title="${escHtml(it.title)}" onclick="event.stopPropagation();showCalDetail(${it.id})">${typeIcon} ${escHtml(it.title)}</div>`;
       }).join('');
     } else {
@@ -2287,15 +2400,11 @@ function renderCalendarGrid(){
   grid.innerHTML = html;
 }
 
-function calPrevMonth(){
-  calMonth--;
-  if(calMonth < 1){ calMonth = 12; calYear--; }
+
   renderCalendarGrid();
 }
 
-function calNextMonth(){
-  calMonth++;
-  if(calMonth > 12){ calMonth = 1; calYear++; }
+
   renderCalendarGrid();
 }
 
