@@ -11,6 +11,7 @@ Muse Catch — 分级 LLM 路由层（多用户云端版）
 """
 import os
 import json
+import re
 import urllib.request
 import urllib.error
 import ssl
@@ -18,6 +19,16 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 load_dotenv(Path(__file__).parent / ".env")
+
+# Hybrid-reasoning providers (MiniMax M-series etc.) emit a <think>…</think>
+# segment before the actual answer. Strip it at the source so every consumer
+# (JSON extraction, regex array scans, chat replies) only sees the answer.
+_THINK_RE = re.compile(r"<think>.*?(?:</think>|$)", re.DOTALL)
+
+def _strip_think(text):
+    if not text or "<think>" not in text:
+        return text
+    return _THINK_RE.sub("", text).strip()
 
 TR_BASE = os.environ.get("TR_BASE_URL", "https://api.tokenrouter.com/v1")
 # Platform-paid key. Unlike the single-user era there is NO runtime mutation:
@@ -125,7 +136,7 @@ def _call_openai_compat(endpoint, key, model, msgs, temp=0.5, max_tokens=1000):
         if resp:
             content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
             if content:
-                return content
+                return _strip_think(content)
     print(f"[LLM Router] custom model failed: {model} @ {endpoint}")
     return None
 
@@ -158,7 +169,7 @@ def _call_tr(key, model, msgs, temp=0.5, max_tokens=1000):
     headers = {"Authorization": f"Bearer {key}"}
     resp = _http_post_json(f"{TR_BASE}/chat/completions", body, headers)
     if resp:
-        return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
+        return _strip_think(resp.get("choices", [{}])[0].get("message", {}).get("content", ""))
     return None
 
 
