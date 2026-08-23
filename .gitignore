@@ -1,5 +1,36 @@
+# Secrets & local env — NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Local SQLite DBs (production lives on the /data volume)
 muse.db
+muse.db-*
+data.db
+*.db
+
+# Extension packaging artifacts (pem is a private key — never commit)
+extension.pem
+*.crx
+extension.zip
+
+# Python
 __pycache__/
 *.pyc
-.env
-.vercel
+.venv/
+venv/
+*.egg-info/
+
+# Vercel
+.vercel/
+
+# Runtime state
+.bot_offset
+output/
+.playwright-cli/
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
