@@ -1790,7 +1790,9 @@ function switchTab(tab, el){
     if(skillsPage) skillsPage.classList.remove('show');
     const settingsPage = document.getElementById('settings-page');
     if(settingsPage) settingsPage.classList.remove('show');
-    [statsBar, dnaBadge, dnaPanel, selBar, filters, pf, grid, empty].forEach(el => { if(el) el.style.display = ''; });
+    [statsBar, dnaBadge, selBar, filters, pf, grid, empty].forEach(el => { if(el) el.style.display = ''; });
+    // Dashboard 不再自动展开 DNA 预览面板，用户主动点 dna-badge 才会触发 toggleDnaPanel
+    if(dnaPanel){ dnaPanel.style.display = 'none'; dnaPanel.classList.remove('show'); }
     document.getElementById('model-config').style.display = 'block';
     loadModelConfig();
     loadTrKey();
