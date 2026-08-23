@@ -1513,7 +1513,7 @@ Focus on making each item feel authentic to the creator's DNA. Not generic calen
 Return ONLY valid JSON array, no markdown."""
 
     try:
-        result = call_llm(prompt, temp=0.85, max_tokens=3000, **_llm_call_kwargs(db, uid))
+        result = call_llm(prompt, temp=0.85, max_tokens=5000, **_llm_call_kwargs(db, uid))
         items = extract_json(result)
         if not isinstance(items, list):
             return jsonify({"ok": False, "error": "Failed to parse AI response", "raw": str(result)[:300]})
