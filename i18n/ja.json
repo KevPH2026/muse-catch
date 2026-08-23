@@ -20,10 +20,10 @@
   "nav.how": "仕組み",
   "nav.models": "AIモデル",
   "nav.install": "インストール",
-  "nav.dashboard": "Dashboard",
+  "nav.dashboard": "ダッシュボード",
   "nav.dna": "DNA",
   "nav.total": "Total",
-  "nav.settings": "Settings",
+  "nav.settings": "設定",
   "source.web": "Web",
   "source.tg": "Agent",
   "source.idea": "アイデア",
@@ -156,5 +156,8 @@
   "trust.beta": "🎁 ベータ中は無料",
   "trust.data": "🔒 データは100%あなたのもの",
   "faq.title": "よくある質問",
-  "final.title": "インスピレーションは待ってくれない。"
+  "final.title": "インスピレーションは待ってくれない。",
+  "nav.dna_page": "DNA",
+  "nav.ship": "配信カレンダー",
+  "nav.market": "ツール市場"
 }

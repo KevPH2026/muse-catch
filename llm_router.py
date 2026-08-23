@@ -132,7 +132,9 @@ def _call_openai_compat(endpoint, key, model, msgs, temp=0.5, max_tokens=1000):
 
     base = endpoint.rstrip("/")
     for url in (f"{base}/v1/chat/completions", f"{base}/chat/completions"):
-        resp = _http_post_json(url, body, headers)
+        # hybrid-reasoning models spend 30s+ in the think phase on heavy
+        # prompts (topics/dive); the 30s default times those out
+        resp = _http_post_json(url, body, headers, timeout=90)
         if resp:
             content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
             if content:
@@ -167,7 +169,7 @@ def _call_tr(key, model, msgs, temp=0.5, max_tokens=1000):
         return None
     body = {"model": model, "messages": msgs, "temperature": temp, "max_tokens": max_tokens}
     headers = {"Authorization": f"Bearer {key}"}
-    resp = _http_post_json(f"{TR_BASE}/chat/completions", body, headers)
+    resp = _http_post_json(f"{TR_BASE}/chat/completions", body, headers, timeout=90)
     if resp:
         return _strip_think(resp.get("choices", [{}])[0].get("message", {}).get("content", ""))
     return None

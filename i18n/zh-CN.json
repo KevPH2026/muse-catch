@@ -20,10 +20,10 @@
   "nav.how": "原理",
   "nav.models": "AI模型",
   "nav.install": "安装",
-  "nav.dashboard": "Dashboard",
+  "nav.dashboard": "仪表盘",
   "nav.dna": "DNA",
   "nav.total": "Total",
-  "nav.settings": "Settings",
+  "nav.settings": "设置",
   "source.web": "Web",
   "source.tg": "Agent",
   "source.idea": "Idea",
@@ -156,5 +156,8 @@
   "trust.beta": "🎁 Beta 期间免费",
   "trust.data": "🔒 数据 100% 归你",
   "faq.title": "常见问题",
-  "final.title": "灵感不会等你。"
+  "final.title": "灵感不会等你。",
+  "nav.dna_page": "DNA",
+  "nav.ship": "发布排期",
+  "nav.market": "工具市场"
 }

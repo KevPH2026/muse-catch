@@ -20,10 +20,10 @@
   "nav.how": "原理",
   "nav.models": "AI模型",
   "nav.install": "安裝",
-  "nav.dashboard": "Dashboard",
+  "nav.dashboard": "儀表盤",
   "nav.dna": "DNA",
   "nav.total": "Total",
-  "nav.settings": "Settings",
+  "nav.settings": "設定",
   "source.web": "Web",
   "source.tg": "Agent",
   "source.idea": "Idea",
@@ -156,5 +156,8 @@
   "trust.beta": "🎁 Beta 期間免費",
   "trust.data": "🔒 數據 100% 歸你",
   "faq.title": "常見問題",
-  "final.title": "靈感不會等你。"
+  "final.title": "靈感不會等你。",
+  "nav.dna_page": "DNA",
+  "nav.ship": "發布排期",
+  "nav.market": "工具市場"
 }
