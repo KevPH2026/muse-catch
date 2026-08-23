@@ -1,6 +1,8 @@
 {
-  "_meta": { "lang": "zh-CN", "name": "简体中文" },
-
+  "_meta": {
+    "lang": "zh-CN",
+    "name": "简体中文"
+  },
   "common.all": "全部",
   "common.clear": "清除选择",
   "common.submit": "提交",
@@ -14,7 +16,6 @@
   "common.confirm_delete_inspiration": "确定删除这条灵感吗？",
   "common.save": "保存",
   "common.optional": "（可选）",
-
   "nav.features": "功能",
   "nav.how": "原理",
   "nav.models": "AI模型",
@@ -23,34 +24,28 @@
   "nav.dna": "DNA",
   "nav.total": "Total",
   "nav.settings": "Settings",
-
   "source.web": "Web",
   "source.tg": "Agent",
   "source.idea": "Idea",
   "source.api": "API",
   "source.manual": "手动",
   "source.extension": "插件",
-
   "time.just_now": "刚刚",
   "time.minutes_ago": "{n}分钟前",
   "time.hours_ago": "{n}小时前",
-
   "hero.title": "灵感本易逝 · <span class=\"grad\">行动应当时</span>",
   "hero.badge": "全球首个面向知识工作者的主动灵感采集与创作引擎 · 100% 开源",
   "hero.subtitle": "被动收藏的时代结束了。Muse 主动捕捉你浏览、聊天、思考时的每一个火花，转化为结构化、可检索、永不丢失的灵感。",
   "hero.cta_demo": "🎬 体验完整流程",
   "hero.cta_install": "✦ 安装浏览器插件",
   "hero.cta_dna": "🧬 DNA 体验 →",
-
   "stat.models": "AI模型",
   "stat.compat": "Agent兼容",
   "stat.opensource": "开源",
   "stat.config": "配置门槛",
-
   "ingest.placeholder": "粘贴链接或灵感文字... 别让它溜走 ✨",
   "ingest.captured": "✨ 灵感已捕获！",
   "ingest.connect_failed": "❌ 连接失败",
-
   "topics.title": "💡 选题建议",
   "topics.placeholder": "🔍 搜索整个生态...",
   "topics.generating": "🔀 正在发散...",
@@ -63,7 +58,6 @@
   "topics.based_on": "基于 {n} 条灵感 · {method} · {mode}",
   "topics.need_min": "需要至少 3 条灵感",
   "topics.selected_count": "已选 {n} 条",
-
   "dive.angles": "💥 爆款角度",
   "dive.headlines": "🔥 爆款标题",
   "dive.structure": "📋 文章结构",
@@ -72,7 +66,6 @@
   "dive.failed": "❌ 深度拆解失败",
   "dive.method": "分析方法: {method}",
   "dive.quotes_summary": "生成 {n} 条金句 · {m} 张配图",
-
   "dna.title": "📝 Agent 进化记录",
   "dna.analyzing": "🧬 正在分析灵感库 + 生成DNA...",
   "dna.done": "✅ 分析完成！基于 {n} 条内容生成DNA",
@@ -80,14 +73,12 @@
   "dna.empty": "没有可分析的内容。请先捕获一些灵感，或提供内容样本。",
   "dna.dimensions": "{n}维 · 综合{score}分 · {m}个核心话题",
   "dna.dimension_fallback": "维度{n}",
-
   "market.upload_title": "📤 上架新产品",
   "market.my_title": "📦 我的工具箱",
   "market.field_name": "产品名称 *",
   "market.field_url": "网址 (可选)",
   "market.field_desc": "简短描述",
   "market.field_tags": "标签，逗号分隔",
-
   "settings.text_model": "💬 文本生成模型",
   "settings.image_model": "🎨 图片生成模型",
   "settings.custom_model": "🤖 自定义模型",
@@ -98,16 +89,12 @@
   "settings.save_failed": "保存失败",
   "settings.copied": "✅ 已复制",
   "settings.copy": "📋 复制",
-
   "calendar.done": "✅ 已生成 {n} 条!",
   "calendar.date_header": "📅 {date} ({n} 条)",
-
   "chat.placeholder": "和 Muse AI 聊天...",
   "chat.preparing": "正在为 {platform} 准备写作...",
   "chat.ship_hint": "选题「{title}」— AI 会根据平台调整写作风格",
-
   "feedback.placeholder": "为什么？（可选）",
-
   "onboard.hello": "嗨！让我了解一下你 👋",
   "onboard.style_q": "你的创作风格是？",
   "onboard.multi": "可多选",
@@ -122,13 +109,43 @@
   "onboard.dna_strengths": "💪 优势",
   "onboard.dna_blindspots": "🔍 盲区",
   "onboard.dna_tip": "💡 突破建议",
-
   "toast.deleted": "🗑 已删除",
   "toast.quotes_generating": "💎 正在生成金句...",
   "toast.expand_failed": "发散失败",
   "toast.internal_error": "内部错误",
   "toast.delete_confirm": "确定删除这条灵感吗？",
-
   "error.content_required": "content is required",
-  "error.internal": "internal server error"
+  "error.internal": "internal server error",
+  "auth.login_title": "🌀 欢迎回来",
+  "auth.register_title": "🌀 创建你的 Muse 账号",
+  "auth.email": "邮箱",
+  "auth.password": "密码（至少 8 位）",
+  "auth.display_name": "昵称（可选）",
+  "auth.invite_code": "邀请码（可选）",
+  "auth.login_btn": "登录",
+  "auth.register_btn": "免费注册",
+  "auth.switch_to_register": "没有账号？免费注册 →",
+  "auth.switch_to_login": "已有账号？登录 →",
+  "auth.login_failed": "登录失败：邮箱或密码错误",
+  "auth.register_failed": "注册失败",
+  "auth.logout": "退出登录",
+  "auth.session_expired": "会话已过期，请重新登录",
+  "auth.tagline": "灵感本易逝，行动应当时。",
+  "tokens.title": "🔑 API Token",
+  "tokens.desc": "用于浏览器插件、Agent（DeepSeek Harness 等）和脚本调用你的 Muse 数据。生成后只显示一次，请妥善保存。",
+  "tokens.name_ph": "Token 名称（如: my-extension）",
+  "tokens.generate": "生成新 Token",
+  "tokens.copy": "📋 复制",
+  "tokens.copied": "✅ 已复制到剪贴板",
+  "tokens.once_hint": "⚠️ 这是唯一一次显示，复制后保存到安全的地方",
+  "tokens.empty": "还没有 Token",
+  "tokens.revoke": "吊销",
+  "tokens.last_used": "最近使用",
+  "tokens.never_used": "从未使用",
+  "tg.title": "📨 Telegram 绑定",
+  "tg.desc": "绑定后，在 Telegram 里转发任何消息给你的 Muse Bot 即可自动捕获入库。",
+  "tg.get_code": "获取配对码",
+  "tg.code_hint": "在 Telegram 中向你的 Muse Bot 发送：",
+  "tg.linked": "✅ 已绑定 Telegram",
+  "tg.not_linked": "未绑定"
 }

@@ -1,6 +1,8 @@
 {
-  "_meta": { "lang": "ja", "name": "日本語" },
-
+  "_meta": {
+    "lang": "ja",
+    "name": "日本語"
+  },
   "common.all": "すべて",
   "common.clear": "選択を解除",
   "common.submit": "送信",
@@ -14,7 +16,6 @@
   "common.confirm_delete_inspiration": "このインスピレーションを削除しますか？",
   "common.save": "保存",
   "common.optional": "（任意）",
-
   "nav.features": "機能",
   "nav.how": "仕組み",
   "nav.models": "AIモデル",
@@ -23,34 +24,28 @@
   "nav.dna": "DNA",
   "nav.total": "Total",
   "nav.settings": "Settings",
-
   "source.web": "Web",
   "source.tg": "Agent",
   "source.idea": "アイデア",
   "source.api": "API",
   "source.manual": "手動",
   "source.extension": "拡張機能",
-
   "time.just_now": "たった今",
   "time.minutes_ago": "{n}分前",
   "time.hours_ago": "{n}時間前",
-
   "hero.title": "インスピレーションは朽ちやすい。<span class=\"grad\">今すぐ行動を。</span>",
   "hero.badge": "知識ワーカーのための、初の能動的インスピレーション収集＆創作エンジン · 100% オープンソース",
   "hero.subtitle": "受動的なブックマークの時代は終わりました。Muse は、ブラウジング・チャット・思考のあらゆる瞬間の火花を能動的に捉え、構造化され検索可能で決して失われないインスピレーションへと変えます。",
   "hero.cta_demo": "🎬 フローを体験",
   "hero.cta_install": "✦ 拡張機能をインストール",
   "hero.cta_dna": "🧬 DNA を試す →",
-
   "stat.models": "AIモデル",
   "stat.compat": "Agent対応",
   "stat.opensource": "オープンソース",
   "stat.config": "設定の手間",
-
   "ingest.placeholder": "リンクや思いつきを貼り付け… 逃さないで ✨",
   "ingest.captured": "✨ インスピレーションを取得！",
   "ingest.connect_failed": "❌ 接続失敗",
-
   "topics.title": "💡 テーマ提案",
   "topics.placeholder": "🔍 エコシステム全体を検索...",
   "topics.generating": "🔀 展開中...",
@@ -63,7 +58,6 @@
   "topics.based_on": "{n} 件のインスピレーションから · {method} · {mode}",
   "topics.need_min": "インスピレーションを3件以上必要です",
   "topics.selected_count": "{n} 件選択中",
-
   "dive.angles": "💥 バズる角度",
   "dive.headlines": "🔥 バズる見出し",
   "dive.structure": "📋 記事構成",
@@ -72,7 +66,6 @@
   "dive.failed": "❌ 深掘り失敗",
   "dive.method": "手法: {method}",
   "dive.quotes_summary": "{n} 件のゼリフ · {m} 枚のカード",
-
   "dna.title": "📝 Agent 進化ログ",
   "dna.analyzing": "🧬 インスピレーションを分析＋DNAを生成中...",
   "dna.done": "✅ 完了！{n} 件からDNAを生成",
@@ -80,14 +73,12 @@
   "dna.empty": "分析できるものがありません。まずインスピレーションを取得するか、サンプルを提供してください。",
   "dna.dimensions": "{n}軸 · 平均{score}点 · {m}個のコアテーマ",
   "dna.dimension_fallback": "軸{n}",
-
   "market.upload_title": "📤 商品を掲載",
   "market.my_title": "📦 マイツールボックス",
   "market.field_name": "商品名 *",
   "market.field_url": "URL (任意)",
   "market.field_desc": "短い説明",
   "market.field_tags": "タグ（カンマ区切り）",
-
   "settings.text_model": "💬 テキストモデル",
   "settings.image_model": "🎨 画像モデル",
   "settings.custom_model": "🤖 カスタムモデル",
@@ -98,16 +89,12 @@
   "settings.save_failed": "保存失敗",
   "settings.copied": "✅ コピーしました",
   "settings.copy": "📋 コピー",
-
   "calendar.done": "✅ {n} 件生成！",
   "calendar.date_header": "📅 {date} ({n} 件)",
-
   "chat.placeholder": "Muse AI とチャット...",
   "chat.preparing": "{platform} 向けに執筆を準備中...",
   "chat.ship_hint": "テーマ「{title}」— AI が配信先に合わせて文体を調整します",
-
   "feedback.placeholder": "理由は？（任意）",
-
   "onboard.hello": "やあ！君のことを教えて 👋",
   "onboard.style_q": "創作スタイルは？",
   "onboard.multi": "複数選択可",
@@ -122,13 +109,43 @@
   "onboard.dna_strengths": "💪 強み",
   "onboard.dna_blindspots": "🔍 盲点",
   "onboard.dna_tip": "💡 ブレークスルーの提案",
-
   "toast.deleted": "🗑 削除しました",
   "toast.quotes_generating": "💎 カード生成中...",
   "toast.expand_failed": "展開に失敗",
   "toast.internal_error": "内部エラー",
   "toast.delete_confirm": "このインスピレーションを削除しますか？",
-
   "error.content_required": "content is required",
-  "error.internal": "internal server error"
+  "error.internal": "internal server error",
+  "auth.login_title": "🌀 おかえりなさい",
+  "auth.register_title": "🌀 Muse アカウントを作成",
+  "auth.email": "メールアドレス",
+  "auth.password": "パスワード（8文字以上）",
+  "auth.display_name": "表示名（任意）",
+  "auth.invite_code": "招待コード（任意）",
+  "auth.login_btn": "ログイン",
+  "auth.register_btn": "無料で登録",
+  "auth.switch_to_register": "アカウントをお持ちでない？無料登録 →",
+  "auth.switch_to_login": "すでにアカウントをお持ち？ログイン →",
+  "auth.login_failed": "ログイン失敗：メールまたはパスワードが違います",
+  "auth.register_failed": "登録に失敗しました",
+  "auth.logout": "ログアウト",
+  "auth.session_expired": "セッションが切れました。再度ログインしてください",
+  "auth.tagline": "インスピレーションは朽ちやすい。今すぐ行動を。",
+  "tokens.title": "🔑 API トークン",
+  "tokens.desc": "ブラウザ拡張機能、エージェント（DeepSeek Harness など）、スクリプトからあなたの Muse データを呼び出すために使います。生成後は一度しか表示されません。安全に保管してください。",
+  "tokens.name_ph": "トークン名（例: my-extension）",
+  "tokens.generate": "新しいトークンを生成",
+  "tokens.copy": "📋 コピー",
+  "tokens.copied": "✅ クリップボードにコピーしました",
+  "tokens.once_hint": "⚠️ この表示は一度きりです。コピーして安全な場所に保存してください",
+  "tokens.empty": "トークンはまだありません",
+  "tokens.revoke": "失効",
+  "tokens.last_used": "最終使用",
+  "tokens.never_used": "未使用",
+  "tg.title": "📨 Telegram 連携",
+  "tg.desc": "連携すると、Telegram で Muse Bot にメッセージを転送するだけで自動キャプチャされます。",
+  "tg.get_code": "ペアリングコードを取得",
+  "tg.code_hint": "Telegram の Muse Bot に送信：",
+  "tg.linked": "✅ Telegram 連携済み",
+  "tg.not_linked": "未連携"
 }

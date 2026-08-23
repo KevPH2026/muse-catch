@@ -1,6 +1,8 @@
 {
-  "_meta": { "lang": "en", "name": "English" },
-
+  "_meta": {
+    "lang": "en",
+    "name": "English"
+  },
   "common.all": "All",
   "common.clear": "Clear",
   "common.submit": "Submit",
@@ -14,7 +16,6 @@
   "common.confirm_delete_inspiration": "Delete this inspiration?",
   "common.save": "Save",
   "common.optional": "(optional)",
-
   "nav.features": "Features",
   "nav.how": "How it works",
   "nav.models": "AI Models",
@@ -23,34 +24,28 @@
   "nav.dna": "DNA",
   "nav.total": "Total",
   "nav.settings": "Settings",
-
   "source.web": "Web",
   "source.tg": "Agent",
   "source.idea": "Idea",
   "source.api": "API",
   "source.manual": "Manual",
   "source.extension": "Extension",
-
   "time.just_now": "just now",
   "time.minutes_ago": "{n}m ago",
   "time.hours_ago": "{n}h ago",
-
   "hero.title": "Inspiration perishes. <span class=\"grad\">Act on it now.</span>",
   "hero.badge": "The first proactive inspiration-capture & creation engine for knowledge workers · 100% open source",
   "hero.subtitle": "The era of passive bookmarking is over. Muse proactively catches every spark from your browsing, chatting, and thinking — turning them into structured, searchable inspiration you'll never lose.",
   "hero.cta_demo": "🎬 Try the full flow",
   "hero.cta_install": "✦ Install the extension",
   "hero.cta_dna": "🧬 Try DNA →",
-
   "stat.models": "AI Models",
   "stat.compat": "Agent-ready",
   "stat.opensource": "Open Source",
   "stat.config": "Setup effort",
-
   "ingest.placeholder": "Paste a link or a thought... don't let it slip ✨",
   "ingest.captured": "✨ Inspiration captured!",
   "ingest.connect_failed": "❌ Connection failed",
-
   "topics.title": "💡 Topic suggestions",
   "topics.placeholder": "🔍 Search the whole ecosystem...",
   "topics.generating": "🔀 Diverging...",
@@ -63,7 +58,6 @@
   "topics.based_on": "From {n} inspirations · {method} · {mode}",
   "topics.need_min": "Need at least 3 inspirations",
   "topics.selected_count": "{n} selected",
-
   "dive.angles": "💥 Viral angles",
   "dive.headlines": "🔥 Viral headlines",
   "dive.structure": "📋 Article structure",
@@ -72,7 +66,6 @@
   "dive.failed": "❌ Deep dive failed",
   "dive.method": "Method: {method}",
   "dive.quotes_summary": "{n} quotes · {m} cards",
-
   "dna.title": "📝 Agent evolution log",
   "dna.analyzing": "🧬 Analyzing inspiration library + building DNA...",
   "dna.done": "✅ Done! DNA built from {n} items",
@@ -80,14 +73,12 @@
   "dna.empty": "Nothing to analyze yet. Capture some inspirations first, or provide a content sample.",
   "dna.dimensions": "{n} dims · {score} avg · {m} core topics",
   "dna.dimension_fallback": "Dim {n}",
-
   "market.upload_title": "📤 Publish a product",
   "market.my_title": "📦 My toolbox",
   "market.field_name": "Product name *",
   "market.field_url": "URL (optional)",
   "market.field_desc": "Short description",
   "market.field_tags": "Tags, comma-separated",
-
   "settings.text_model": "💬 Text model",
   "settings.image_model": "🎨 Image model",
   "settings.custom_model": "🤖 Custom model",
@@ -98,16 +89,12 @@
   "settings.save_failed": "Save failed",
   "settings.copied": "✅ Copied",
   "settings.copy": "📋 Copy",
-
   "calendar.done": "✅ Generated {n} entries!",
   "calendar.date_header": "📅 {date} ({n} items)",
-
   "chat.placeholder": "Chat with Muse AI...",
   "chat.preparing": "Preparing writing for {platform}...",
   "chat.ship_hint": "Topic \"{title}\" — AI will adapt its style to the platform",
-
   "feedback.placeholder": "Why? (optional)",
-
   "onboard.hello": "Hi! Let me get to know you 👋",
   "onboard.style_q": "What's your creative style?",
   "onboard.multi": "multi-select",
@@ -122,13 +109,43 @@
   "onboard.dna_strengths": "💪 Strengths",
   "onboard.dna_blindspots": "🔍 Blind spots",
   "onboard.dna_tip": "💡 Breakthrough tip",
-
   "toast.deleted": "🗑 Deleted",
   "toast.quotes_generating": "💎 Generating quote cards...",
   "toast.expand_failed": "Divergence failed",
   "toast.internal_error": "Internal error",
   "toast.delete_confirm": "Delete this inspiration?",
-
   "error.content_required": "content is required",
-  "error.internal": "internal server error"
+  "error.internal": "internal server error",
+  "auth.login_title": "🌀 Welcome back",
+  "auth.register_title": "🌀 Create your Muse account",
+  "auth.email": "Email",
+  "auth.password": "Password (min 8 chars)",
+  "auth.display_name": "Display name (optional)",
+  "auth.invite_code": "Invite code (optional)",
+  "auth.login_btn": "Log in",
+  "auth.register_btn": "Sign up free",
+  "auth.switch_to_register": "No account? Sign up free →",
+  "auth.switch_to_login": "Already have an account? Log in →",
+  "auth.login_failed": "Login failed: wrong email or password",
+  "auth.register_failed": "Registration failed",
+  "auth.logout": "Log out",
+  "auth.session_expired": "Session expired, please log in again",
+  "auth.tagline": "Inspiration is perishable. Act on it now.",
+  "tokens.title": "🔑 API Token",
+  "tokens.desc": "For the browser extension, agents (DeepSeek Harness, etc.) and scripts to call your Muse data. Shown only once — store it safely.",
+  "tokens.name_ph": "Token name (e.g. my-extension)",
+  "tokens.generate": "Generate new token",
+  "tokens.copy": "📋 Copy",
+  "tokens.copied": "✅ Copied to clipboard",
+  "tokens.once_hint": "⚠️ Shown only once — copy it somewhere safe",
+  "tokens.empty": "No tokens yet",
+  "tokens.revoke": "Revoke",
+  "tokens.last_used": "Last used",
+  "tokens.never_used": "Never used",
+  "tg.title": "📨 Telegram linking",
+  "tg.desc": "Once linked, forward any message to your Muse Bot on Telegram to capture it automatically.",
+  "tg.get_code": "Get pairing code",
+  "tg.code_hint": "Send this to your Muse Bot on Telegram:",
+  "tg.linked": "✅ Telegram linked",
+  "tg.not_linked": "Not linked"
 }
