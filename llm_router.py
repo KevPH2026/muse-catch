@@ -1,198 +1,132 @@
 """
-Muse Catch — 分级 LLM 路由层
-- Agent 内置 LLM：隐私数据不出对话上下文（Onboarding DNA、个人画像分析）
-- TokenRouter 云端：公开功能（灵感分析、选题、金句配图）— 用户自行配置 API Key
+Muse Catch — 分级 LLM 路由层（多用户云端版）
 
-缺省模式：未配置 TR_API_KEY 时自动使用 Agent 自身的 LLM 能力（不绑特定模型）。
-TokenRouter 注册：https://tokenrouter.com
+调用优先级（server 按用户解析后传入）：
+  0. 用户自定义模型（Settings 配置，BYOK，不限量）
+  1. 用户自己的 TokenRouter Key（BYOK，不限量）
+  2. 平台 TokenRouter Key（env TR_API_KEY，仅当 allow_platform=True — 由 server 的每用户每日配额控制）
+  3. 平台默认模型（env DEEPSEEK_API_KEY 等，同样受 allow_platform 控制）
+  4. 本地 Ollama（env OLLAMA_BASE_URL，免费）
+  5. 全部失败 → None，调用方走规则兜底
 """
 import os
 import json
-import re
 import urllib.request
 import urllib.error
 import ssl
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv(Path(__file__).parent / ".env")
-# Also inherit Agent's own API keys (Hermes Agent env)
-_load_agent = Path(os.path.expanduser("~/.hermes/.env"))
-if _load_agent.exists():
-    load_dotenv(_load_agent, override=False)  # don't override skill's .env
 
-TZ = timezone(timedelta(hours=8))
 TR_BASE = os.environ.get("TR_BASE_URL", "https://api.tokenrouter.com/v1")
-# TR_KEY is mutable at runtime so the dashboard can configure it without a
-# process restart. Read it through get_tr_key()/set_tr_key() everywhere.
-_TR_KEY = os.environ.get("TR_API_KEY", "")
-OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+# Platform-paid key. Unlike the single-user era there is NO runtime mutation:
+# per-user keys are resolved in server.py and passed per-call, so one user's
+# key can never serve another's requests.
+PLATFORM_TR_KEY = os.environ.get("TR_API_KEY", "")
+OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
 
-
-def get_tr_key():
-    """Current TokenRouter API key (may have been updated at runtime)."""
-    return _TR_KEY
-
-
-def set_tr_key(key):
-    """Update the TokenRouter API key at runtime — takes effect on the next
-    call_llm() without restarting the process. Pass '' to clear."""
-    global _TR_KEY
-    _TR_KEY = (key or "").strip()
-
-
-# Backwards-compat alias for any caller still reading the module attribute.
-TR_KEY = _TR_KEY
+# Platform default model (any OpenAI-compatible API, configured via env only —
+# no ~/.hermes filesystem reads in the container).
+_DEFAULT_KEY_VARS = [
+    "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+    "MINIMAX_API_KEY", "GLM_API_KEY", "ZHIPUAI_API_KEY",
+    "KIMI_API_KEY", "QIANWEN_API_KEY", "BAICHUAN_API_KEY",
+]
+PLATFORM_LLM_KEY = next((os.environ.get(v, "") for v in _DEFAULT_KEY_VARS if os.environ.get(v, "")), "")
+PLATFORM_LLM_BASE = os.environ.get("MUSE_LLM_BASE_URL", "https://api.deepseek.com")
+PLATFORM_LLM_MODEL = os.environ.get("MUSE_LLM_MODEL", "deepseek-chat")
 
 # 模型路由表
 ROUTE = {
-    "chat":        {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.7, "max_tokens": 2000},
-    "expand":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 1200},
-    "classify":    {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 1500},
-    "topics":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.8, "max_tokens": 800},
-    "deep_dive":   {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.7, "max_tokens": 1200},
-    "quotes":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.9, "max_tokens": 600},
-    "dna":         {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.5, "max_tokens": 1200, "label": "Agent 内置 LLM"},
-    "ingest":      {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.3, "max_tokens": 400},
-    "onboarding":  {"provider": "auto", "model_tr": "deepseek/deepseek-v4-pro", "model_local": None, "temp": 0.5, "max_tokens": 800, "label": "Agent 内置 LLM"},
+    "chat":        {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.7, "max_tokens": 2000},
+    "expand":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 1200},
+    "classify":    {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 1500},
+    "topics":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 800},
+    "deep_dive":   {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.7, "max_tokens": 1200},
+    "quotes":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.9, "max_tokens": 600},
+    "dna":         {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 1200},
+    "ingest":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 400},
+    "onboarding":  {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 800},
 }
 
 
-# Agent 自身的 LLM 配置（从 Agent 环境继承，不绑特定模型）
-def _read_agent_config():
-    """读取 Agent 当前的模型配置，返回 (api_key, base_url, model)。"""
-    key = None
-    base = "https://api.deepseek.com"
-    model = "deepseek-chat"
-    try:
-        # 1. 尝试从 Agent 的 config.yaml 获取当前模型
-        import yaml
-        cfg_path = Path(os.path.expanduser("~/.hermes/config.yaml"))
-        if cfg_path.exists():
-            cfg = yaml.safe_load(cfg_path.read_text())
-            m = cfg.get("model", {})
-            provider = m.get("provider", "").lower()
-            model = m.get("default", model)
-            base = m.get("base_url", base)
-    except Exception:
-        pass
-    
-    # 2. 查找 Agent 可用的 API Key（按通用命名规则尝试）
-    key_env_vars = [
-        "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
-        "MINIMAX_API_KEY", "GLM_API_KEY", "ZHIPUAI_API_KEY",
-        "KIMI_API_KEY", "QIANWEN_API_KEY", "BAICHUAN_API_KEY"
-    ]
-    for var in key_env_vars:
-        val = os.environ.get(var, "")
-        if val:
-            key = val
-            break
-    return key, base, model
-
-_AGENT_KEY, _AGENT_BASE, _AGENT_MODEL = _read_agent_config()
+def platform_llm_available():
+    """True if the deployment has ANY platform-paid LLM resource configured.
+    Server uses this to avoid charging user quota when nothing can serve it."""
+    return bool(PLATFORM_TR_KEY or PLATFORM_LLM_KEY)
 
 
-def call_llm(prompt, task="ingest", system=None, temp=None, max_tokens=None, user_config=None):
-    """统一 LLM 调用入口。优先级：用户自定义模型 > TR_API_KEY > Agent 自身 LLM > 规则兜底"""
+def call_llm(prompt=None, task="ingest", system=None, temp=None, max_tokens=None,
+             user_config=None, tr_key=None, allow_platform=False, messages=None):
+    """统一 LLM 调用入口（多用户版）。
+
+    messages: 完整的 [{role, content}] 列表（聊天历史场景），提供时优先于 prompt/system。
+    user_config: 用户自定义模型 {model, endpoint, key}（BYOK）。
+    tr_key: 用户自己的 TokenRouter Key（BYOK）。
+    allow_platform: server 侧每用户每日配额校验通过后才为 True，控制平台付费资源。
+    """
     cfg = ROUTE.get(task, ROUTE["ingest"])
     _temp = temp if temp is not None else cfg["temp"]
     _max_tokens = max_tokens if max_tokens is not None else cfg["max_tokens"]
-    
-    # 0. 用户自定义模型（Settings 配置），最高优先级
+    if messages is None:
+        msgs = []
+        if system:
+            msgs.append({"role": "system", "content": system})
+        msgs.append({"role": "user", "content": prompt or ""})
+    else:
+        msgs = list(messages)
+
+    # 0. 用户自定义模型（BYOK，最高优先级，不限量）
     if user_config and user_config.get("model") and user_config.get("endpoint") and user_config.get("key"):
         result = _call_openai_compat(
             user_config["endpoint"], user_config["key"],
-            user_config["model"], prompt, _temp, _max_tokens, system
+            user_config["model"], msgs, _temp, _max_tokens
         )
         if result:
             return result
-    
-    # 1. TokenRouter cloud (if user configured key)
-    if get_tr_key():
-        model = cfg.get("model_tr", "deepseek/deepseek-v4-pro")
-        result = _call_tr(model, prompt, _temp, _max_tokens, system)
+
+    # 1. 用户自己的 TokenRouter Key（BYOK，不限量）
+    if tr_key:
+        result = _call_tr(tr_key, cfg.get("model_tr", "deepseek/deepseek-v4-pro"), msgs, _temp, _max_tokens)
         if result:
             return result
-    
-    # 2. Agent 自身的 LLM 能力（继承 Hermes Agent 的 API Key）
-    if _AGENT_KEY:
-        result = _call_agent_model(_AGENT_MODEL, prompt, _temp, _max_tokens, system)
+
+    # 2. 平台付费资源 — 仅当 server 配额校验通过
+    if allow_platform:
+        if PLATFORM_TR_KEY:
+            result = _call_tr(PLATFORM_TR_KEY, cfg.get("model_tr", "deepseek/deepseek-v4-pro"), msgs, _temp, _max_tokens)
+            if result:
+                return result
+        if PLATFORM_LLM_KEY:
+            result = _call_openai_compat(PLATFORM_LLM_BASE, PLATFORM_LLM_KEY, PLATFORM_LLM_MODEL, msgs, _temp, _max_tokens)
+            if result:
+                return result
+
+    # 3. 本地 Ollama（免费回退，仅显式配置 OLLAMA_BASE_URL 时启用）
+    if OLLAMA_BASE:
+        result = _call_ollama(OLLAMA_MODEL, msgs, _temp, _max_tokens)
         if result:
             return result
-    
-    # 3. Local Ollama fallback
-    local_model = cfg.get("model_local") or OLLAMA_MODEL
-    result = _call_ollama(local_model, prompt, _temp, _max_tokens, system)
-    if result:
-        return result
-    
-    print("[LLM Router] No LLM available. Set TR_API_KEY in .env or let your Agent handle analysis.")
+
+    print("[LLM Router] No LLM available for this call (BYOK absent / platform quota spent).")
     return None
 
 
-def _call_agent_model(model, prompt, temp=0.5, max_tokens=1000, system=None):
-    """调用 Agent 自身的 LLM（继承 Agent 的模型配置）"""
-    if not _AGENT_KEY:
-        return None
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-    
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temp,
-        "max_tokens": max_tokens
-    }
-    headers = {"Authorization": f"Bearer {_AGENT_KEY}"}
-    
-    endpoints = [
-        f"{_AGENT_BASE}/v1/chat/completions",
-        f"{_AGENT_BASE}/chat/completions",
-    ]
-    for ep in endpoints:
-        resp = _http_post_json(ep, body, headers)
-        if resp:
-            content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
-            if content:
-                return content
-    return None
-
-
-def _call_openai_compat(endpoint, key, model, prompt, temp=0.5, max_tokens=1000, system=None):
+def _call_openai_compat(endpoint, key, model, msgs, temp=0.5, max_tokens=1000):
     """Call any OpenAI-compatible API (DeepSeek, SiliconFlow, custom)"""
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-    
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temp,
-        "max_tokens": max_tokens
-    }
+    body = {"model": model, "messages": msgs, "temperature": temp, "max_tokens": max_tokens}
     headers = {"Authorization": f"Bearer {key}"}
-    
-    # Try multiple endpoint patterns
+
     base = endpoint.rstrip("/")
-    urls = [
-        f"{base}/v1/chat/completions",
-        f"{base}/chat/completions",
-    ]
-    for url in urls:
+    for url in (f"{base}/v1/chat/completions", f"{base}/chat/completions"):
         resp = _http_post_json(url, body, headers)
         if resp:
             content = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
             if content:
-                if not system or "system" not in str(system).lower()[:20]:
-                    print(f"[LLM Router] User custom model OK: {model}")
                 return content
-    print(f"[LLM Router] User custom model failed: {model} @ {endpoint}")
+    print(f"[LLM Router] custom model failed: {model} @ {endpoint}")
     return None
 
 
@@ -216,22 +150,11 @@ def _http_post_json(url, body, headers=None, timeout=30):
         return None
 
 
-def _call_tr(model, prompt, temp=0.5, max_tokens=1000, system=None):
-    """调用 TokenRouter 云端 API"""
-    key = get_tr_key()
+def _call_tr(key, model, msgs, temp=0.5, max_tokens=1000):
+    """调用 TokenRouter 云端 API（key 由调用方传入：用户自有或平台）"""
     if not key:
         return None
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temp,
-        "max_tokens": max_tokens
-    }
+    body = {"model": model, "messages": msgs, "temperature": temp, "max_tokens": max_tokens}
     headers = {"Authorization": f"Bearer {key}"}
     resp = _http_post_json(f"{TR_BASE}/chat/completions", body, headers)
     if resp:
@@ -239,21 +162,13 @@ def _call_tr(model, prompt, temp=0.5, max_tokens=1000, system=None):
     return None
 
 
-def _call_ollama(model, prompt, temp=0.5, max_tokens=1000, system=None):
+def _call_ollama(model, msgs, temp=0.5, max_tokens=1000):
     """调用本地 Ollama"""
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-    
     body = {
         "model": model,
-        "messages": messages,
+        "messages": msgs,
         "stream": False,
-        "options": {
-            "temperature": temp,
-            "num_predict": max_tokens
-        }
+        "options": {"temperature": temp, "num_predict": max_tokens}
     }
     resp = _http_post_json(f"{OLLAMA_BASE}/api/chat", body, timeout=60)
     if resp:
@@ -261,9 +176,9 @@ def _call_ollama(model, prompt, temp=0.5, max_tokens=1000, system=None):
     return None
 
 
-def call_tr_image(prompt, size="1024x1024"):
-    """调用 TokenRouter 图片生成"""
-    key = get_tr_key()
+def call_tr_image(prompt, size="1024x1024", tr_key=None, allow_platform=False):
+    """调用 TokenRouter 图片生成。用户自有 Key 优先；平台 Key 需配额放行。"""
+    key = tr_key or (PLATFORM_TR_KEY if allow_platform else "")
     if not key:
         return None
     body = {
@@ -297,7 +212,7 @@ def extract_json(content):
     # Try direct parse first
     try:
         return json.loads(content)
-    except:
+    except Exception:
         pass
     # Try regex extraction — find first { or [ that pairs correctly
     for opener, closer in [('{', '}'), ('[', ']')]:
@@ -327,6 +242,6 @@ def extract_json(content):
                         substr = content[start:i+1]
                         try:
                             return json.loads(substr)
-                        except:
+                        except Exception:
                             return None
     return None
