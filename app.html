@@ -530,6 +530,81 @@ a{color:inherit;text-decoration:none}
 .auth-switch{text-align:center;margin-top:14px;font-size:12px}
 .auth-switch a{color:var(--purple-light,#a89bff);cursor:pointer;text-decoration:none}
 .auth-foot{text-align:center;margin-top:18px;font-size:11px;color:var(--dim,#777)}
+
+/* ====== A. 后台重设计（阶段 A） ====== */
+
+/* Avatar 下拉菜单 */
+.sidebar-user{position:relative;cursor:pointer;transition:background .15s}
+.sidebar-user:hover{background:rgba(255,255,255,.04)}
+.user-menu{position:absolute;left:calc(100% - 12px);bottom:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:6px;min-width:160px;box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;visibility:hidden;transform:translateY(8px);transition:.18s;z-index:50}
+.user-menu.open{opacity:1;visibility:visible;transform:translateY(0)}
+.user-menu a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;color:var(--dim);cursor:pointer;transition:.12s;text-decoration:none}
+.user-menu a:hover{background:rgba(124,108,255,.12);color:var(--text)}
+.user-menu a.danger{color:#ff7e7e}
+.user-menu a.danger:hover{background:rgba(255,80,80,.12)}
+.user-menu a span:first-child{width:18px;text-align:center;font-size:14px}
+.user-menu-sep{height:1px;background:var(--border);margin:4px 0}
+
+/* 顶部 H1 过渡 */
+.main-header h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+#page-title{display:inline-block;transition:opacity .15s}
+
+/* Header actions 按钮小一点 */
+.header-actions{display:flex;gap:8px;align-items:center}
+.header-actions .btn{padding:8px 14px;font-size:13px}
+.header-actions #btn-demo{padding:8px 12px;min-width:0}
+
+/* 统计卡瘦身：去小图，突显大字 */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 18px 20px;transition:.2s}
+.stat-card:hover{border-color:rgba(124,108,255,.35)}
+.stat-header{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim);margin-bottom:8px}
+.stat-header .stat-label{font-weight:600;letter-spacing:.02em}
+.stat-header .stat-icon{opacity:.7;font-size:14px}
+.stat-big{font-size:30px;font-weight:800;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.stat-sub{font-size:11.5px;color:var(--dimmer)}
+
+/* DNA tab 不显示统计区（用 .on-dna 控制） */
+body.on-dna #stats-bar,
+body.on-dna #dna-badge{display:none}
+
+/* DNA tab 不显示话题面板（除非已开） — 实际由 switchTab 控制显示 */
+
+/* DNA detail 排版优化：6 维度卡片化 */
+#dna-detail .dna-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px}
+#dna-detail .dna-section h4{font-size:14px;font-weight:700;margin:0 0 8px;color:var(--text);display:flex;align-items:center;gap:8px}
+#dna-detail .dna-section p{color:var(--dim);font-size:13.5px;line-height:1.7;margin:0}
+
+/* DNA 雷达：居中+呼吸感 */
+#dna-page > div[style*="aspect-ratio"], #dna-page canvas#dna-radar{display:block;margin:0 auto 24px}
+
+/* Dashboard hero 输入框：更显眼 */
+#ingest-input{font-size:15px !important;padding:14px 18px !important}
+
+/* Hero stats 折叠：dashboard 默认只看核心输入 + 卡片墙，统计放后面小字 */
+.dash-stats-collapsed{display:flex;gap:24px;flex-wrap:wrap;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:18px;font-size:13px;color:var(--dim)}
+.dash-stats-collapsed .ds{color:var(--text);font-weight:700;font-size:15px;margin-right:6px}
+
+/* Settings section 分组视觉 */
+#settings-page .settings-group{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px}
+#settings-page .settings-group-title{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+#settings-page .settings-group-desc{font-size:12.5px;color:var(--dim);margin-bottom:18px}
+
+/* OPC Market 卡片瘦身 */
+#skills-page .market-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;transition:.2s;display:flex;flex-direction:column;gap:8px;height:100%}
+#skills-page .market-card:hover{border-color:rgba(124,108,255,.4);transform:translateY(-2px)}
+
+/* Ship 默认周视图：日历格再压缩一些 */
+#ship-page .calendar-week, #ship-page .calendar-day{}
+
+/* 内容区统一内边距 */
+.content{padding:0}
+
+/* 移动端：侧边栏 5 项紧凑 */
+@media(max-width:860px){
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .user-menu{left:auto;right:12px;bottom:calc(100% - 8px)}
+}
 </style>
 <div id="auth-overlay" class="hidden">
   <div class="auth-card">
@@ -571,18 +646,11 @@ a{color:inherit;text-decoration:none}
 <aside class="sidebar">
   <div class="sidebar-brand"><span class="icon">🌀</span><span>Muse</span></div>
   <nav class="sidebar-nav">
-    <a class="nav-item active" onclick="switchTab('dashboard', this)"><span class="nav-icon">📊</span><span data-i18n="nav.dashboard">仪表盘</span></a>
-    <a class="nav-item" onclick="switchTab('dna', this)"><span class="nav-icon">🧬</span><span data-i18n="nav.dna_page">DNA</span></a>
-    <a class="nav-item" onclick="switchTab('ship', this)"><span class="nav-icon">📅</span><span data-i18n="nav.ship">发布排期</span></a>
-    <a class="nav-item" onclick="switchTab('skills', this)"><span class="nav-icon">🏪</span><span data-i18n="nav.market">工具市场</span></a>
-    <a class="nav-item" onclick="switchTab('settings', this)"><span class="nav-icon">⚙️</span><span data-i18n="nav.settings">设置</span></a>
-    <a class="nav-item" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">💡</span>选题建议</a>
-    <div class="nav-divider"></div>
-    <a class="nav-item" onclick="document.getElementById('ingest-input').focus()"><span class="nav-icon">⚡</span>快速捕获</a>
-    <a class="nav-item" href="https://muse.opclab.org" target="_blank"><span class="nav-icon">🌐</span>前台</a>
-    <a class="nav-item" href="https://github.com/KevPH2026/muse-catch" target="_blank"><span class="nav-icon">📦</span>GitHub</a>
-    <div class="nav-divider"></div>
-    <a class="nav-item" onclick="resetOnboarding()"><span class="nav-icon">⚙️</span>重新认识我</a>
+    <a class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard', this)"><span class="nav-icon">📊</span><span data-i18n="nav.dashboard">仪表盘</span></a>
+    <a class="nav-item" data-tab="dna" onclick="switchTab('dna', this)"><span class="nav-icon">🧬</span><span data-i18n="nav.dna_page">DNA</span></a>
+    <a class="nav-item" data-tab="ship" onclick="switchTab('ship', this)"><span class="nav-icon">📅</span><span data-i18n="nav.ship">发布排期</span></a>
+    <a class="nav-item" data-tab="skills" onclick="switchTab('skills', this)"><span class="nav-icon">🏪</span><span data-i18n="nav.market">工具市场</span></a>
+    <a class="nav-item" data-tab="settings" onclick="switchTab('settings', this)"><span class="nav-icon">⚙</span><span data-i18n="nav.settings">设置</span></a>
   </nav>
   <div class="lang-switcher" style="padding:8px 16px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)">
     <span style="opacity:.7">🌐</span>
@@ -593,29 +661,43 @@ a{color:inherit;text-decoration:none}
       <option value="ja">日本語</option>
     </select>
   </div>
-  <div class="sidebar-user" id="sidebar-user" style="display:none;cursor:default">
+  <div class="sidebar-user" id="sidebar-user" style="display:none" onclick="toggleUserMenu(event)">
     <div class="avatar" id="su-avatar">M</div>
     <div class="user-info">
       <div class="user-name" id="su-name">—</div>
       <div class="user-email" id="su-email">—</div>
-      <div class="user-email" style="margin-top:2px"><a href="javascript:void(0)" onclick="doLogout()" style="color:var(--purple-light);text-decoration:none;font-size:10px" data-i18n="auth.logout">退出登录</a></div>
+    </div>
+    <div class="user-menu" id="user-menu" onclick="event.stopPropagation()">
+      <a onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'});document.getElementById('user-menu').classList.remove('open')"><span>💡</span>选题建议</a>
+      <a onclick="document.getElementById('ingest-input').focus();document.getElementById('user-menu').classList.remove('open')"><span>⚡</span>快速捕获</a>
+      <a onclick="resetOnboarding();document.getElementById('user-menu').classList.remove('open')"><span>🔄</span>重新认识我</a>
+      <a href="https://muse.opclab.org" target="_blank"><span>🌐</span>前台</a>
+      <a href="https://github.com/KevPH2026/muse-catch" target="_blank"><span>📦</span>GitHub</a>
+      <div class="user-menu-sep"></div>
+      <a onclick="doLogout()" class="danger"><span>↩</span><span data-i18n="auth.logout">退出登录</span></a>
     </div>
   </div>
-  <div class="sidebar-qr">
-    <div class="qr-label">📱 扫码体验</div>
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://muse.opclab.org/app" alt="QR Code" class="qr-img">
-  </div>
+  <script>
+  function toggleUserMenu(e){
+    e.stopPropagation();
+    const m = document.getElementById('user-menu');
+    if(m) m.classList.toggle('open');
+  }
+  document.addEventListener('click', () => {
+    const m = document.getElementById('user-menu');
+    if(m) m.classList.remove('open');
+  });
+  </script>
 </aside>
 
 <!-- ============ MAIN AREA ============ -->
 <main class="main">
   <!-- Header -->
   <div class="main-header">
-    <h1 id="page-scroll-top">灵感总览</h1>
+    <h1 id="page-scroll-top"><span id="page-title">灵感总览</span></h1>
     <div class="header-actions">
-      <button class="btn btn-outline" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})">💡 选题</button>
-      <button class="btn btn-primary" onclick="startAutoDemo()" id="btn-demo">🎬 Demo</button>
-      <button class="btn btn-outline" onclick="document.getElementById('ingest-input').focus()">⚡ 捕获灵感</button>
+      <button class="btn btn-primary" onclick="document.getElementById('ingest-input').focus()">⚡ 捕获灵感</button>
+      <button class="btn btn-outline" onclick="startAutoDemo()" id="btn-demo" title="Demo">🎬</button>
     </div>
   </div>
 
@@ -1618,9 +1700,29 @@ function drawRadar(strengths, canvasId='dna-radar'){
 // =========== INIT ===========
 
 // ---- Tab Switching ----
+const TAB_TITLES = {
+  dashboard: { zh: '灵感总览', en: 'Overview', 'zh-TW':'靈感總覽', ja:'インサイト' },
+  dna:       { zh: '创作者 DNA', en: 'Creator DNA', 'zh-TW':'創作者 DNA', ja:'クリエイター DNA' },
+  ship:      { zh: '发布排期', en: 'Publishing Calendar', 'zh-TW':'發布排期', ja:'配信カレンダー' },
+  skills:    { zh: '工具市场', en: 'OPC Market', 'zh-TW':'工具市場', ja:'ツール市場' },
+  settings:  { zh: '设置', en: 'Settings', 'zh-TW':'設定', ja:'設定' },
+};
+function _setPageTitle(tab){
+  const t = document.getElementById('page-title');
+  if(!t || !TAB_TITLES[tab]) return;
+  const lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'zh-CN';
+  const short = (lang || 'zh-CN').split('-')[0];
+  const m = TAB_TITLES[tab];
+  t.textContent = m[lang] || m[short] || m.zh;
+}
+function _setBodyTab(tab){
+  document.body.classList.remove('on-dashboard','on-dna','on-ship','on-skills','on-settings');
+  document.body.classList.add('on-' + tab);
+}
 function switchTab(tab, el){
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(i => i.classList.remove('active'));
   if(el) el.classList.add('active');
+  _setPageTitle(tab);
   const content = document.querySelector('.content');
   const dnaPage = document.getElementById('dna-page');
   const statsBar = document.getElementById('stats-bar');
@@ -1693,6 +1795,7 @@ function switchTab(tab, el){
     loadModelConfig();
     loadTrKey();
   }
+  _setBodyTab(tab);
 }
 
 
