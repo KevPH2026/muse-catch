@@ -275,7 +275,7 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
               <option value="ja">日本語</option>
             </select>
         </div>
-        <a href="http://localhost:5200/app" target="_blank" class="nav-cta">Launch Demo →</a>
+        <a href="/app" class="nav-cta">免费开始 →</a>
     </div>
 </nav>
 
@@ -289,7 +289,7 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
         <p class="sub" data-i18n="hero.subtitle">被动收藏的时代结束了。Muse 主动捕捉你的每一个灵感信号，基于创作DNA主动生成可分发的内容——从灵感到Ship，全自动。</p>
         <div class="hero-btns">
             <button onclick="openDemo()" class="btn-lg btn-grad" style="font-family:inherit" data-i18n="hero.cta_demo">🎬 体验完整流程</button>
-            <a href="http://localhost:5200/app" target="_blank" class="btn-lg btn-outline">🔬 Live Demo</a>
+            <a href="/app" class="btn-lg btn-outline">🔬 Live Demo</a>
             <a href="#install" class="btn-lg btn-outline" data-i18n="hero.cta_install">✦ 安装浏览器插件</a>
             <a href="/onboarding" target="_blank" class="btn-lg btn-outline" data-i18n="hero.cta_dna">🧬 DNA 体验 →</a>
         </div>
@@ -428,12 +428,13 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
             <h2>开始<span class="grad">捕捉</span></h2>
             <p>安装浏览器插件，30秒开始你的第一条灵感</p>
             <div class="ext-buttons">
-                <a href="/muse-extension.zip" download class="ext-btn"><span class="icon">🧩</span> 下载 Chrome 插件</a>
-                <a href="/muse-extension.zip" download class="ext-btn"><span class="icon">🦊</span> 下载 Edge 插件</a>
-                <a href="https://muse-xi-murex.vercel.app/onboarding" target="_blank" class="ext-btn"><span class="icon">🚀</span> 在线体验</a>
+                <a href="/extension.zip" download class="ext-btn"><span class="icon">🧩</span> 下载 Chrome 插件</a>
+                <a href="/extension.zip" download class="ext-btn"><span class="icon">🦊</span> 下载 Edge 插件</a>
+                <a href="/app" class="ext-btn"><span class="icon">🚀</span> 在线体验</a>
             </div>
             <div style="margin-top:20px;font-size:12px;color:var(--dim)">
-                安装：下载ZIP → 解压 → chrome://extensions → 开发者模式 → 加载已解压的扩展程序
+                云端版三步：① <a href="/app" style="color:var(--accent)">注册账号</a> → ② Settings 生成 API Token → ③ 插件设置里粘贴 Token<br>
+                本地插件安装：下载ZIP → 解压 → chrome://extensions → 开发者模式 → 加载已解压的扩展程序 · Beta 期间免费
             </div>
         </div>
     </div>
@@ -461,7 +462,7 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
 </style>
 
 <!-- Install -->
-<section class="section" id="install" style="background:var(--surface);border-radius:24px;border:1px solid var(--border);padding:60px 0;margin:40px auto;max-width:1100px">
+<section class="section" id="install-agent" style="background:var(--surface);border-radius:24px;border:1px solid var(--border);padding:60px 0;margin:40px auto;max-width:1100px">
     <div class="wrap" style="text-align:center">
         <div class="s-label">Quick Install</div>
         <h2>安装到<span class="grad">任何 Agent</span></h2>
@@ -473,7 +474,7 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
         </div>
         
         <div class="learn-more" style="margin-top:16px;color:var(--dim);font-size:14px">
-            Agent 自动：pip install → python server.py → localhost:5200/app 就绪
+            Agent 自动拉起本地服务，或直接用云端 API + API Token（Settings 里生成）
         </div>
     </div>
 </section>
@@ -482,12 +483,12 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
 <section class="section" id="live-demo" style="background:var(--surface);border-radius:24px;border:1px solid var(--border);padding:60px 0;margin:40px auto;max-width:1100px">
     <div class="wrap" style="text-align:center">
         <div class="s-label">Live Demo</div>
-        <h2>在<span class="grad">你的机器</span>上跑起来</h2>
-        <p class="s-desc">Dashboard 包含完整的灵感管理、DNA 画像、选题生成、深潜拆解。5 分钟本地启动。</p>
+        <h2>直接<span class="grad">在线体验</span></h2>
+        <p class="s-desc">注册即用，无需本地安装。Dashboard 包含完整的灵感管理、DNA 画像、选题生成、深潜拆解。Beta 期间免费。</p>
         
         <div class="hero-btns" style="justify-content:center">
-            <a href="http://localhost:5200/app" target="_blank" class="btn-lg btn-grad">🔬 Launch Live Demo</a>
-            <a href="https://litter.catbox.moe/7g8z2t.mp4" target="_blank" class="btn-lg btn-outline">🎬 Watch Demo (45s)</a>
+            <a href="/app" class="btn-lg btn-grad">🚀 免费注册，立即体验</a>
+            <a href="/muse-demo.mp4" target="_blank" class="btn-lg btn-outline">🎬 Watch Demo (45s)</a>
         </div>
     </div>
 </section>
@@ -498,8 +499,8 @@ footer{border-top:1px solid var(--border);padding:40px 0;margin-top:40px}
         <div class="footer-brand">✦ Muse · Created by <a href="https://superk.ai" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600">Mr.K</a> — 2026</div>
         <div class="footer-links">
             <a href="https://github.com/KevPH2026/muse" target="_blank">GitHub</a>
-            <a href="https://muse-xi-murex.vercel.app" target="_blank">Dashboard</a>
-            <a href="https://muse-xi-murex.vercel.app/onboarding" target="_blank">Onboarding</a>
+            <a href="/app">Dashboard</a>
+            <a href="/app">Onboarding</a>
         </div>
     </div>
 </footer>
@@ -515,24 +516,7 @@ function copyInstall(elId,btnId) {
     setTimeout(()=>{btn.textContent='📋 复制';btn.classList.remove('copied')},2000);
   });
 }
-// Auto-populate model routing from API
-fetch('/api/models').then(r=>r.json()).then(d=>{
-    if(!d.ok)return;
-    const grid=document.getElementById('models-grid');
-    const tasks=Object.entries(d.routing);
-    const colors=['#6366f1','#a855f7','#ec4899','#10b981','#f59e0b','#3b82f6'];
-    grid.innerHTML=tasks.map(([task,info],i)=>{
-        const parts=info.model.split('/');
-        const provider=parts[0]||'';
-        const model=parts[1]||info.model;
-        const initials=model.replace(/[^A-Z0-9]/gi,'').substring(0,3).toUpperCase();
-        const c=colors[i%colors.length];
-        return `<div class="model-badge">
-            <div class="model-logo" style="background:${c}22;color:${c}">${initials}</div>
-            <div><div class="model-name">${model}</div><div class="model-task">${task} · ${info.reason}</div></div>
-        </div>`;
-    }).join('');
-}).catch(()=>{});
+// Model grid is static HTML above — no dynamic /api/models call (endpoint never existed).
 </script>
 <!-- Demo Overlay -->
 <div class="demo-overlay" id="demo-overlay">
@@ -828,7 +812,7 @@ document.getElementById('demo-result').classList.add('show');document.getElement
       }
     } catch(e) {
       hideTyping();
-      addMsg('muse', '⚠️ 连接失败，请确认服务已启动 (localhost:5200)');
+      addMsg('muse', '⚠️ 连接失败，请稍后再试');
     }
     btn.disabled = false;
     input.focus();

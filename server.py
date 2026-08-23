@@ -1363,7 +1363,17 @@ def demo_js():
 
 @app.route("/muse-demo.mp4")
 def muse_demo_mp4():
-    return send_file(Path(__file__).parent / "muse-demo.mp4", mimetype="video/mp4")
+    resp = send_file(Path(__file__).parent / "muse-demo.mp4", mimetype="video/mp4")
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+@app.route("/extension.zip")
+def extension_zip():
+    """Chrome/Edge extension package (downloaded from the landing page)."""
+    resp = send_file(Path(__file__).parent / "extension.zip", mimetype="application/zip",
+                     as_attachment=True, download_name="muse-extension.zip")
+    resp.headers["Cache-Control"] = "public, max-age=3600"
+    return resp
 
 # ========== WEREAD SYNC (微信读书 API 一键同步) ==========
 # ========== CONVERSATIONAL AGENT (v1 — natural language Muse interface) ==========
