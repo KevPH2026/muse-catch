@@ -395,7 +395,10 @@ def auth_login():
 @app.route("/api/auth/logout", methods=["POST"])
 def auth_logout():
     session.clear()
-    return jsonify({"ok": True})
+    # Drop the session cookie on the client so the token can't be reused
+    resp = jsonify({"ok": True})
+    resp.delete_cookie("session", path="/")
+    return resp
 
 @app.route("/api/auth/me")
 def auth_me():
