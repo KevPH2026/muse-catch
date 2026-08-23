@@ -1,7 +1,18 @@
 // Muse · Catch — Background Service Worker
 // 右键菜单 + 快捷键 + API 代理
 
-const DEFAULT_API = 'http://localhost:5200/api/ingest';
+const DEFAULT_API = 'https://muse.opclab.org/api/ingest';
+
+// Shared capture config: { apiUrl, authToken } from chrome.storage.local.
+// Every fetch site (background/popup/content) reads the same two keys and
+// sends the Bearer token — get it from Muse → Settings → API Token.
+async function getCaptureConfig() {
+  const stored = await chrome.storage.local.get(['apiUrl', 'authToken']);
+  return {
+    apiUrl: stored.apiUrl || DEFAULT_API,
+    authToken: stored.authToken || ''
+  };
+}
 
 // ============ INSTALL ============
 chrome.runtime.onInstalled.addListener(() => {
@@ -65,15 +76,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 // ============ SEND TO MUSE API ============
 async function sendToMuse(payload) {
-  const stored = await chrome.storage.local.get('apiUrl');
-  const apiUrl = stored.apiUrl || DEFAULT_API;
+  const { apiUrl, authToken } = await getCaptureConfig();
 
   try {
     const resp = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      },
       body: JSON.stringify(payload)
     });
+
+    if (resp.status === 401) {
+      throw new Error('Token 无效或未配置 — 请在 Muse 设置里生成 API Token 并填入插件');
+    }
 
     if (resp.ok) {
       const result = await resp.json();

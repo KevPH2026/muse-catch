@@ -1,7 +1,7 @@
 // Muse · Catch — Popup Logic
 // 捕获当前浏览页面到 Muse 灵感库
 
-const DEFAULT_API = 'http://localhost:5200/api/ingest';
+const DEFAULT_API = 'https://muse.opclab.org/api/ingest';
 
 let currentTab = null;
 let selectedTags = [];
@@ -35,9 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (_) {}
   }
 
-  // Load settings
-  const stored = await chrome.storage.local.get('apiUrl');
+  // Load settings (API URL + auth token from Muse → Settings → API Token)
+  const stored = await chrome.storage.local.get(['apiUrl', 'authToken']);
   document.getElementById('api-url').value = stored.apiUrl || DEFAULT_API;
+  document.getElementById('api-token').value = stored.authToken || '';
 
   // Bind events
   bindEvents();
@@ -71,8 +72,9 @@ function bindEvents() {
   // Save settings
   document.getElementById('save-settings').addEventListener('click', async () => {
     const url = document.getElementById('api-url').value.trim();
-    await chrome.storage.local.set({ apiUrl: url });
-    showStatus('✅ API 地址已保存', 'success');
+    const token = document.getElementById('api-token').value.trim();
+    await chrome.storage.local.set({ apiUrl: url, authToken: token });
+    showStatus('✅ 设置已保存', 'success');
     document.getElementById('settings-panel').style.display = 'none';
   });
 
@@ -109,14 +111,21 @@ async function capture() {
   };
 
   try {
-    const stored = await chrome.storage.local.get('apiUrl');
+    const stored = await chrome.storage.local.get(['apiUrl', 'authToken']);
     const apiUrl = stored.apiUrl || DEFAULT_API;
 
     const resp = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(stored.authToken ? { 'Authorization': `Bearer ${stored.authToken}` } : {})
+      },
       body: JSON.stringify(payload)
     });
+
+    if (resp.status === 401) {
+      throw new Error('Token 无效 — 请在插件设置里填入 API Token（Muse 设置页生成）');
+    }
 
     if (!resp.ok) {
       const err = await resp.text();

@@ -1,7 +1,7 @@
 // Muse · Catch — Content Script v3
 // Twitter/X 点赞/收藏自动捕获 + 微信公众号阅读自动捕获 + 手动捕获
 
-const DEFAULT_API = 'http://localhost:5200/api/ingest';
+const DEFAULT_API = 'https://muse.opclab.org/api/ingest';
 const CAPTURED_URLS = new Set(); // URL dedup for session
 
 // ============ 通用 — Toast 视觉反馈 ============
@@ -55,17 +55,23 @@ function getMeta() {
 // ============ 通用 — 发送到 Muse ============
 async function sendToMuse(payload) {
   try {
-    // Read the user-configured API URL from storage (same key popup/background
-    // use) so a custom endpoint set in Settings applies here too. Falls back to
-    // DEFAULT_API when unset. Previously this was a hardcoded const, which meant
-    // the Twitter/WeChat/WeRead auto-capture ignored the configured URL.
-    const stored = await chrome.storage.local.get('apiUrl');
+    // Read the user-configured API URL + auth token from storage (same keys
+    // popup/background use) so custom endpoints and tokens apply here too.
+    // The token comes from Muse → Settings → API Token.
+    const stored = await chrome.storage.local.get(['apiUrl', 'authToken']);
     const apiUrl = stored.apiUrl || DEFAULT_API;
     const r = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(stored.authToken ? { 'Authorization': `Bearer ${stored.authToken}` } : {})
+      },
       body: JSON.stringify(payload)
     });
+    if (r.status === 401) {
+      showToast('Muse: Token 无效 — 请在设置里更新 API Token', false);
+      return { ok: false, error: 'unauthorized' };
+    }
     if (r.ok) {
       const d = await r.json();
       console.log('[Muse] ✅', d.title?.slice(0, 30) || 'captured');
@@ -73,7 +79,7 @@ async function sendToMuse(payload) {
     }
     return { ok: false, error: `HTTP ${r.status}` };
   } catch (e) {
-    console.log('[Muse] ⚠️ API unreachable — is Muse server running?');
+    console.log('[Muse] ⚠️ API unreachable — check your connection or API URL');
     return { ok: false, error: 'API unreachable' };
   }
 }
