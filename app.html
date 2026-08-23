@@ -611,11 +611,11 @@ a{color:inherit;text-decoration:none}
 <main class="main">
   <!-- Header -->
   <div class="main-header">
-    <h1 id="page-scroll-top">Your inspiration overview</h1>
+    <h1 id="page-scroll-top">灵感总览</h1>
     <div class="header-actions">
       <button class="btn btn-outline" onclick="document.getElementById('topics-panel').classList.toggle('show');document.getElementById('topics-panel').scrollIntoView({behavior:'smooth'})">💡 选题</button>
       <button class="btn btn-primary" onclick="startAutoDemo()" id="btn-demo">🎬 Demo</button>
-      <button class="btn btn-outline" onclick="document.getElementById('ingest-input').focus()">⚡ Capture Inspiration</button>
+      <button class="btn btn-outline" onclick="document.getElementById('ingest-input').focus()">⚡ 捕获灵感</button>
     </div>
   </div>
 
@@ -682,31 +682,31 @@ a{color:inherit;text-decoration:none}
     <div class="stats-bar" id="stats-bar">
       <!-- Total with heatmap -->
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">Total</span><span class="stat-icon">📊</span></div>
+        <div class="stat-header"><span class="stat-label">累计</span><span class="stat-icon">📊</span></div>
         <div class="stat-big" id="stat-total">0</div>
-        <div class="stat-sub">captured inspirations</div>
+        <div class="stat-sub">已捕获灵感</div>
         <div class="heatmap-grid" id="week-heatmap"></div>
       </div>
 
       <!-- This week with bars -->
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">This week</span><span class="stat-icon">📈</span></div>
+        <div class="stat-header"><span class="stat-label">本周</span><span class="stat-icon">📈</span></div>
         <div class="stat-big" id="stat-week">0</div>
-        <div class="stat-sub">new this week</div>
+        <div class="stat-sub">本周新增</div>
         <div class="mini-bars" id="week-chart"></div>
       </div>
 
       <!-- Sources with dots -->
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">Sources</span><span class="stat-icon">🔗</span></div>
+        <div class="stat-header"><span class="stat-label">来源</span><span class="stat-icon">🔗</span></div>
         <div class="stat-big" id="stat-sources">0</div>
-        <div class="stat-sub">active channels</div>
+        <div class="stat-sub">活跃渠道</div>
         <div class="source-list-stat" id="source-list"></div>
       </div>
 
       <!-- Emotions donut -->
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">Emotions</span><span class="stat-icon">🎭</span></div>
+        <div class="stat-header"><span class="stat-label">情绪</span><span class="stat-icon">🎭</span></div>
         <div class="donut-wrap">
           <svg id="emotion-donut" width="68" height="68" viewBox="0 0 68 68"></svg>
           <div class="donut-legend" id="emotion-legend"></div>
@@ -1128,7 +1128,7 @@ function renderStats(s){
   // Week heatmap (7 cols × N rows, last 4 weeks)
   const hm=document.getElementById('week-heatmap');
   if(!hm)return;
-  const days=['M','T','W','T','F','S','S'];
+  const days=['一','二','三','四','五','六','日'];
   const today=new Date().getDay();
   let html='';
   for(let i=6;i>=0;i--){
@@ -1186,7 +1186,7 @@ function renderWeekChart(s){
   if(!el||!s.daily_counts)return;
   const max=Math.max(...Object.values(s.daily_counts),1);
   const colors=['#6366f1','#818cf8','#a855f7','#6366f1','#818cf8','#a855f7','#6366f1'];
-  const days=['M','T','W','T','F','S','S'];
+  const days=['一','二','三','四','五','六','日'];
   let html='';
   Object.entries(s.daily_counts).forEach(([,v],i)=>{
     const h=Math.max((v/max)*48,3);
