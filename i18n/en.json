@@ -41,7 +41,6 @@
   "hero.cta_dna": "🧬 Try DNA →",
   "stat.models": "AI Models",
   "stat.compat": "Agent-ready",
-  "stat.opensource": "Open Source",
   "stat.config": "Setup effort",
   "ingest.placeholder": "Paste a link or a thought... don't let it slip ✨",
   "ingest.captured": "✨ Inspiration captured!",
@@ -151,9 +150,8 @@
   "nav.faq": "FAQ",
   "hero.headline": "Inspiration perishes.<br><span class=\"grad\">Act on it now.</span>",
   "hero.sub_v2": "Every spark from browsing, tweets and chats: capture in one click, let AI distill it — compounding into your Creator DNA.",
-  "hero.cta_free": "Start free →",
+  "hero.cta_free": "Start now →",
   "hero.cta_watch": "Watch 45s demo",
-  "trust.beta": "🎁 Free during beta",
   "trust.data": "🔒 Your data, 100% yours",
   "faq.title": "FAQ",
   "final.title": "Inspiration won't wait. Assets compound.",
@@ -161,5 +159,7 @@
   "nav.ship": "Ship",
   "nav.market": "OPC Market",
   "hero.sub_v3": "Not another bookmarking tool: it knows what you read and think, weaving scattered sparks into your Creator DNA. Capture once, compound forever — the open-source inspiration asset OS.",
-  "nav.compare": "Compare"
+  "nav.compare": "Compare",
+  "trust.fast": "⚡ Capture in 1 second, zero organize",
+  "trust.agent": "🧬 Creator DNA compounds over time"
 }

@@ -41,7 +41,6 @@
   "hero.cta_dna": "🧬 DNA 体验 →",
   "stat.models": "AI模型",
   "stat.compat": "Agent兼容",
-  "stat.opensource": "开源",
   "stat.config": "配置门槛",
   "ingest.placeholder": "粘贴链接或灵感文字... 别让它溜走 ✨",
   "ingest.captured": "✨ 灵感已捕获！",
@@ -151,15 +150,16 @@
   "nav.faq": "FAQ",
   "hero.headline": "灵感本易逝，<br><span class=\"grad\">行动应当时</span>",
   "hero.sub_v2": "网页、推特、聊天里的每一个火花：一键捕获，AI 自动提炼成标题、摘要、关键词，沉淀为你的创作者 DNA。",
-  "hero.cta_free": "免费开始 →",
+  "hero.cta_free": "立即开始 →",
   "hero.cta_watch": "看 45 秒演示",
-  "trust.beta": "🎁 Beta 期间免费",
   "trust.data": "🔒 数据 100% 归你",
   "faq.title": "常见问题",
   "final.title": "灵感不会等人，资产需要积累。",
   "nav.dna_page": "DNA",
   "nav.ship": "发布排期",
   "nav.market": "工具市场",
-  "hero.sub_v3": "不是又一个收藏工具：它知道你在看什么、想什么，把散落的火花自动串成你的创作者 DNA。一次捕获，永久复利——开源的灵感资产操作系统。",
-  "nav.compare": "对比"
+  "hero.sub_v3": "不是又一个收藏工具：它知道你在看什么、想什么，把散落的火花自动串成你的创作者 DNA。一次捕获，永久复利——灵感资产操作系统。",
+  "nav.compare": "对比",
+  "trust.fast": "⚡ 1 秒入库，无需整理",
+  "trust.agent": "🧬 创作者 DNA 持续生长"
 }

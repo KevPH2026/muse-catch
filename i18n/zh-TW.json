@@ -41,7 +41,6 @@
   "hero.cta_dna": "🧬 DNA 體驗 →",
   "stat.models": "AI模型",
   "stat.compat": "Agent相容",
-  "stat.opensource": "開源",
   "stat.config": "設定門檻",
   "ingest.placeholder": "貼上連結或靈感文字... 別讓它溜走 ✨",
   "ingest.captured": "✨ 靈感已擷取！",
@@ -151,9 +150,8 @@
   "nav.faq": "FAQ",
   "hero.headline": "靈感本易逝，<br><span class=\"grad\">行動應當時</span>",
   "hero.sub_v2": "網頁、推文、聊天裡的每一個火花：一鍵擷取，AI 自動提煉成標題、摘要、關鍵詞，沉澱為你的創作者 DNA。",
-  "hero.cta_free": "免費開始 →",
+  "hero.cta_free": "立即開始 →",
   "hero.cta_watch": "看 45 秒演示",
-  "trust.beta": "🎁 Beta 期間免費",
   "trust.data": "🔒 數據 100% 歸你",
   "faq.title": "常見問題",
   "final.title": "靈感不會等人，資產需要積累。",
@@ -161,5 +159,7 @@
   "nav.ship": "發布排期",
   "nav.market": "工具市場",
   "hero.sub_v3": "不是又一個收藏工具：它知道你在看什麼、想什麼，把散落的火花自動串成你的創作者 DNA。一次擷取，永久複利——開源的靈感資產作業系統。",
-  "nav.compare": "對比"
+  "nav.compare": "對比",
+  "trust.fast": "⚡ 1 秒入庫，無需整理",
+  "trust.agent": "🧬 創作者 DNA 持續生長"
 }
