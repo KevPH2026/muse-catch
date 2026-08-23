@@ -234,17 +234,19 @@ The demo comes pre-seeded with 10 inspirations, a full DNA profile, OPC Market p
 ## 🛠️ For Developers
 
 ```bash
-# Run with LLM-powered extraction
-export DEEPSEEK_API_KEY="sk-xxx"
-python3 server.py
+# 本地开发
+python3 server.py            # → http://localhost:5200
+gunicorn -b 0.0.0.0:5200 server:app   # 生产入口（Docker 同款）
 
-# Expose to public internet
-lt --port 5200
-# → https://xxx.loca.lt
-
-# Deploy
-vercel --prod
+# 云端部署（Railway / Zeabur / Fly，Docker 镜像）
+# 必配环境变量见 .env.example：MUSE_SECRET_KEY / ADMIN_EMAIL / ADMIN_PASSWORD
+# 挂载持久卷到 /data（SQLite 落盘），TR_API_KEY 为平台付费回退（每用户每日配额）
+railway up
 ```
+
+**多用户版（v1）**：开放注册（可用 `MUSE_INVITE_CODE` 改为邀请制），Web 端 session 登录；
+浏览器插件 / DeepSeek Harness 等 Agent / 脚本用 **API Token**（登录后 Settings 生成）调用
+`POST /api/ingest`（`Authorization: Bearer muse_...`）；Telegram Bot 通过网页端配对码绑定账号。
 
 ---
 
