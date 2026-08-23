@@ -802,7 +802,7 @@ body.on-dna #dna-badge{display:none}
       <div class="dna-text"><strong id="dna-persona">...</strong><span id="dna-stats"></span></div>
       <div style="font-size:16px;color:var(--purple-light)">→</div>
     </div>
-    <div id="dna-panel" class="show">
+    <div id="dna-panel" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3 style="margin:0;font-size:20px">🧬 Creator DNA</h3>
         <div style="display:flex;gap:8px">
@@ -1713,7 +1713,7 @@ function _setPageTitle(tab){
   const lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'zh-CN';
   const short = (lang || 'zh-CN').split('-')[0];
   const m = TAB_TITLES[tab];
-  t.textContent = m[lang] || m[short] || m.zh;
+  t.textContent = m[lang] || m[short] || m['zh-CN'];
 }
 function _setBodyTab(tab){
   document.body.classList.remove('on-dashboard','on-dna','on-ship','on-skills','on-settings');
