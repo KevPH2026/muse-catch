@@ -10,8 +10,6 @@ output
 .playwright-cli
 extension.pem
 extension.crx
-*.zip
-!extension.zip
 .DS_Store
 *.mp4
 !muse-demo.mp4

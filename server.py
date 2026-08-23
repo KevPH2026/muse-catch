@@ -1369,8 +1369,17 @@ def muse_demo_mp4():
 
 @app.route("/extension.zip")
 def extension_zip():
-    """Chrome/Edge extension package (downloaded from the landing page)."""
-    resp = send_file(Path(__file__).parent / "extension.zip", mimetype="application/zip",
+    """Chrome/Edge extension package — zipped on the fly from extension/ so the
+    download is always in sync with the deployed code (no stale artifact)."""
+    import io, zipfile
+    ext_dir = Path(__file__).parent / "extension"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in sorted(ext_dir.rglob("*")):
+            if p.is_file() and p.name != ".DS_Store":
+                zf.write(p, p.relative_to(ext_dir.parent))
+    buf.seek(0)
+    resp = send_file(buf, mimetype="application/zip",
                      as_attachment=True, download_name="muse-extension.zip")
     resp.headers["Cache-Control"] = "public, max-age=3600"
     return resp

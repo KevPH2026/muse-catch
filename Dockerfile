@@ -10,7 +10,6 @@ COPY extension/ extension/
 COPY i18n/ i18n/
 COPY i18n.js onboard.js demo.js app.html index.html demo.html pitch.html ./
 COPY muse-demo.mp4 ./
-COPY extension.zip ./
 COPY images/ images/
 COPY skill/ skill/
 COPY scripts/ scripts/
