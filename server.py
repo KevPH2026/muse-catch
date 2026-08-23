@@ -1144,6 +1144,7 @@ def generate_topics():
                     topics = json.loads(arr_match.group())
                     return jsonify({"topics": topics, "source_count": len(rows), "method": "tr_claude", "mode": mode})
                 except Exception: pass
+            print(f"[topics] LLM content unparseable ({len(content)} chars): {content[:150]!r}")
     except Exception as e:
         print(f"Topic LLM fallback: {e}")
     

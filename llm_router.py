@@ -51,15 +51,15 @@ PLATFORM_LLM_MODEL = os.environ.get("MUSE_LLM_MODEL", "deepseek-chat")
 
 # 模型路由表（max_tokens 含混合推理模型的 <think> 段，需为正文留余量）
 ROUTE = {
-    "chat":        {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.7, "max_tokens": 3000},
-    "expand":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 2500},
-    "classify":    {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 2500},
-    "topics":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 2000},
-    "deep_dive":   {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.7, "max_tokens": 2500},
-    "quotes":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.9, "max_tokens": 1500},
-    "dna":         {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 2500},
-    "ingest":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 1200},
-    "onboarding":  {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 1600},
+    "chat":        {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.7, "max_tokens": 4000},
+    "expand":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 4000},
+    "classify":    {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 3000},
+    "topics":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.8, "max_tokens": 5000},
+    "deep_dive":   {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.7, "max_tokens": 5000},
+    "quotes":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.9, "max_tokens": 3000},
+    "dna":         {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 4500},
+    "ingest":      {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.3, "max_tokens": 2500},
+    "onboarding":  {"model_tr": "deepseek/deepseek-v4-pro", "temp": 0.5, "max_tokens": 3000},
 }
 
 
